@@ -34,14 +34,12 @@ const HomeScreen = ({ navigation }) => {
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          {/* 1. Cabeçalho */}
           <View style={styles.headerContainer}>
             <View style={styles.profileRow}>
               <ProfileHeader />
               <Text style={styles.userName}>Olá, {user.name}</Text>
             </View>
           </View>
-          {/* 2. Menu Principal */}
           <View style={styles.menuContainer}>
             <MenuButton
               title="Buscar Livros"
@@ -63,7 +61,6 @@ const HomeScreen = ({ navigation }) => {
             />
           </View>
         </View>
-        {/* 3. Rodapé */}
         <TabBar />
       </SafeAreaView>
     </ImageBackground>
@@ -86,7 +83,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     width: "90%",
-    flexDirection: "row", // Adicione esta linha
+    flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
     marginTop: 30,
