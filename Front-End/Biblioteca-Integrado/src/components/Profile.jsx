@@ -30,7 +30,7 @@ const UserAvatar = () => {
           cx="40"
           cy="40"
           r={radius}
-          stroke="#7c3aed"
+          stroke="#6750A4"
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={`${circumference * 0.15} ${circumference * 0.85}`}
