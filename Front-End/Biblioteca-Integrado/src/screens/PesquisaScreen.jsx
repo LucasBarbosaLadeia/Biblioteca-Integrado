@@ -77,6 +77,9 @@ const PesquisaScreen = ({ navigation }) => {
                     title={item.title}
                     coverImage={item.coverImage}
                     isAvailable={item.isAvailable}
+                    onPress={() =>
+                      navigation.navigate("EspecificacoesLivro", { book: item })
+                    }
                   />
                 )}
                 ListHeaderComponent={

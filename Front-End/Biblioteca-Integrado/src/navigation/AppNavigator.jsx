@@ -2,6 +2,7 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
+import EspecificacoesLivroScreen from "../screens/EspecificacoesLivroScreen";
 import PesquisaScreen from "../screens/PesquisaScreen";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -20,6 +21,10 @@ const AppNavigator = () => {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Pesquisa" component={PesquisaScreen} />
+        <Stack.Screen
+          name="EspecificacoesLivro"
+          component={EspecificacoesLivroScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
