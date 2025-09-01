@@ -6,6 +6,9 @@ import path from "path";
 // Importar models e suas relações
 import "./models";
 
+// Importar rotas
+import routes from "./routes";
+
 const app = express();
 const port = 3001; // Mudando para porta 3001 para evitar conflito
 
@@ -13,6 +16,9 @@ const port = 3001; // Mudando para porta 3001 para evitar conflito
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Usar rotas da API
+app.use("/api", routes);
 
 // Testar conexão com banco de dados
 const testDatabase = async (): Promise<void> => {
@@ -46,12 +52,15 @@ const startServer = async (): Promise<void> => {
   }
 };
 
-// Rota de teste
+// Rota de teste (mantida para compatibilidade)
 app.get("/", (req, res) => {
-  res.json({ message: "Biblioteca Integrado API está funcionando!" });
+  res.json({
+    message: "Biblioteca Integrado API está funcionando!",
+    api: "Acesse /api para ver os endpoints disponíveis",
+  });
 });
 
-// Rota de health check
+// Rota de health check (mantida para compatibilidade)
 app.get("/health", (req, res) => {
   res.json({
     status: "OK",
