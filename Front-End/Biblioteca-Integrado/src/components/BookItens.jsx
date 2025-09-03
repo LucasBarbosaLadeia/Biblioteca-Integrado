@@ -1,8 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const BookItem = ({ title, coverImage, isAvailable }) => {
+const BookItem = ({ title, coverImage, isAvailable, onPress }) => {
   const availabilityColor = isAvailable ? "#2ECC71" : "#E74C3C";
   const availabilityIcon = isAvailable ? "checkmark-circle" : "close-circle";
   const availabilityText = isAvailable
@@ -10,26 +10,34 @@ const BookItem = ({ title, coverImage, isAvailable }) => {
     : "Indisponível Na Biblioteca";
 
   return (
-    <View style={styles.cardContainer}>
-      <Image source={coverImage} style={styles.coverImage} resizeMode="cover" />
-      <View style={styles.infoContainer}>
-        <View style={styles.titleBackground}>
-          <Text style={styles.titleText} numberOfLines={2}>
-            {title}
-          </Text>
-        </View>
-        <View style={styles.availabilityContainer}>
-          <Ionicons
-            name={availabilityIcon}
-            size={20}
-            color={availabilityColor}
-          />
-          <Text style={[styles.availabilityText, { color: availabilityColor }]}>
-            {availabilityText}
-          </Text>
+    <TouchableOpacity onPress={onPress}>
+      <View style={styles.cardContainer}>
+        <Image
+          source={coverImage}
+          style={styles.coverImage}
+          resizeMode="cover"
+        />
+        <View style={styles.infoContainer}>
+          <View style={styles.titleBackground}>
+            <Text style={styles.titleText} numberOfLines={2}>
+              {title}
+            </Text>
+          </View>
+          <View style={styles.availabilityContainer}>
+            <Ionicons
+              name={availabilityIcon}
+              size={20}
+              color={availabilityColor}
+            />
+            <Text
+              style={[styles.availabilityText, { color: availabilityColor }]}
+            >
+              {availabilityText}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
