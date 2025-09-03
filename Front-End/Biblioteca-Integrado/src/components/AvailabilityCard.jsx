@@ -5,13 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 const AvailabilityCard = ({ book }) => {
   const [notified, setNotified] = useState(false);
 
-  // --- 1. MUDANÇA NA LÓGICA DA FUNÇÃO ---
   const handleNotifyClick = () => {
-    // a função de callback garante que estamos usando o valor mais atual do estado.
     setNotified((currentValue) => !currentValue);
-
-    // O console.log usa o valor atual de 'notified' antes da mudança
-    console.log(notified ? "Notificação CANCELADA!" : "Notificação ATIVADA!");
   };
 
   return (
@@ -22,7 +17,14 @@ const AvailabilityCard = ({ book }) => {
             <Ionicons name="checkmark-circle" size={24} color="#2ECC71" />
             <Text style={styles.statusText}>Disponível</Text>
           </View>
-          <Text style={styles.detailText}>Exemplares Disponíveis: 3</Text>
+          {/* APROVEITEI PARA TORNAR O NÚMERO DE CÓPIAS DINÂMICO */}
+          <Text style={styles.detailText}>
+            Exemplares Disponíveis: {book.copies}
+          </Text>
+          {/* ✨ LINHA ADICIONADA PARA MOSTRAR A PRATELEIRA ✨ */}
+          <Text style={styles.detailText}>
+            Localização: Prateleira {book.shelf}
+          </Text>
         </>
       ) : (
         <>
@@ -32,10 +34,8 @@ const AvailabilityCard = ({ book }) => {
           </View>
 
           <TouchableOpacity
-            // 3. O estilo agora alterna para um visual "ativo"
             style={[styles.notifyButton, notified && styles.notifyButtonActive]}
             onPress={handleNotifyClick}
-            // 2. REMOVIDA a propriedade 'disabled'
           >
             <Text
               style={[
@@ -54,6 +54,7 @@ const AvailabilityCard = ({ book }) => {
   );
 };
 
+// Seus estilos continuam os mesmos
 const styles = StyleSheet.create({
   cardContainer: {
     padding: 20,
@@ -71,22 +72,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginLeft: 10,
   },
-  detailText: { color: "white", fontSize: 16 },
+  detailText: { color: "white", fontSize: 16, marginTop: 5 }, // Adicionei um marginTop para espaçamento
   notifyButton: {
     borderWidth: 1,
     borderColor: "white",
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: "transparent", // Estado original transparente
+    backgroundColor: "transparent",
   },
   notifyButtonText: {
     color: "white",
     fontSize: 14,
   },
-  // Estilo para quando o botão estiver ATIVADO
   notifyButtonActive: {
-    backgroundColor: "#20f038ff", // Roxo, por exemplo
+    backgroundColor: "#20f038ff",
     borderColor: "#20f062ff",
   },
   notifyButtonTextActive: {
