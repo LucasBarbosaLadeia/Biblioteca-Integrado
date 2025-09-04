@@ -23,11 +23,11 @@ const HomeScreen = ({ navigation }) => {
   const handPesquisar = () => {
     navigation.navigate("Pesquisa");
   };
-  const handMeusLivros = () => {
-    console.log("Meus Livros");
+  const handFavoritos = () => {
+    navigation.navigate("Favoritos");
   };
   const handMeusDados = () => {
-    console.log("Meus Dados");
+    navigation.navigate("YourDetails");
   };
 
   return (
@@ -48,15 +48,15 @@ const HomeScreen = ({ navigation }) => {
               style={{ marginBottom: 30 }}
             />
             <MenuButton
-              title="Meus Livros"
+              title="Favoritos"
               iconName="book"
-              onPress={() => console.log("Meus Livros")}
+              onPress={() => handFavoritos("Favoritos")}
               style={{ marginBottom: 30 }}
             />
             <MenuButton
               title="Meus Dados"
               iconName="profile"
-              onPress={() => console.log("Meus Dados")}
+              onPress={() => handMeusDados("Meus Dados")}
               style={{ marginBottom: 330 }}
             />
           </View>
