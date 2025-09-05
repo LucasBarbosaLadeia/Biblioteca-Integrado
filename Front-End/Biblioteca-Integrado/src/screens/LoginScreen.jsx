@@ -13,6 +13,7 @@ import {
 // <--- IMPORTANTE: Importe sua imagem
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { maskRA, unmaskRA } from "../utils/mask";
 
 const LoginScreen = ({ navigation }) => {
   const [ra, setRa] = useState("");
@@ -27,7 +28,7 @@ const LoginScreen = ({ navigation }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ra, senha }),
+          body: JSON.stringify({ ra: unmaskRA(ra), senha }),
         }
       );
 
@@ -37,7 +38,7 @@ const LoginScreen = ({ navigation }) => {
         await AsyncStorage.setItem("token", data.token);
         navigation.navigate("Home");
       } else {
-        alert(data.message || "Credenciais inválidas");
+        alert(data.message || "Credenciais inválidas", console.log(ra, senha));
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
@@ -59,7 +60,7 @@ const LoginScreen = ({ navigation }) => {
             placeholderTextColor="#BBBBBB"
             keyboardType="numeric"
             value={ra}
-            onChangeText={setRa}
+            onChangeText={(text) => setRa(maskRA(text))}
           />
           <TextInput
             style={styles.input}
