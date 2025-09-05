@@ -25,10 +25,10 @@ http://localhost:3001/api
 ```json
 POST /api/usuarios
 {
-  "nome": "João Silva",
-  "email": "joao@email.com",
+  "nome": "Gabriel Speciam",
+  "email": "gabrielSpeciam@email.com",
   "senha": "123456",
-  "RA": "2024001",
+  "RA": "123456",
   "tipo": "aluno"
 }
 ```
