@@ -1,15 +1,25 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
-const TabBar = () => {
+const TabBar = ({ navigator }) => {
+  const navigation = useNavigation();
+
+  const handHome = () => {
+    navigation.navigate("Home");
+  };
+  const handNotification = () => {
+    navigation.navigate("Notification");
+  };
+
   return (
     <View style={styles.tabBarContainer}>
-      <TouchableOpacity style={styles.tabItem}>
+      <TouchableOpacity style={styles.tabItem} onPress={handHome}>
         <Ionicons name="home" size={24} color="#FFFFFF" />
         <Text style={styles.tabText}>Home</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.tabItem}>
+      <TouchableOpacity style={styles.tabItem} onPress={handNotification}>
         <Ionicons name="notifications" size={24} color="#FFFFFF" />
         <Text style={styles.tabText}>Notificação</Text>
       </TouchableOpacity>
@@ -37,6 +47,8 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
   },
   tabText: {
     color: "#FFFFFF",

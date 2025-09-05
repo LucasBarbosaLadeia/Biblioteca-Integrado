@@ -99,13 +99,15 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   menuContainer: {
-    width: "100%",
-    marginTop: 20,
+    width: 350,
+    height: 600,
+    marginBottom: 40,
     padding: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    borderRadius: 10,
+    marginTop: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.5)",
+    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
   },
 });
 

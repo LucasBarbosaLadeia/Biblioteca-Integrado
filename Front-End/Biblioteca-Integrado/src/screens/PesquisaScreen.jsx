@@ -119,21 +119,22 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 2,
   },
   searchBarWrapper: {
     flex: 1,
     marginLeft: 0,
   },
   menuContainer: {
-    flex: 1,
-    width: "100%",
-    backgroundColor: "rgba(17, 16, 16, 0.01)",
-    borderRadius: 20,
+    width: 350,
+    height: 580,
+    marginBottom: 40,
+    padding: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    borderRadius: 10,
+    marginTop: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.5)",
-    padding: 2,
-    marginBottom: 100,
+    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
   },
   resultsTitle: {
     color: "#FFFFFF",
