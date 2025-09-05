@@ -55,15 +55,17 @@ const FavoritesScreen = ({ navigation }) => {
           </View>
 
           {/* Lista de favoritos */}
-          <ScrollView contentContainerStyle={styles.listContainer}>
-            {favoriteBooks.map((book, index) => (
-              <BookInfoCard
-                key={index}
-                book={book}
-                onPress={() => navigation.navigate("BookDetails", { book })}
-              />
-            ))}
-          </ScrollView>
+          <View style={styles.containerLista}>
+            <ScrollView contentContainerStyle={styles.listContainer}>
+              {favoriteBooks.map((book, index) => (
+                <BookInfoCard
+                  key={index}
+                  book={book}
+                  onPress={() => navigation.navigate("BookDetails", { book })}
+                />
+              ))}
+            </ScrollView>
+          </View>
         </View>
         <TabBar />
       </SafeAreaView>
@@ -98,6 +100,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#fff",
     marginLeft: 20,
+  },
+  containerLista: {
+    width: 350,
+    height: 600,
+    marginBottom: 40,
+    padding: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    borderRadius: 10,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
   },
   listContainer: {
     width: "100%",

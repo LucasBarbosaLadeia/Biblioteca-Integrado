@@ -7,6 +7,8 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+
 import BackgroundImage from "../assets/background.png";
 import ProfileHeader from "../components/Profile"; // Ícone de perfil
 import TabBar from "../components/TagBar"; // Se ainda quiser manter
@@ -14,6 +16,10 @@ import TabBar from "../components/TagBar"; // Se ainda quiser manter
 import { Ionicons } from "@expo/vector-icons"; // Ícone para o botão "Sair"
 
 const YourDetails = ({ navigation }) => {
+  const handleLogout = () => {
+    navigation.navigate("Login");
+  };
+
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
@@ -56,7 +62,7 @@ const YourDetails = ({ navigation }) => {
           </View>
 
           {/* Botão de sair */}
-          <TouchableOpacity style={styles.logoutButton}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="power" size={20} color="#ff4d4d" />
             <Text style={styles.logoutText}>Sair</Text>
           </TouchableOpacity>

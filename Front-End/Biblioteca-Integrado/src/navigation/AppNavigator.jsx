@@ -2,6 +2,7 @@ import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
+import NotificationScreen from "../screens/NotificationScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import YourDetailsScreen from "../screens/YourDetailsScreen";
 import EspecificacoesLivroScreen from "../screens/EspecificacoesLivroScreen";
@@ -25,6 +26,7 @@ const AppNavigator = () => {
         <Stack.Screen name="Pesquisa" component={PesquisaScreen} />
         <Stack.Screen name="YourDetails" component={YourDetailsScreen} />
         <Stack.Screen name="Favoritos" component={FavoritesScreen} />
+        <Stack.Screen name="Notification" component={NotificationScreen} />
 
         <Stack.Screen
           name="EspecificacoesLivro"
