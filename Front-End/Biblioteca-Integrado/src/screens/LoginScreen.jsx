@@ -12,13 +12,37 @@ import {
 
 // <--- IMPORTANTE: Importe sua imagem
 import BackgroundImage from "../assets/background.png";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LoginScreen = ({ navigation }) => {
   const [ra, setRa] = useState("");
   const [senha, setSenha] = useState("");
 
-  const handleLogin = () => {
-    navigation.navigate("Home");
+  const handleLogin = async () => {
+    try {
+      const respose = await fetch(
+        "http://192.168.0.104:3001/api/usuarios/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ra, senha }),
+        }
+      );
+
+      const data = await respose.json();
+
+      if (data.token) {
+        await AsyncStorage.setItem("token", data.token);
+        navigation.navigate("Home");
+      } else {
+        alert(data.message || "Credenciais inválidas");
+      }
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
+      alert("Erro ao fazer login. Tente novamente mais tarde.");
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Usuario, { IUsuario } from "../models/Usuario";
 import * as bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export class UsuarioController {
   // Listar todos os usuários
@@ -287,9 +288,9 @@ export class UsuarioController {
   // Login de usuário
   static async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, senha } = req.body;
+      const { ra, senha } = req.body;
 
-      if (!email || !senha) {
+      if (!ra || !senha) {
         res.status(400).json({
           success: false,
           message: "Email e senha são obrigatórios",
@@ -297,7 +298,7 @@ export class UsuarioController {
         return;
       }
 
-      const usuario = await Usuario.findOne({ where: { email } });
+      const usuario = await Usuario.findOne({ where: { RA: ra } });
       if (!usuario) {
         res.status(401).json({
           success: false,
@@ -315,6 +316,12 @@ export class UsuarioController {
         return;
       }
 
+      const token = jwt.sign(
+        { id: usuario.id_usuario, email: usuario.email },
+        process.env.JWT_SECRET || "segredo_simples", // pode ser uma string fixa
+        { expiresIn: "1h" } // expira em 1 hora
+      );
+
       // Retornar usuário sem a senha
       const usuarioResponse = await Usuario.findByPk(usuario.id_usuario, {
         attributes: { exclude: ["senha"] },
@@ -322,6 +329,7 @@ export class UsuarioController {
 
       res.status(200).json({
         success: true,
+        token,
         data: usuarioResponse,
         message: "Login realizado com sucesso",
       });
