@@ -11,15 +11,38 @@ import {
 import MenuButton from "../components/Botao";
 import ProfileHeader from "../components/Profile";
 import TabBar from "../components/TagBar";
+import { useEffect, useState } from "react";
 
 // Importe a imagem de fundo
 import BackgroundImage from "../assets/background.png";
-
-const user = {
-  name: "João Silva",
-};
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HomeScreen = ({ navigation }) => {
+  const [user, setUser] = useState(null);
+
+  const fetchUser = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const userId = await AsyncStorage.getItem("userId");
+
+      const response = await fetch(
+        `http://192.168.0.104:3001/api/usuarios/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setUser(data.data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário:", error);
+    }
+  };
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
   const handPesquisar = () => {
     navigation.navigate("Pesquisa");
   };
@@ -37,7 +60,9 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.headerContainer}>
             <View style={styles.profileRow}>
               <ProfileHeader />
-              <Text style={styles.userName}>Olá, {user.name}</Text>
+              <Text style={styles.userName}>
+                Olá, {user ? user.nome : "Carregando..."}
+              </Text>
             </View>
           </View>
           <View style={styles.menuContainer}>
