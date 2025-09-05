@@ -23,25 +23,23 @@ const HomeScreen = ({ navigation }) => {
   const handPesquisar = () => {
     navigation.navigate("Pesquisa");
   };
-  const handMeusLivros = () => {
-    console.log("Meus Livros");
+  const handFavoritos = () => {
+    navigation.navigate("Favoritos");
   };
   const handMeusDados = () => {
-    console.log("Meus Dados");
+    navigation.navigate("YourDetails");
   };
 
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          {/* 1. Cabeçalho */}
           <View style={styles.headerContainer}>
             <View style={styles.profileRow}>
               <ProfileHeader />
               <Text style={styles.userName}>Olá, {user.name}</Text>
             </View>
           </View>
-          {/* 2. Menu Principal */}
           <View style={styles.menuContainer}>
             <MenuButton
               title="Buscar Livros"
@@ -50,20 +48,19 @@ const HomeScreen = ({ navigation }) => {
               style={{ marginBottom: 30 }}
             />
             <MenuButton
-              title="Meus Livros"
+              title="Favoritos"
               iconName="book"
-              onPress={() => console.log("Meus Livros")}
+              onPress={() => handFavoritos("Favoritos")}
               style={{ marginBottom: 30 }}
             />
             <MenuButton
               title="Meus Dados"
               iconName="profile"
-              onPress={() => console.log("Meus Dados")}
+              onPress={() => handMeusDados("Meus Dados")}
               style={{ marginBottom: 330 }}
             />
           </View>
         </View>
-        {/* 3. Rodapé */}
         <TabBar />
       </SafeAreaView>
     </ImageBackground>
@@ -86,7 +83,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     width: "90%",
-    flexDirection: "row", // Adicione esta linha
+    flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
     marginTop: 30,
@@ -102,13 +99,15 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   menuContainer: {
-    width: "100%",
-    marginTop: 20,
+    width: 350,
+    height: 600,
+    marginBottom: 40,
     padding: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    borderRadius: 10,
+    marginTop: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.5)",
+    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
   },
 });
 
