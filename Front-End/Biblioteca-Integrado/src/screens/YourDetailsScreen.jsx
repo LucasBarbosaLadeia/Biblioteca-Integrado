@@ -15,7 +15,7 @@ import TabBar from "../components/TagBar"; // Se ainda quiser manter
 
 import { Ionicons } from "@expo/vector-icons"; // Ícone para o botão "Sair"
 
-const YourDetails = ({ navigation }) => {
+const SearchScreen = ({ navigation }) => {
   const handleLogout = () => {
     navigation.navigate("Login");
   };
@@ -160,4 +160,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default YourDetails;
+export default SearchScreen;

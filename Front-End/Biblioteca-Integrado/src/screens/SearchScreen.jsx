@@ -13,10 +13,11 @@ import CampoLupa from "../components/CampoLupa";
 import BackgroundImage from "../assets/background.png";
 import TabBar from "../components/TagBar";
 import BookItem from "../components/BookItens";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const placeholderCover = require("../assets/indisponivel.jpg");
 
-const PesquisaScreen = ({ navigation }) => {
+const SearchScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,22 +28,38 @@ const PesquisaScreen = ({ navigation }) => {
     setLoading(true);
     setSearched(true);
     setResults([]);
+
     try {
+      const token = await AsyncStorage.getItem("token");
+
       const response = await fetch(
-        `https://openlibrary.org/search.json?q=${query}`
+        `http://192.168.0.104:3001/api/livros?search=${encodeURIComponent(
+          query
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // se seu backend exigir autenticação
+          },
+        }
       );
+
       const data = await response.json();
-      const formattedBooks = data.docs.map((doc) => ({
-        id: doc.key,
-        title: doc.title,
-        coverImage: doc.cover_i
-          ? { uri: `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` }
-          : placeholderCover,
-        isAvailable: doc.ebook_access === "borrowable",
-      }));
-      setResults(formattedBooks);
+
+      if (data.success) {
+        const formattedBooks = data.data.map((book) => ({
+          id: book.id_livro,
+          title: book.titulo,
+          coverImage: { uri: book.capa_url },
+          isAvailable: book.qt_atual > 0,
+        }));
+
+        setResults(formattedBooks);
+      } else {
+        alert(data.message || "Erro ao buscar livros");
+      }
     } catch (error) {
       console.error("Erro ao buscar livros:", error);
+      alert("Erro ao buscar livros. Tente novamente mais tarde.");
     } finally {
       setLoading(false);
     }
@@ -151,4 +168,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PesquisaScreen;
+export default SearchScreen;

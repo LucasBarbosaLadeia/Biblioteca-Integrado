@@ -6,7 +6,7 @@ import NotificationScreen from "../screens/NotificationScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import YourDetailsScreen from "../screens/YourDetailsScreen";
 import EspecificacoesLivroScreen from "../screens/EspecificacoesLivroScreen";
-import PesquisaScreen from "../screens/PesquisaScreen";
+import SearchScreen from "../screens/SearchScreen";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
 
@@ -23,7 +23,7 @@ const AppNavigator = () => {
       >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Pesquisa" component={PesquisaScreen} />
+        <Stack.Screen name="Pesquisa" component={SearchScreen} />
         <Stack.Screen name="YourDetails" component={YourDetailsScreen} />
         <Stack.Screen name="Favoritos" component={FavoritesScreen} />
         <Stack.Screen name="Notification" component={NotificationScreen} />

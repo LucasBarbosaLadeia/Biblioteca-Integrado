@@ -36,6 +36,8 @@ const LoginScreen = ({ navigation }) => {
 
       if (data.token) {
         await AsyncStorage.setItem("token", data.token);
+        await AsyncStorage.setItem("userId", String(data.data.id_usuario));
+
         navigation.navigate("Home");
       } else {
         alert(data.message || "Credenciais inválidas", console.log(ra, senha));
