@@ -22,7 +22,7 @@ const LoginScreen = ({ navigation }) => {
   const handleLogin = async () => {
     try {
       const respose = await fetch(
-        "http://192.168.0.104:3001/api/usuarios/login",
+        "http://10.10.27.8:3001/api/usuarios/login", // sempre olhe o ip
         {
           method: "POST",
           headers: {

@@ -15,6 +15,7 @@ export interface ILivro {
   qt_total: number;
   createdAt?: Date;
   updatedAt?: Date;
+  paginas: number;
 }
 
 class Livro extends Model<ILivro> implements ILivro {
@@ -29,6 +30,7 @@ class Livro extends Model<ILivro> implements ILivro {
   public isbn?: string;
   public qt_atual!: number;
   public qt_total!: number;
+  public paginas!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -97,6 +99,14 @@ Livro.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       field: "qt_total",
+      validate: {
+        min: 0,
+      },
+    },
+    paginas: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: "paginas",
       validate: {
         min: 0,
       },

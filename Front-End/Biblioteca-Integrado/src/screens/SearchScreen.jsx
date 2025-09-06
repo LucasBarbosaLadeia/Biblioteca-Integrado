@@ -33,9 +33,7 @@ const SearchScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://192.168.0.104:3001/api/livros?search=${encodeURIComponent(
-          query
-        )}`,
+        `http://10.10.27.8:3001/api/livros?search=${encodeURIComponent(query)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // se seu backend exigir autenticação
@@ -49,6 +47,12 @@ const SearchScreen = ({ navigation }) => {
         const formattedBooks = data.data.map((book) => ({
           id: book.id_livro,
           title: book.titulo,
+          autor: book.autor,
+          first_publish_year: book.ano_publicacao,
+          subject: book.categoria,
+          number_pags: book.paginas,
+          qt_atual: book.qt_atual,
+          prateleira: book.prateleira,
           coverImage: { uri: book.capa_url },
           isAvailable: book.qt_atual > 0,
         }));

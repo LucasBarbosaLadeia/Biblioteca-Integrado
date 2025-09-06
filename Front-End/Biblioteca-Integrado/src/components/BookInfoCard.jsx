@@ -18,16 +18,13 @@ const BookInfoCard = ({ book }) => {
         <Text style={styles.titleText} numberOfLines={2}>
           {book.title}
         </Text>
-        <DetailRow label="Autor" value={book.author_name?.[0] || "N/A"} />
+        <DetailRow label="Autor" value={book.autor || "N/A"} />
         <DetailRow
           label="Publicação"
           value={book.first_publish_year || "N/A"}
         />
-        <DetailRow label="Categoria" value={book.subject?.[0] || "N/A"} />
-        <DetailRow
-          label="Páginas"
-          value={book.number_of_pages_median || "N/A"}
-        />
+        <DetailRow label="Categoria" value={book.subject?.nome || "N/A"} />
+        <DetailRow label="Páginas" value={book.number_pags || "N/A"} />
       </View>
     </View>
   );
