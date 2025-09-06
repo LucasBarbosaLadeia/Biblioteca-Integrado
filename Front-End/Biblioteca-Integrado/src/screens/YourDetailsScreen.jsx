@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,16 +7,45 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 
 import BackgroundImage from "../assets/background.png";
-import ProfileHeader from "../components/Profile"; // Ícone de perfil
-import TabBar from "../components/TagBar"; // Se ainda quiser manter
-
-import { Ionicons } from "@expo/vector-icons"; // Ícone para o botão "Sair"
+import ProfileHeader from "../components/Profile";
+import TabBar from "../components/TagBar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
+import { maskRA } from "../utils/mask";
 
 const SearchScreen = ({ navigation }) => {
-  const handleLogout = () => {
+  const [user, setUser] = useState(null); // Estado para armazenar os dados do usuário
+
+  const fetchUser = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const userId = await AsyncStorage.getItem("userId");
+
+      const response = await fetch(
+        `http://10.10.27.8:3001/api/usuarios/${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setUser(data.data);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados do usuário:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await AsyncStorage.clear();
     navigation.navigate("Login");
   };
 
@@ -33,11 +62,17 @@ const SearchScreen = ({ navigation }) => {
           {/* Bloco de informações */}
           <View style={styles.infoBlock}>
             {[
-              { label: "Nome", value: "Gabriel Henrique Sanches Speciam" },
-              { label: "RA", value: "00.0000-1" },
+              {
+                label: "Nome",
+                value: user ? user.nome || "N/A" : "Carregando...",
+              },
+              {
+                label: "RA",
+                value: user ? maskRA(user.RA) || "N/A" : "Carregando...",
+              },
               {
                 label: "E-Mail",
-                value: "emailtest@gmail.com",
+                value: user ? user.email || "N/A" : "Carregando...",
                 extraPadding: true,
               },
             ].map((item, index) => (
@@ -67,6 +102,7 @@ const SearchScreen = ({ navigation }) => {
             <Text style={styles.logoutText}>Sair</Text>
           </TouchableOpacity>
         </View>
+
         <TabBar />
       </SafeAreaView>
     </ImageBackground>
@@ -104,11 +140,11 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 40,
     padding: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 10,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
+    borderColor: "rgba(255, 255, 255, 0.5)",
   },
   row: {
     flexDirection: "row",
@@ -150,7 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 30,
-    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     marginTop: -20,
   },
   logoutText: {

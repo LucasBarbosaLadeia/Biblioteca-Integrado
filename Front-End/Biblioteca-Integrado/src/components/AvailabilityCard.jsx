@@ -17,13 +17,11 @@ const AvailabilityCard = ({ book }) => {
             <Ionicons name="checkmark-circle" size={24} color="#2ECC71" />
             <Text style={styles.statusText}>Disponível</Text>
           </View>
-          {/* APROVEITEI PARA TORNAR O NÚMERO DE CÓPIAS DINÂMICO */}
           <Text style={styles.detailText}>
-            Exemplares Disponíveis: {book.copies}
+            Exemplares Disponíveis: {book.qt_atual}
           </Text>
-          {/* ✨ LINHA ADICIONADA PARA MOSTRAR A PRATELEIRA ✨ */}
           <Text style={styles.detailText}>
-            Localização: Prateleira {book.shelf}
+            Localização: Prateleira {book.prateleira}
           </Text>
         </>
       ) : (

@@ -26,7 +26,7 @@ const HomeScreen = ({ navigation }) => {
       const userId = await AsyncStorage.getItem("userId");
 
       const response = await fetch(
-        `http://192.168.0.104:3001/api/usuarios/${userId}`,
+        `http://10.10.27.8:3001/api/usuarios/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -15,7 +15,7 @@ import BookInfoCard from "../components/BookInfoCard";
 import AvailabilityCard from "../components/AvailabilityCard";
 import TabBar from "../components/TagBar";
 
-const EspecificacoesLivroScreen = ({ route, navigation }) => {
+const BookSpecificationsScreen = ({ route, navigation }) => {
   const { book } = route.params;
   const [isFavorited, setIsFavorited] = useState(book.isFavorite || false);
 
@@ -26,10 +26,11 @@ const EspecificacoesLivroScreen = ({ route, navigation }) => {
     );
   };
 
+  console.log("📚 Book recebido:", book);
+
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header customizado (BOTÃO REMOVIDO DAQUI) */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back-circle" size={40} color="white" />
@@ -41,14 +42,11 @@ const EspecificacoesLivroScreen = ({ route, navigation }) => {
           <BookInfoCard book={book} />
           <AvailabilityCard book={book} />
         </ScrollView>
-
-        {/* <<< NOVO LOCAL: O BOTÃO FLUTUANTE VAI AQUI >>> */}
-        {/* Ele fica FORA do ScrollView para não rolar com o conteúdo */}
         <TouchableOpacity onPress={handleFavoriteToggle} style={styles.fab}>
           <Ionicons
             name={isFavorited ? "heart" : "heart-outline"}
             size={32}
-            color={"white"} // Cor do ícone
+            color={"white"}
           />
         </TouchableOpacity>
 
@@ -93,4 +91,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EspecificacoesLivroScreen;
+export default BookSpecificationsScreen;

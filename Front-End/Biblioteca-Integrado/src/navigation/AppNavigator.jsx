@@ -5,7 +5,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import NotificationScreen from "../screens/NotificationScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
 import YourDetailsScreen from "../screens/YourDetailsScreen";
-import EspecificacoesLivroScreen from "../screens/EspecificacoesLivroScreen";
+import BookSpecificationsScreen from "../screens/BookSpecificationsScreen";
 import SearchScreen from "../screens/SearchScreen";
 import LoginScreen from "../screens/LoginScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -27,10 +27,9 @@ const AppNavigator = () => {
         <Stack.Screen name="YourDetails" component={YourDetailsScreen} />
         <Stack.Screen name="Favoritos" component={FavoritesScreen} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
-
         <Stack.Screen
           name="EspecificacoesLivro"
-          component={EspecificacoesLivroScreen}
+          component={BookSpecificationsScreen}
         />
       </Stack.Navigator>
     </NavigationContainer>
