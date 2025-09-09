@@ -13,7 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BackgroundImage from "../assets/background.png";
 import FavoriteCard from "../components/FavoriteCard";
 
-const FavoritesScreen = () => {
+const FavoritesScreen = ({ navigation }) => {
   const [favoritos, setFavoritos] = useState([]);
 
   const carregarFavoritos = async () => {
@@ -22,7 +22,7 @@ const FavoritesScreen = () => {
       const usuarioId = await AsyncStorage.getItem("userId");
 
       const response = await fetch(
-        `http://192.168.0.103:3001/api/favoritos/usuario/${usuarioId}`,
+        `http://10.10.22.203:3001/api/favoritos/usuario/${usuarioId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -56,9 +56,10 @@ const FavoritesScreen = () => {
           <View style={styles.containerLista}>
             <FlatList
               data={favoritos}
-              renderItem={({ item }) => <FavoriteCard favorito={item} />}
+              renderItem={({ item }) => (
+                <FavoriteCard favorito={item} navigation={navigation} />
+              )}
               keyExtractor={(item) => item.id_favorito.toString()}
-              contentContainerStyle={styles.listContainer}
             />
           </View>
         </View>

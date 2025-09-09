@@ -33,7 +33,7 @@ const SearchScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://192.168.0.103:3001/api/livros?search=${encodeURIComponent(
+        `http://10.10.22.203:3001/api/livros?search=${encodeURIComponent(
           query
         )}`,
         {

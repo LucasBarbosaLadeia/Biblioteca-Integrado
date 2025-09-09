@@ -1,24 +1,44 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const FavoriteCard = ({ favorito }) => {
+  const navigation = useNavigation(); // pega o navigation do contexto
   const { livro } = favorito;
 
-  // Usar a URL da imagem ou placeholder se não existir
-  const imageUrl =
-    livro.coverImage ||
-    "https://via.placeholder.com/80x120.png?text=Sem+Imagem";
+  const handlePress = () => {
+    navigation.navigate("EspecificacoesLivro", {
+      book: {
+        id: livro.id_livro,
+        title: livro.titulo,
+        autor: livro.autor,
+        first_publish_year: livro.ano_publicacao,
+        subject: livro.categoria,
+        number_pags: livro.paginas,
+        qt_atual: livro.qt_atual,
+        prateleira: livro.prateleira,
+        coverImage: { uri: livro.capa_url },
+        isAvailable: livro.qt_atual > 0,
+      },
+    });
+    console.log("Livro pressionado:", livro);
+  };
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
       <Image source={{ uri: livro.capa_url }} style={styles.coverImage} />
-
       <View style={styles.info}>
         <Text style={styles.title}>{livro.titulo}</Text>
         <Text style={styles.author}>Autor: {livro.autor}</Text>
-        <Text style={styles.category}>Categoria: {livro.categoria.nome}</Text>
+        <Text style={styles.category}>
+          Categoria: {livro.categoria?.nome || "Sem categoria"}
+        </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -43,24 +63,10 @@ const styles = StyleSheet.create({
     marginRight: 16,
     resizeMode: "cover",
   },
-  info: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-  },
-  author: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 2,
-  },
-  category: {
-    fontSize: 13,
-    color: "#666",
-  },
+  info: { flex: 1 },
+  title: { fontSize: 18, fontWeight: "bold", color: "#333", marginBottom: 4 },
+  author: { fontSize: 14, color: "#555", marginBottom: 2 },
+  category: { fontSize: 13, color: "#666" },
 });
 
 export default FavoriteCard;

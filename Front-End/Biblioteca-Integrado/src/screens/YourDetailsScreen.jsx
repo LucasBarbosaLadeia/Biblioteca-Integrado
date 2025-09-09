@@ -24,7 +24,7 @@ const SearchScreen = ({ navigation }) => {
       const userId = await AsyncStorage.getItem("userId");
 
       const response = await fetch(
-        `http://192.168.0.103:3001/api/usuarios/${userId}`,
+        `http://10.10.22.203:3001/api/usuarios/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

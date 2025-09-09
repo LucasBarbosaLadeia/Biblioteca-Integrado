@@ -1,7 +1,7 @@
 export const toggleFavorito = async (usuarioId, livroId, token) => {
   try {
     const response = await fetch(
-      "http://192.168.0.103:3001/api/favoritos/toggle",
+      "http://10.10.22.203:3001/api/favoritos/toggle",
       {
         method: "POST",
         headers: {

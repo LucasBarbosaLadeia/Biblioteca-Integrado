@@ -20,45 +20,42 @@ import { toggleFavorito as toggleFavoritoAPI } from "../utils/favoritos";
 const BookSpecificationsScreen = ({ route, navigation }) => {
   const { book } = route.params;
   const [isFavorited, setIsFavorited] = useState(false);
+  const [loadingFavorite, setLoadingFavorite] = useState(true);
 
-  // Verifica se o livro está favoritado
   const checkIfFavorited = async () => {
     try {
+      setLoadingFavorite(true);
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
 
-      console.log("Token:", token);
-      console.log("Usuário ID:", usuarioId);
-      console.log("Book ID:", book.id);
-
       const response = await fetch(
-        `http://192.168.0.103:3001/api/favoritos/usuario/${usuarioId}/livro/${book.id}`,
+        `http://10.10.22.203:3001/api/favoritos/usuario/${usuarioId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log("Status da resposta:", response.status);
+      const result = await response.json();
 
-      const data = await response.json();
-
-      console.log("Dados recebidos da API:", data);
-
-      if (data.success && data.data) {
-        setIsFavorited(true);
+      if (result.success && Array.isArray(result.data)) {
+        const isFav = result.data.some(
+          (fav) => fav.id_livro === book.id || fav.livro?.id_livro === book.id
+        );
+        setIsFavorited(isFav);
       } else {
         setIsFavorited(false);
       }
     } catch (error) {
       console.error("Erro ao verificar favorito:", error);
+      setIsFavorited(false);
+    } finally {
+      setLoadingFavorite(false);
     }
   };
-
   useEffect(() => {
     checkIfFavorited();
   }, []);
 
-  // Alterna favorito
   const handleToggleFavorito = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
@@ -67,7 +64,6 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       const response = await toggleFavoritoAPI(usuarioId, book.id, token);
 
       if (response.success) {
-        // Inverte o estado atual
         setIsFavorited((prev) => !prev);
       } else {
         console.warn(
@@ -98,9 +94,19 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
         </ScrollView>
 
         {/* Botão de favoritar */}
-        <TouchableOpacity onPress={handleToggleFavorito} style={styles.fab}>
+        <TouchableOpacity
+          onPress={handleToggleFavorito}
+          style={styles.fab}
+          disabled={loadingFavorite} // desabilita enquanto carrega
+        >
           <Ionicons
-            name={isFavorited ? "heart" : "heart-outline"}
+            name={
+              loadingFavorite
+                ? "heart-outline" // enquanto carrega
+                : isFavorited
+                ? "heart" // já favoritado
+                : "heart-outline" // não favoritado
+            }
             size={32}
             color={"white"}
           />

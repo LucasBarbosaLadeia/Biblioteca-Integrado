@@ -159,6 +159,10 @@ export class FavoritoController {
               "qt_atual",
               "qt_total",
               "capa_url",
+              "sinopse",
+              "prateleira",
+              "ano_publicacao",
+              "paginas",
             ],
             include: [
               {
