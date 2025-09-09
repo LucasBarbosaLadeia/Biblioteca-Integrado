@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,28 +9,81 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import BackgroundImage from "../assets/background.png";
 import BookInfoCard from "../components/BookInfoCard";
 import AvailabilityCard from "../components/AvailabilityCard";
 import TabBar from "../components/TagBar";
+import { toggleFavorito as toggleFavoritoAPI } from "../utils/favoritos";
 
 const BookSpecificationsScreen = ({ route, navigation }) => {
   const { book } = route.params;
-  const [isFavorited, setIsFavorited] = useState(book.isFavorite || false);
+  const [isFavorited, setIsFavorited] = useState(false);
 
-  const handleFavoriteToggle = () => {
-    setIsFavorited((currentValue) => !currentValue);
-    console.log(
-      `Livro ${!isFavorited ? "adicionado aos" : "removido dos"} favoritos!`
-    );
+  // Verifica se o livro está favoritado
+  const checkIfFavorited = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const usuarioId = await AsyncStorage.getItem("userId");
+
+      console.log("Token:", token);
+      console.log("Usuário ID:", usuarioId);
+      console.log("Book ID:", book.id);
+
+      const response = await fetch(
+        `http://192.168.0.103:3001/api/favoritos/usuario/${usuarioId}/livro/${book.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("Status da resposta:", response.status);
+
+      const data = await response.json();
+
+      console.log("Dados recebidos da API:", data);
+
+      if (data.success && data.data) {
+        setIsFavorited(true);
+      } else {
+        setIsFavorited(false);
+      }
+    } catch (error) {
+      console.error("Erro ao verificar favorito:", error);
+    }
   };
 
-  console.log("📚 Book recebido:", book);
+  useEffect(() => {
+    checkIfFavorited();
+  }, []);
+
+  // Alterna favorito
+  const handleToggleFavorito = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const usuarioId = await AsyncStorage.getItem("userId");
+
+      const response = await toggleFavoritoAPI(usuarioId, book.id, token);
+
+      if (response.success) {
+        // Inverte o estado atual
+        setIsFavorited((prev) => !prev);
+      } else {
+        console.warn(
+          "Erro ao favoritar:",
+          response.message || "Erro desconhecido"
+        );
+      }
+    } catch (error) {
+      console.error("Erro ao alternar favorito:", error);
+    }
+  };
 
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back-circle" size={40} color="white" />
@@ -38,11 +91,14 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
           <Text style={styles.headerText}>Especificações do livro</Text>
         </View>
 
+        {/* Conteúdo do livro */}
         <ScrollView contentContainerStyle={styles.container}>
           <BookInfoCard book={book} />
           <AvailabilityCard book={book} />
         </ScrollView>
-        <TouchableOpacity onPress={handleFavoriteToggle} style={styles.fab}>
+
+        {/* Botão de favoritar */}
+        <TouchableOpacity onPress={handleToggleFavorito} style={styles.fab}>
           <Ionicons
             name={isFavorited ? "heart" : "heart-outline"}
             size={32}
@@ -50,6 +106,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
           />
         </TouchableOpacity>
 
+        {/* Barra de navegação inferior */}
         <TabBar />
       </SafeAreaView>
     </ImageBackground>
@@ -64,27 +121,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    paddingHorizontal: 20, // Adicionado padding para alinhar com o conteúdo
+    paddingHorizontal: 20,
   },
   headerText: {
     color: "white",
     fontSize: 20,
     fontWeight: "bold",
-    marginLeft: 30, // Retornamos a margem para o texto
+    marginLeft: 30,
   },
-  // <<< NOVO ESTILO PARA O BOTÃO FLUTUANTE >>>
   fab: {
-    position: "absolute", // Posição absoluta para flutuar
+    position: "absolute",
     width: 60,
     height: 60,
-    borderRadius: 30, // Deixa o botão redondo
-    backgroundColor: "#E74C3C", // Cor de fundo do botão
+    borderRadius: 30,
+    backgroundColor: "#E74C3C",
     justifyContent: "center",
     alignItems: "center",
-    right: 30, // 30 pixels da direita
-    bottom: 100, // 100 pixels de baixo (para não ficar em cima da TabBar)
-    elevation: 8, // Sombra para Android
-    shadowColor: "#000", // Sombra para iOS
+    right: 30,
+    bottom: 100,
+    elevation: 8,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,

@@ -33,7 +33,9 @@ const SearchScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://10.10.27.8:3001/api/livros?search=${encodeURIComponent(query)}`,
+        `http://192.168.0.103:3001/api/livros?search=${encodeURIComponent(
+          query
+        )}`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // se seu backend exigir autenticação

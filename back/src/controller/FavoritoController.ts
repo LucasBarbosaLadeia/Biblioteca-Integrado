@@ -158,6 +158,7 @@ export class FavoritoController {
               "isbn",
               "qt_atual",
               "qt_total",
+              "capa_url",
             ],
             include: [
               {
