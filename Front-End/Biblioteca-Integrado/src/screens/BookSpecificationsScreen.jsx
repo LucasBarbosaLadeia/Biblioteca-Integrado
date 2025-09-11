@@ -29,7 +29,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       const usuarioId = await AsyncStorage.getItem("userId");
 
       const response = await fetch(
-        `http://10.10.22.203:3001/api/favoritos/usuario/${usuarioId}`,
+        `http://192.168.0.103:3001/api/favoritos/usuario/${usuarioId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

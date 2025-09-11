@@ -21,7 +21,6 @@ const FavoriteCard = ({ favorito }) => {
         isAvailable: livro.qt_atual > 0,
       },
     });
-    console.log("Livro pressionado:", livro);
   };
 
   return (

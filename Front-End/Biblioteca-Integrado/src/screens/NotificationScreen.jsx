@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 
-import Ionicons from "react-native-vector-icons/Ionicons";
+import { Ionicons } from "@expo/vector-icons";
 import BackgroundImage from "../assets/background.png";
 import ProfileHeader from "../components/Profile";
 import TabBar from "../components/TagBar";

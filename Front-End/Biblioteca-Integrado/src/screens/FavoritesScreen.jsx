@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   ImageBackground,
   FlatList,
+  RefreshControl,
 } from "react-native";
 import ProfileHeader from "../components/Profile";
 import TabBar from "../components/TagBar";
@@ -15,6 +16,7 @@ import FavoriteCard from "../components/FavoriteCard";
 
 const FavoritesScreen = ({ navigation }) => {
   const [favoritos, setFavoritos] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const carregarFavoritos = async () => {
     try {
@@ -22,7 +24,7 @@ const FavoritesScreen = ({ navigation }) => {
       const usuarioId = await AsyncStorage.getItem("userId");
 
       const response = await fetch(
-        `http://10.10.22.203:3001/api/favoritos/usuario/${usuarioId}`,
+        `http://192.168.0.103:3001/api/favoritos/usuario/${usuarioId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -32,13 +34,18 @@ const FavoritesScreen = ({ navigation }) => {
 
       const data = await response.json();
       if (data.success) {
-        console.log("Favoritos recebidos:", data.data);
         setFavoritos(data.data);
       }
     } catch (error) {
       console.error("Erro ao carregar favoritos:", error);
     }
   };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await carregarFavoritos();
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     carregarFavoritos();
@@ -54,12 +61,16 @@ const FavoritesScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.containerLista}>
+            <Text style={styles.listTitle}>Meus Livros Favoritos</Text>
             <FlatList
               data={favoritos}
               renderItem={({ item }) => (
                 <FavoriteCard favorito={item} navigation={navigation} />
               )}
               keyExtractor={(item) => item.id_favorito.toString()}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
             />
           </View>
         </View>
@@ -108,9 +119,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.5)",
   },
-  listContainer: {
-    width: "100%",
-    paddingBottom: 100,
+  listTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });
 
