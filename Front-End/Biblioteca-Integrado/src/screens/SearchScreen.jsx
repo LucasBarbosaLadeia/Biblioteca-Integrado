@@ -15,8 +15,6 @@ import TabBar from "../components/TagBar";
 import BookItem from "../components/BookItens";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const placeholderCover = require("../assets/indisponivel.jpg");
-
 const SearchScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -33,10 +31,12 @@ const SearchScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://10.10.27.8:3001/api/livros?search=${encodeURIComponent(query)}`,
+        `http://192.168.0.103:3001/api/livros?search=${encodeURIComponent(
+          query
+        )}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // se seu backend exigir autenticação
+            Authorization: `Bearer ${token}`,
           },
         }
       );
