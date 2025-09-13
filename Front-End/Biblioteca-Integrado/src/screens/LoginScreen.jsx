@@ -10,10 +10,10 @@ import {
   ImageBackground,
 } from "react-native";
 
-// <--- IMPORTANTE: Importe sua imagem
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { maskRA, unmaskRA } from "../utils/mask";
+import { API_HOST } from "@env";
 
 const LoginScreen = ({ navigation }) => {
   const [ra, setRa] = useState("");
@@ -21,16 +21,14 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const respose = await fetch(
-        "http://192.168.0.103:3001/api/usuarios/login", // sempre olhe o ip
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ra: unmaskRA(ra), senha }),
-        }
-      );
+      const API = API_HOST;
+      const respose = await fetch(`${API}/api/usuarios/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ra: unmaskRA(ra), senha }),
+      });
 
       const data = await respose.json();
 
@@ -44,6 +42,8 @@ const LoginScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
+      console.log(ra, senha);
+      console.log(API);
       alert("Erro ao fazer login. Tente novamente mais tarde.");
     }
   };

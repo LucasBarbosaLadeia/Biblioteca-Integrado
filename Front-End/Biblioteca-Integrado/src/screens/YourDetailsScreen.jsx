@@ -14,21 +14,20 @@ import TabBar from "../components/TagBar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { maskRA } from "../utils/mask";
+import { API_HOST } from "@env";
 
 const SearchScreen = ({ navigation }) => {
-  const [user, setUser] = useState(null); // Estado para armazenar os dados do usuário
+  const [user, setUser] = useState(null);
 
   const fetchUser = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
       const userId = await AsyncStorage.getItem("userId");
+      const API = API_HOST;
 
-      const response = await fetch(
-        `http://192.168.0.103:3001/api/usuarios/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await fetch(`${API}/api/usuarios/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const data = await response.json();
 
@@ -53,13 +52,10 @@ const SearchScreen = ({ navigation }) => {
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          {/* Header com ícone e título */}
           <View style={styles.headerContainer}>
             <ProfileHeader />
             <Text style={styles.headerTitle}>Seus Dados</Text>
           </View>
-
-          {/* Bloco de informações */}
           <View style={styles.infoBlock}>
             {[
               {
@@ -95,8 +91,6 @@ const SearchScreen = ({ navigation }) => {
               </View>
             ))}
           </View>
-
-          {/* Botão de sair */}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="power" size={20} color="#ff4d4d" />
             <Text style={styles.logoutText}>Sair</Text>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,12 +14,59 @@ import BackgroundImage from "../assets/background.png";
 import TabBar from "../components/TagBar";
 import BookItem from "../components/BookItens";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_HOST } from "@env";
 
 const SearchScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [allBooks, setAllBooks] = useState([]);
+  const API = API_HOST;
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchBooks = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await fetch(`${API}/api/livros`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        const formattedBooks = data.data.map((book) => ({
+          id: book.id_livro,
+          title: book.titulo,
+          autor: book.autor,
+          first_publish_year: book.ano_publicacao,
+          subject: book.categoria,
+          number_pags: book.paginas,
+          qt_atual: book.qt_atual,
+          prateleira: book.prateleira,
+          coverImage: { uri: book.capa_url },
+          isAvailable: book.qt_atual > 0,
+        }));
+        setAllBooks(formattedBooks);
+      } else {
+        alert(data.message || "Erro ao buscar livros");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar livros:", error);
+      alert("Erro ao buscar livros. Tente novamente mais tarde.");
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBooks();
+    setRefreshing(false);
+  };
 
   const handleSearch = async () => {
     if (query.trim() === "") return;
@@ -31,9 +78,7 @@ const SearchScreen = ({ navigation }) => {
       const token = await AsyncStorage.getItem("token");
 
       const response = await fetch(
-        `http://192.168.0.103:3001/api/livros?search=${encodeURIComponent(
-          query
-        )}`,
+        `${API}/api/livros?search=${encodeURIComponent(query)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -91,11 +136,12 @@ const SearchScreen = ({ navigation }) => {
           ) : (
             <View style={styles.menuContainer}>
               <FlatList
-                data={results}
-                keyExtractor={(item) => item.id}
+                data={searched ? results : allBooks}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
                   <BookItem
                     title={item.title}
+                    author={item.autor}
                     coverImage={item.coverImage}
                     isAvailable={item.isAvailable}
                     onPress={() =>
@@ -104,7 +150,7 @@ const SearchScreen = ({ navigation }) => {
                   />
                 )}
                 ListHeaderComponent={
-                  results.length > 0 ? (
+                  searched && results.length > 0 ? (
                     <Text style={styles.resultsTitle}>Livros encontrados</Text>
                   ) : null
                 }
@@ -113,12 +159,14 @@ const SearchScreen = ({ navigation }) => {
                     <Text style={styles.emptyText}>
                       Nenhum livro encontrado para "{query}"
                     </Text>
-                  ) : (
+                  ) : allBooks.length === 0 ? (
                     <Text style={styles.emptyText}>
-                      Faça uma busca para ver os resultados.
+                      Nenhum livro cadastrado.
                     </Text>
-                  )
+                  ) : null
                 }
+                refreshing={refreshing}
+                onRefresh={onRefresh}
               />
             </View>
           )}

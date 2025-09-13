@@ -2,15 +2,17 @@ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const BookItem = ({ title, coverImage, isAvailable, onPress }) => {
+const BookItem = ({ title, author, coverImage, isAvailable, onPress }) => {
   const availabilityColor = isAvailable ? "#2ECC71" : "#E74C3C";
   const availabilityIcon = isAvailable ? "checkmark-circle" : "close-circle";
   const availabilityText = isAvailable
     ? "Disponível Na Biblioteca"
     : "Indisponível Na Biblioteca";
+  // Se o título for longo, diminui a fonte
+  const isLongTitle = title && title.length > 20;
 
   return (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
       <View style={styles.cardContainer}>
         <Image
           source={coverImage}
@@ -18,15 +20,22 @@ const BookItem = ({ title, coverImage, isAvailable, onPress }) => {
           resizeMode="cover"
         />
         <View style={styles.infoContainer}>
-          <View style={styles.titleBackground}>
-            <Text style={styles.titleText} numberOfLines={2}>
+          <View style={styles.titleWrapper}>
+            <Text
+              style={[styles.titleText, isLongTitle && styles.titleTextSmall]}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
               {title}
             </Text>
           </View>
+          <Text style={styles.authorText} numberOfLines={1}>
+            {author}
+          </Text>
           <View style={styles.availabilityContainer}>
             <Ionicons
               name={availabilityIcon}
-              size={20}
+              size={22}
               color={availabilityColor}
             />
             <Text
@@ -45,55 +54,74 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: "#0A1931",
     borderRadius: 20,
-    padding: 15,
-    marginVertical: 10,
-    marginHorizontal: 10,
+    padding: 10,
+    marginVertical: 8,
+    marginHorizontal: 6,
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 4,
   },
   coverImage: {
-    width: 80,
-    height: 120,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 70,
+    height: 100,
+    borderRadius: 8,
+    borderWidth: 1.5,
     borderColor: "#FFFFFF",
-    resizeMode: "cover",
+    backgroundColor: "#0A1931",
   },
   infoContainer: {
     flex: 1,
-    marginLeft: 15,
-    justifyContent: "space-between",
-    height: 120,
+    marginLeft: 12,
+    justifyContent: "center",
+    height: 100,
   },
-  titleBackground: {
+  titleWrapper: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    paddingVertical: 10,
-    marginTop: 1,
-    marginInline: 5,
-    paddingHorizontal: 15,
-    // alignSelf: "flex-start",
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 18,
+    alignSelf: "center",
+    marginBottom: 4,
+    borderWidth: 1.5,
+    borderColor: "#3A4A7A",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   titleText: {
     color: "#000000",
     fontWeight: "bold",
     fontSize: 16,
+    textAlign: "center",
+  },
+  titleTextSmall: {
+    fontSize: 13,
+  },
+  authorText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    textAlign: "center",
+    marginBottom: 8,
   },
   availabilityContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginTop: 4,
+    marginLeft: 0,
   },
   availabilityText: {
     fontSize: 14,
     fontWeight: "600",
-    marginLeft: 8,
+    marginLeft: 7,
+    color: "#FFFFFF",
   },
 });
 

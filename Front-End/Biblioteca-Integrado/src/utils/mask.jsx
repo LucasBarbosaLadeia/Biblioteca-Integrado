@@ -1,6 +1,6 @@
 export const maskRA = (text) => {
-  let cleaned = text.replace(/\D/g, ""); // remove tudo que não é número
-  if (cleaned.length > 7) cleaned = cleaned.slice(0, 7); // limita a 7 dígitos
+  let cleaned = text.replace(/\D/g, "");
+  if (cleaned.length > 7) cleaned = cleaned.slice(0, 7);
 
   let masked = cleaned;
 

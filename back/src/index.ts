@@ -27,7 +27,7 @@ const testDatabase = async (): Promise<void> => {
     console.log("✅ Banco de dados conectado com sucesso!");
 
     // Sincronizar modelos
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log("🔄 Banco de dados sincronizado!");
   } catch (error) {
     console.error("❌ Erro no banco de dados:", error);
