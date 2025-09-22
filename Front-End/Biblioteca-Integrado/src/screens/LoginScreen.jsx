@@ -8,16 +8,23 @@ import {
   Platform,
   SafeAreaView,
   ImageBackground,
+  View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { maskRA, unmaskRA } from "../utils/mask";
 import { API_HOST } from "@env";
+import CustomAlert from "../components/CustomAlert";
 
 const LoginScreen = ({ navigation }) => {
   const [ra, setRa] = useState("");
   const [senha, setSenha] = useState("");
+  const [showEsqueceuSenha, setShowEsqueceuSenha] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async () => {
     try {
@@ -38,13 +45,13 @@ const LoginScreen = ({ navigation }) => {
 
         navigation.navigate("Home");
       } else {
-        alert(data.message || "Credenciais inválidas", console.log(ra, senha));
+        setErrorMessage(data.message || "Credenciais inválidas");
+        setShowErrorAlert(true);
       }
     } catch (error) {
       console.error("Erro ao fazer login:", error);
-      console.log(ra, senha);
-      console.log(API);
-      alert("Erro ao fazer login. Tente novamente mais tarde.");
+      setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+      setShowErrorAlert(true);
     }
   };
 
@@ -55,6 +62,20 @@ const LoginScreen = ({ navigation }) => {
           style={styles.container}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
+          <CustomAlert
+            visible={showEsqueceuSenha}
+            onClose={() => setShowEsqueceuSenha(false)}
+            title={"Aviso"}
+            message={"Funcionalidade em desenvolvimento"}
+            buttonText={"OK"}
+          />
+          <CustomAlert
+            visible={showErrorAlert}
+            onClose={() => setShowErrorAlert(false)}
+            title={"Erro"}
+            message={errorMessage}
+            buttonText={"OK"}
+          />
           <Text style={styles.title}>Biblioteca Integrado</Text>
           <TextInput
             style={styles.input}
@@ -64,18 +85,30 @@ const LoginScreen = ({ navigation }) => {
             value={ra}
             onChangeText={(text) => setRa(maskRA(text))}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            placeholderTextColor="#BBBBBB"
-            secureTextEntry
-            value={senha}
-            onChangeText={setSenha}
-          />
+          <View style={styles.inputPasswordContainer}>
+            <TextInput
+              style={styles.inputPassword}
+              placeholder="Senha"
+              placeholderTextColor="#BBBBBB"
+              secureTextEntry={!showPassword}
+              value={senha}
+              onChangeText={setSenha}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword((prev) => !prev)}
+            >
+              <Ionicons
+                name={showPassword ? "eye" : "eye-off"}
+                size={24}
+                color="#888"
+              />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Entrar</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => console.log("Esqueceu a senha?")}>
+          <TouchableOpacity onPress={() => setShowEsqueceuSenha(true)}>
             <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
           </TouchableOpacity>
         </KeyboardAvoidingView>
@@ -116,6 +149,27 @@ const styles = StyleSheet.create({
     fontSize: 16, // Tamanho da fonte
     color: "#333333", // Cor do texto (cinza escuro)
     marginBottom: 20, // Espaço abaixo do campo
+  },
+  inputPasswordContainer: {
+    width: "90%",
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    marginBottom: 20,
+    height: 50,
+    paddingHorizontal: 5,
+  },
+  inputPassword: {
+    flex: 1,
+    height: 50,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    color: "#333333",
+    backgroundColor: "transparent",
+  },
+  eyeIcon: {
+    padding: 8,
   },
   button: {
     width: "90%", // Largura de 90% do container

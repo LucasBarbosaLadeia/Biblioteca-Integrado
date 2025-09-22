@@ -1,6 +1,9 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
+import {
+  createStackNavigator,
+  TransitionPresets,
+} from "@react-navigation/stack";
 
 import NotificationScreen from "../screens/NotificationScreen";
 import FavoritesScreen from "../screens/FavoritesScreen";
@@ -19,6 +22,23 @@ const AppNavigator = () => {
         initialRouteName="Login"
         screenOptions={{
           headerShown: false,
+          transitionSpec: {
+            open: { animation: "timing", config: { duration: 250 } },
+            close: { animation: "timing", config: { duration: 250 } },
+          },
+          cardStyleInterpolator: ({ current }) => ({
+            cardStyle: {
+              opacity: current.progress,
+              transform: [
+                {
+                  scale: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.98, 1],
+                  }),
+                },
+              ],
+            },
+          }),
         }}
       >
         <Stack.Screen name="Login" component={LoginScreen} />

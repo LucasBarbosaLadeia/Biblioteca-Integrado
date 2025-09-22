@@ -37,7 +37,6 @@ const FavoritesScreen = ({ navigation }) => {
       const data = await response.json();
       if (data.success) {
         setFavoritos(data.data);
-        console.log("Dados carregados:", data.data);
       }
     } catch (error) {
       console.error("Erro ao carregar favoritos:", error);

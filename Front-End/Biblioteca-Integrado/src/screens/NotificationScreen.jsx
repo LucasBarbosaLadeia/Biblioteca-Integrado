@@ -6,7 +6,7 @@ import {
   ImageBackground,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
+  Modal,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -14,41 +14,45 @@ import BackgroundImage from "../assets/background.png";
 import ProfileHeader from "../components/Profile";
 import TabBar from "../components/TagBar";
 import Notification from "../components/Notification";
+import CustomAlert from "../components/CustomAlert";
 
-const NotificationScreen = ({ navigator }) => {
+const NotificationScreen = ({ navigation }) => {
+  const [showTelaDesenvolvimento, setShowTelaDesenvolvimento] =
+    React.useState(true);
+  const [showModelLixeira, setShowModelLixeira] = React.useState(false);
   const book = "O Senhor dos Aneis";
-
-  const handleClearNotifications = () => {
-    Alert.alert(
-      "Apagar todas?",
-      "Você tem certeza que deseja apagar todas as notificações?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Apagar", onPress: () => console.log("Notificações apagadas") },
-      ]
-    );
-  };
 
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          {/* Header */}
+          <CustomAlert
+            visible={showTelaDesenvolvimento}
+            title="Aviso"
+            message={
+              "🚧 Tela em Desenvolvimento\nEsta página está em fase de construção. Ela foi adicionada para que você possa visualizar onde a funcionalidade ficará no futuro."
+            }
+            onClose={() => setShowTelaDesenvolvimento(false)}
+            buttonText="OK"
+          />
+          <CustomAlert
+            visible={showModelLixeira}
+            title="Aviso"
+            message={"FUNCIONALIDADE EM DESENVOLVIMENTO"}
+            onClose={() => setShowModelLixeira(false)}
+            buttonText="OK"
+          />
           <View style={styles.headerContainer}>
             <ProfileHeader />
             <Text style={styles.headerTitle}>Notificação</Text>
           </View>
-
-          {/* Info Block */}
           <View style={styles.infoBlock}>
             <Notification livro={book} />
-
-            {/* Botão de apagar no canto inferior direito */}
             <TouchableOpacity
-              onPress={handleClearNotifications}
+              onPress={() => setShowModelLixeira(true)}
               style={styles.trashButton}
             >
-              <Ionicons name="trash-outline" size={24} color="#fff" />
+              <Ionicons name="trash-outline" size={24} color="#ee1a1aff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -96,7 +100,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.5)",
-    position: "relative", // necessário para o botão absoluto funcionar dentro
+    position: "relative",
   },
   trashButton: {
     position: "absolute",

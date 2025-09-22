@@ -14,9 +14,12 @@ import { useEffect, useState } from "react";
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
+import getFirstAndLast from "../utils/name";
 
 const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
+
+  // Utilitário de nome movido para src/utils/name.jsx
 
   const fetchUser = async () => {
     try {
@@ -55,8 +58,12 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.headerContainer}>
             <View style={styles.profileRow}>
               <ProfileHeader />
-              <Text style={styles.userName}>
-                Olá, {user ? user.nome : "Carregando..."}
+              <Text
+                style={styles.userName}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                Olá, {user ? getFirstAndLast(user.nome) : "Carregando..."}
               </Text>
             </View>
           </View>
@@ -111,12 +118,15 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 25,
+    gap: 16,
+    width: "100%",
   },
   userName: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#FFFFFF",
+    maxWidth: "70%",
+    flexShrink: 1,
   },
   menuContainer: {
     width: 350,
