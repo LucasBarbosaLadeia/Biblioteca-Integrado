@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_HOST } from "@env";
 
 import BackgroundImage from "../assets/background.png";
 import BookInfoCard from "../components/BookInfoCard";
@@ -27,9 +28,10 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       setLoadingFavorite(true);
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
+      const API = API_HOST;
 
       const response = await fetch(
-        `http://192.168.0.103:3001/api/favoritos/usuario/${usuarioId}`,
+        `${API}/api/favoritos/usuario/${usuarioId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -79,21 +81,16 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back-circle" size={40} color="white" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Especificações do livro</Text>
         </View>
-
-        {/* Conteúdo do livro */}
         <ScrollView contentContainerStyle={styles.container}>
           <BookInfoCard book={book} />
           <AvailabilityCard book={book} />
         </ScrollView>
-
-        {/* Botão de favoritar */}
         <TouchableOpacity
           onPress={handleToggleFavorito}
           style={styles.fab}
@@ -111,8 +108,6 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
             color={"white"}
           />
         </TouchableOpacity>
-
-        {/* Barra de navegação inferior */}
         <TabBar />
       </SafeAreaView>
     </ImageBackground>

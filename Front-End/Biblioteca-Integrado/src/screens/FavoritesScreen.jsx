@@ -13,6 +13,7 @@ import TabBar from "../components/TagBar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BackgroundImage from "../assets/background.png";
 import FavoriteCard from "../components/FavoriteCard";
+import { API_HOST } from "@env";
 
 const FavoritesScreen = ({ navigation }) => {
   const [favoritos, setFavoritos] = useState([]);
@@ -22,9 +23,10 @@ const FavoritesScreen = ({ navigation }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
+      const API = API_HOST;
 
       const response = await fetch(
-        `http://192.168.0.103:3001/api/favoritos/usuario/${usuarioId}`,
+        `${API}/api/favoritos/usuario/${usuarioId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -35,6 +37,7 @@ const FavoritesScreen = ({ navigation }) => {
       const data = await response.json();
       if (data.success) {
         setFavoritos(data.data);
+        console.log("Dados carregados:", data.data);
       }
     } catch (error) {
       console.error("Erro ao carregar favoritos:", error);

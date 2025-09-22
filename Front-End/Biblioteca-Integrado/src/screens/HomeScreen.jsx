@@ -7,15 +7,13 @@ import {
   Text,
 } from "react-native";
 
-// Importe os componentes que criamos
 import MenuButton from "../components/Botao";
 import ProfileHeader from "../components/Profile";
 import TabBar from "../components/TagBar";
 import { useEffect, useState } from "react";
-
-// Importe a imagem de fundo
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_HOST } from "@env";
 
 const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -24,13 +22,10 @@ const HomeScreen = ({ navigation }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       const userId = await AsyncStorage.getItem("userId");
-
-      const response = await fetch(
-        `http://192.168.0.103:3001/api/usuarios/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const API = API_HOST;
+      const response = await fetch(`${API}/api/usuarios/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await response.json();
       if (data.success) {
         setUser(data.data);
