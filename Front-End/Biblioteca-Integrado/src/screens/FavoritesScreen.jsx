@@ -1,70 +1,79 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
   ImageBackground,
-  ScrollView,
-  TouchableOpacity,
+  FlatList,
+  RefreshControl,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-
-import BackgroundImage from "../assets/background.png";
 import ProfileHeader from "../components/Profile";
-import BookInfoCard from "../components/BookInfoCard"; // seu componente aqui
 import TabBar from "../components/TagBar";
-
-// Lista de favoritos fake (simulando livros)
-const favoriteBooks = [
-  {
-    title: "Clean Code",
-    author_name: ["Robert C. Martin"],
-    first_publish_year: 2008,
-    subject: ["Software Engineering"],
-    number_of_pages_median: 464,
-    coverImage: require("../assets/Clean-Code.jpg"), // imagem local
-  },
-  {
-    title: "Design Patterns",
-    author_name: ["Erich Gamma"],
-    first_publish_year: 1994,
-    subject: ["Architecture"],
-    number_of_pages_median: 395,
-    coverImage: require("../assets/Clean-Code.jpg"),
-  },
-  {
-    title: "The Pragmatic Programmer",
-    author_name: ["Andrew Hunt"],
-    first_publish_year: 1999,
-    subject: ["Programming"],
-    number_of_pages_median: 352,
-    coverImage: require("../assets/Clean-Code.jpg"),
-  },
-];
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import BackgroundImage from "../assets/background.png";
+import FavoriteCard from "../components/FavoriteCard";
+import { API_HOST } from "@env";
 
 const FavoritesScreen = ({ navigation }) => {
+  const [favoritos, setFavoritos] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const carregarFavoritos = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const usuarioId = await AsyncStorage.getItem("userId");
+      const API = API_HOST;
+
+      const response = await fetch(
+        `${API}/api/favoritos/usuario/${usuarioId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        setFavoritos(data.data);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar favoritos:", error);
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await carregarFavoritos();
+    setRefreshing(false);
+  }, []);
+
+  useEffect(() => {
+    carregarFavoritos();
+  }, []);
+
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          {/* Header */}
           <View style={styles.headerContainer}>
             <ProfileHeader />
             <Text style={styles.headerTitle}>Favoritos</Text>
           </View>
 
-          {/* Lista de favoritos */}
           <View style={styles.containerLista}>
-            <ScrollView contentContainerStyle={styles.listContainer}>
-              {favoriteBooks.map((book, index) => (
-                <BookInfoCard
-                  key={index}
-                  book={book}
-                  onPress={() => navigation.navigate("BookDetails", { book })}
-                />
-              ))}
-            </ScrollView>
+            <Text style={styles.listTitle}>Meus Livros Favoritos</Text>
+            <FlatList
+              data={favoritos}
+              renderItem={({ item }) => (
+                <FavoriteCard favorito={item} navigation={navigation} />
+              )}
+              keyExtractor={(item) => item.id_favorito.toString()}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+            />
           </View>
         </View>
         <TabBar />
@@ -106,25 +115,18 @@ const styles = StyleSheet.create({
     height: 600,
     marginBottom: 40,
     padding: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 10,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
+    borderColor: "rgba(255, 255, 255, 0.5)",
   },
-  listContainer: {
-    width: "100%",
-    paddingBottom: 100,
-  },
-  logoutButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  logoutText: {
+  listTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
     color: "#fff",
-    marginLeft: 10,
-    fontWeight: "600",
+    marginBottom: 10,
+    textAlign: "center",
   },
 });
 

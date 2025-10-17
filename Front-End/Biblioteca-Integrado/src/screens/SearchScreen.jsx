@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,36 +13,102 @@ import CampoLupa from "../components/CampoLupa";
 import BackgroundImage from "../assets/background.png";
 import TabBar from "../components/TagBar";
 import BookItem from "../components/BookItens";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_HOST } from "@env";
 
-const placeholderCover = require("../assets/indisponivel.jpg");
-
-const PesquisaScreen = ({ navigation }) => {
+const SearchScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [allBooks, setAllBooks] = useState([]);
+  const API = API_HOST;
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchBooks = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await fetch(`${API}/api/livros`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        const formattedBooks = data.data.map((book) => ({
+          id: book.id_livro,
+          title: book.titulo,
+          autor: book.autor,
+          first_publish_year: book.ano_publicacao,
+          subject: book.categoria,
+          number_pags: book.paginas,
+          qt_atual: book.qt_atual,
+          prateleira: book.prateleira,
+          coverImage: { uri: book.capa_url },
+          isAvailable: book.qt_atual > 0,
+        }));
+        setAllBooks(formattedBooks);
+      } else {
+        alert(data.message || "Erro ao buscar livros");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar livros:", error);
+      alert("Erro ao buscar livros. Tente novamente mais tarde.");
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchBooks();
+    setRefreshing(false);
+  };
 
   const handleSearch = async () => {
     if (query.trim() === "") return;
     setLoading(true);
     setSearched(true);
     setResults([]);
+
     try {
+      const token = await AsyncStorage.getItem("token");
+
       const response = await fetch(
-        `https://openlibrary.org/search.json?q=${query}`
+        `${API}/api/livros?search=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
+
       const data = await response.json();
-      const formattedBooks = data.docs.map((doc) => ({
-        id: doc.key,
-        title: doc.title,
-        coverImage: doc.cover_i
-          ? { uri: `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` }
-          : placeholderCover,
-        isAvailable: doc.ebook_access === "borrowable",
-      }));
-      setResults(formattedBooks);
+
+      if (data.success) {
+        const formattedBooks = data.data.map((book) => ({
+          id: book.id_livro,
+          title: book.titulo,
+          autor: book.autor,
+          first_publish_year: book.ano_publicacao,
+          subject: book.categoria,
+          number_pags: book.paginas,
+          qt_atual: book.qt_atual,
+          prateleira: book.prateleira,
+          coverImage: { uri: book.capa_url },
+          isAvailable: book.qt_atual > 0,
+        }));
+
+        setResults(formattedBooks);
+      } else {
+        alert(data.message || "Erro ao buscar livros");
+      }
     } catch (error) {
       console.error("Erro ao buscar livros:", error);
+      alert("Erro ao buscar livros. Tente novamente mais tarde.");
     } finally {
       setLoading(false);
     }
@@ -70,11 +136,12 @@ const PesquisaScreen = ({ navigation }) => {
           ) : (
             <View style={styles.menuContainer}>
               <FlatList
-                data={results}
-                keyExtractor={(item) => item.id}
+                data={searched ? results : allBooks}
+                keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
                   <BookItem
                     title={item.title}
+                    author={item.autor}
                     coverImage={item.coverImage}
                     isAvailable={item.isAvailable}
                     onPress={() =>
@@ -83,7 +150,7 @@ const PesquisaScreen = ({ navigation }) => {
                   />
                 )}
                 ListHeaderComponent={
-                  results.length > 0 ? (
+                  searched && results.length > 0 ? (
                     <Text style={styles.resultsTitle}>Livros encontrados</Text>
                   ) : null
                 }
@@ -92,12 +159,14 @@ const PesquisaScreen = ({ navigation }) => {
                     <Text style={styles.emptyText}>
                       Nenhum livro encontrado para "{query}"
                     </Text>
-                  ) : (
+                  ) : allBooks.length === 0 ? (
                     <Text style={styles.emptyText}>
-                      Faça uma busca para ver os resultados.
+                      Nenhum livro cadastrado.
                     </Text>
-                  )
+                  ) : null
                 }
+                refreshing={refreshing}
+                onRefresh={onRefresh}
               />
             </View>
           )}
@@ -151,4 +220,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PesquisaScreen;
+export default SearchScreen;

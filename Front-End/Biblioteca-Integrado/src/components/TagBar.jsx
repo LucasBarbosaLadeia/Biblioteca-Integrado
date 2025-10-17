@@ -2,9 +2,11 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import CustomAlert from "./CustomAlert";
 
 const TabBar = ({ navigator }) => {
   const navigation = useNavigation();
+  const [showAlertaTema, setShowAlertaTema] = React.useState(false);
 
   const handHome = () => {
     navigation.navigate("Home");
@@ -12,9 +14,19 @@ const TabBar = ({ navigator }) => {
   const handNotification = () => {
     navigation.navigate("Notification");
   };
+  const alertaTema = () => {
+    setShowAlertaTema(true);
+  };
 
   return (
     <View style={styles.tabBarContainer}>
+      <CustomAlert
+        visible={showAlertaTema}
+        title="Aviso"
+        message={"FUNCIONALIDADE EM DESENVOLVIMENTO"}
+        onClose={() => setShowAlertaTema(false)}
+        buttonText="OK"
+      />
       <TouchableOpacity style={styles.tabItem} onPress={handHome}>
         <Ionicons name="home" size={24} color="#FFFFFF" />
         <Text style={styles.tabText}>Home</Text>
@@ -23,7 +35,7 @@ const TabBar = ({ navigator }) => {
         <Ionicons name="notifications" size={24} color="#FFFFFF" />
         <Text style={styles.tabText}>Notificação</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.tabItem}>
+      <TouchableOpacity style={styles.tabItem} onPress={alertaTema}>
         <Ionicons name="sunny" size={24} color="#FFFFFF" />
         <Text style={styles.tabText}>Tema</Text>
       </TouchableOpacity>
