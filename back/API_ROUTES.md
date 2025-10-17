@@ -25,10 +25,10 @@ http://localhost:3001/api
 ```json
 POST /api/usuarios
 {
-  "nome": "João Silva",
-  "email": "joao@email.com",
+  "nome": "Gabriel Speciam",
+  "email": "gabrielSpeciam@email.com",
   "senha": "123456",
-  "RA": "2024001",
+  "RA": "123456",
   "tipo": "aluno"
 }
 ```
@@ -57,14 +57,16 @@ POST /api/usuarios
 ```json
 POST /api/livros
 {
-  "titulo": "O Senhor dos Anéis",
-  "autor": "J.R.R. Tolkien",
+  "titulo": "Dom Casmurro",
+  "autor": "Machado de Assis",
   "id_categoria": 1,
-  "ano_publicacao": 1954,
-  "isbn": "978-85-359-0277-8",
-  "qt_total": 5,
-  "sinopse": "Uma aventura épica...",
-  "prateleira": "A-01"
+  "ano_publicacao": 1899,
+  "capa_url": "https://exemplo.com/capas/dom_casmurro.jpg",
+  "sinopse": "A clássica história de Bentinho e Capitu, narrada sob a perspectiva do ciúme e da dúvida.",
+  "prateleira": "A-12",
+  "isbn": "978-85-359-0277-3",
+  "qt_atual": 3,
+  "qt_total": 5
 }
 ```
 

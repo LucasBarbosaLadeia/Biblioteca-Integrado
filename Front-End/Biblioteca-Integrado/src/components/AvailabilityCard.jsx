@@ -1,29 +1,37 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import CustomAlert from "./CustomAlert";
 
 const AvailabilityCard = ({ book }) => {
-  const [notified, setNotified] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   const handleNotifyClick = () => {
-    setNotified((currentValue) => !currentValue);
+    setShowAlert(true);
   };
 
   return (
     <View style={styles.cardContainer}>
+      <CustomAlert
+        visible={showAlert}
+        title="Aviso"
+        message={
+          "Funcionalidade será implementada quando houver integração com o lado da empresa."
+        }
+        onClose={() => setShowAlert(false)}
+        buttonText="OK"
+      />
       {book.isAvailable ? (
         <>
           <View style={styles.statusRow}>
             <Ionicons name="checkmark-circle" size={24} color="#2ECC71" />
             <Text style={styles.statusText}>Disponível</Text>
           </View>
-          {/* APROVEITEI PARA TORNAR O NÚMERO DE CÓPIAS DINÂMICO */}
           <Text style={styles.detailText}>
-            Exemplares Disponíveis: {book.copies}
+            Exemplares Disponíveis: {book.qt_atual}
           </Text>
-          {/* ✨ LINHA ADICIONADA PARA MOSTRAR A PRATELEIRA ✨ */}
           <Text style={styles.detailText}>
-            Localização: Prateleira {book.shelf}
+            Localização: Prateleira {book.prateleira}
           </Text>
         </>
       ) : (
@@ -34,18 +42,11 @@ const AvailabilityCard = ({ book }) => {
           </View>
 
           <TouchableOpacity
-            style={[styles.notifyButton, notified && styles.notifyButtonActive]}
+            style={styles.notifyButton}
             onPress={handleNotifyClick}
           >
-            <Text
-              style={[
-                styles.notifyButtonText,
-                notified && styles.notifyButtonTextActive,
-              ]}
-            >
-              {notified
-                ? "Você será notificado!"
-                : "Notificar quando disponível"}
+            <Text style={styles.notifyButtonText}>
+              Notificar quando disponível
             </Text>
           </TouchableOpacity>
         </>
