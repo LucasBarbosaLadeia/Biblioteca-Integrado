@@ -59,7 +59,11 @@ const LoginScreen = ({ navigation }) => {
       source={BackgroundImage}
       resizeMode="cover"
       className="flex-1"
-      style={Platform.OS === "web" ? { minHeight: "100vh", width: "100%" } : { flex: 1 }}
+      style={
+        Platform.OS === "web"
+          ? { minHeight: "100vh", width: "100%" }
+          : { flex: 1 }
+      }
     >
       <SafeAreaView className="flex-1">
         <KeyboardAvoidingView
