@@ -88,7 +88,7 @@ const LoginScreen = ({ navigation }) => {
           />
           <Text
             // CLASSE NATIVEWIND E RESPONSIVIDADE APLICADA AQUI
-            className="text-3xl md:text-4xl font-bold text-gray-200 mb-12"
+            className="text-3xl md:text-6xl font-extrabold text-gray-200 mb-12 text-center"
           >
             Biblioteca Integrado
           </Text>
