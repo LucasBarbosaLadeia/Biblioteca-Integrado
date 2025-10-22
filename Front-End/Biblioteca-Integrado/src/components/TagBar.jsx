@@ -28,15 +28,15 @@ const TabBar = ({ navigator }) => {
         buttonText="OK"
       />
       <TouchableOpacity style={styles.tabItem} onPress={handHome}>
-        <Ionicons name="home" size={24} color="#FFFFFF" />
+        <Ionicons name="home" size={24} color="#51A2FF" />
         <Text style={styles.tabText}>Home</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.tabItem} onPress={handNotification}>
-        <Ionicons name="notifications" size={24} color="#FFFFFF" />
+        <Ionicons name="notifications" size={24} color="#51A2FF" />
         <Text style={styles.tabText}>Notificação</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.tabItem} onPress={alertaTema}>
-        <Ionicons name="sunny" size={24} color="#FFFFFF" />
+        <Ionicons name="sunny" size={24} color="#51A2FF" />
         <Text style={styles.tabText}>Tema</Text>
       </TouchableOpacity>
     </View>
@@ -47,15 +47,12 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    alignItems: "center",
-    backgroundColor: "rgba(173, 216, 230, 0.3)", // Azul claro transparente
-    paddingVertical: 13,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    position: "absolute", // Fixa na parte inferior
-    bottom: 0,
-    left: 0,
-    right: 0,
+    paddingHorizontal: 30,
+    marginHorizontal: 20,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    paddingVertical: 10,
+    borderRadius: 150,
+    marginBottom: 20,
   },
   tabItem: {
     alignItems: "center",
@@ -63,7 +60,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabText: {
-    color: "#FFFFFF",
+    color: "#51A2FF",
     fontSize: 12,
     marginTop: 4,
   },
