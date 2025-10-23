@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import CustomAlert from "./CustomAlert";
+import CustomAlert from "../CustomAlert";
 
 const TabBar = ({ navigator }) => {
   const navigation = useNavigation();
@@ -28,15 +28,15 @@ const TabBar = ({ navigator }) => {
         buttonText="OK"
       />
       <TouchableOpacity style={styles.tabItem} onPress={handHome}>
-        <Ionicons name="home" size={24} color="#51A2FF" />
+        <Ionicons name="home" size={24} color="#fff" />
         <Text style={styles.tabText}>Home</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.tabItem} onPress={handNotification}>
-        <Ionicons name="notifications" size={24} color="#51A2FF" />
+        <Ionicons name="notifications" size={24} color="#fff" />
         <Text style={styles.tabText}>Notificação</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.tabItem} onPress={alertaTema}>
-        <Ionicons name="sunny" size={24} color="#51A2FF" />
+        <Ionicons name="sunny" size={24} color="#fff" />
         <Text style={styles.tabText}>Tema</Text>
       </TouchableOpacity>
     </View>
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingHorizontal: 30,
     marginHorizontal: 20,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "#111933ff",
     paddingVertical: 10,
     borderRadius: 150,
     marginBottom: 20,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabText: {
-    color: "#51A2FF",
+    color: "#fff",
     fontSize: 12,
     marginTop: 4,
   },

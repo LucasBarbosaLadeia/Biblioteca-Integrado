@@ -2,7 +2,12 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const HomeHeader = ({ title = "Home", onMenuPress, onBellPress, hasAlert }) => {
+const HomeHeader = ({
+  title = "Biblioteca",
+  onMenuPress,
+  onBellPress,
+  hasAlert,
+}) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.iconBtn} onPress={onMenuPress}>
@@ -32,7 +37,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "#111933ff)",
     justifyContent: "center",
     alignItems: "center",
   },

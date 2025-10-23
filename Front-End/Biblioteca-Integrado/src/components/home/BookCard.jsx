@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 // Definição das cores para manter a consistência
 const COLORS = {
-  CARD_BG: "#2b2f41", // Fundo principal do card (Azul Escuro)
+  CARD_BG: "#111933ff", // Fundo principal do card (Azul Escuro)
   WRAPPER_BG: "#3a3f55", // Fundo do wrapper do coração
   TEXT_LIGHT: "#d5d5d5ff", // Texto principal (título)
   TEXT_SECONDARY: "#b7b8c2", // Texto secundário (preço)

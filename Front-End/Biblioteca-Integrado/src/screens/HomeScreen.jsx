@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, SafeAreaView, Text, FlatList } from "react-native";
-import TabBar from "../components/TagBar";
+import TabBar from "../components/home/TagBar";
 import HomeHeader from "../components/home/HomeHeader";
 import SearchBarWithFilter from "../components/home/SearchBarWithFilter";
 import SectionHeader from "../components/home/SectionHeader";
 import BookCard from "../components/home/BookCard";
 import CleanCodeCover from "../assets/Clean-Code.jpg";
+import DrawerMenu from "../components/home/DrawerMenu";
 
 const mockBooks = [
   {
@@ -48,6 +49,14 @@ const mockBooksRecommended = [
 const HomeScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState({});
+  const [drawerVisible, setDrawerVisible] = useState(false);
+
+  const mockUser = { name: "João Silva", role: "Estudante" };
+
+  const handleLogout = () => {
+    // basic logout stub: navigate to Login (adjust as needed)
+    navigation.navigate("Login");
+  };
 
   const onSearch = () => navigation.navigate("Pesquisa");
   const onFilter = () => navigation.navigate("Pesquisa");
@@ -67,7 +76,7 @@ const HomeScreen = ({ navigation }) => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.page}>
           <HomeHeader
-            onMenuPress={() => {}}
+            onMenuPress={() => setDrawerVisible(true)}
             onBellPress={() => navigation.navigate("Notification")}
             hasAlert
           />
@@ -83,7 +92,7 @@ const HomeScreen = ({ navigation }) => {
             onFilterPress={onFilter}
           />
 
-          <SectionHeader title="Popular Books" onPress={() => {}} />
+          <SectionHeader title="Populares" onPress={() => {}} />
           <FlatList
             data={mockBooks}
             horizontal
@@ -103,7 +112,7 @@ const HomeScreen = ({ navigation }) => {
             style={{ marginTop: 8 }}
           />
 
-          <SectionHeader title="Recommended Books" />
+          <SectionHeader title="Recomendados" />
           <FlatList
             data={mockBooksRecommended}
             horizontal
@@ -124,6 +133,14 @@ const HomeScreen = ({ navigation }) => {
           />
         </View>
         <TabBar />
+        <DrawerMenu
+          visible={drawerVisible}
+          onClose={() => setDrawerVisible(false)}
+          navigation={navigation}
+          user={mockUser}
+          onLogout={handleLogout}
+          activeRoute={"Home"}
+        />
       </SafeAreaView>
     </View>
   );

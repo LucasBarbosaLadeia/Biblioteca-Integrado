@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import ProfileHeader from "../components/Profile";
-import TabBar from "../components/TagBar";
+import TabBar from "../components/home/TagBar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BackgroundImage from "../assets/background.png";
 import FavoriteCard from "../components/FavoriteCard";
