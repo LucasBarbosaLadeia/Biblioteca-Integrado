@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  TouchableWithoutFeedback,
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,7 +23,7 @@ const DrawerMenu = ({
 }) => {
   // open from left: start off-screen to the left
   const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const overlayOpacity = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     if (visible) {
@@ -63,9 +62,12 @@ const DrawerMenu = ({
 
   return (
     <View pointerEvents={visible ? "auto" : "none"} style={styles.container}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} />
-      </TouchableWithoutFeedback>
+      {/* Make overlay presentational only so taps on the overlay don't close the drawer.
+          Closing should only happen when the X button is pressed. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.overlay, { opacity: overlayOpacity }]}
+      />
 
       <Animated.View
         style={[
@@ -162,7 +164,9 @@ const DrawerMenu = ({
               styles.menuItem,
               activeRoute === "YourDetails" ? styles.menuItemActive : null,
             ]}
-            onPress={() => handleNavigate("YourDetails")}
+            onPress={() => {
+              handleNavigate("YourDetails");
+            }}
           >
             <Ionicons
               name="person-outline"
@@ -288,8 +292,8 @@ const styles = StyleSheet.create({
   closeCircle: {
     width: 34,
     height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 6,
+    backgroundColor: "#1b2546ff",
     alignItems: "center",
     justifyContent: "center",
   },
