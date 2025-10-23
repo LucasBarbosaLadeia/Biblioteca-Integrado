@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import {
+  ScrollView,
+  StatusBar,
+  useWindowDimensions,
+  Keyboard,
   StyleSheet,
   Text,
   TextInput,
@@ -9,6 +13,7 @@ import {
   SafeAreaView,
   ImageBackground,
   View,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -19,6 +24,8 @@ import { API_HOST } from "@env";
 import CustomAlert from "../components/CustomAlert";
 
 const LoginScreen = ({ navigation }) => {
+  const { width } = useWindowDimensions();
+  const isSmall = width < 360;
   const [ra, setRa] = useState("");
   const [senha, setSenha] = useState("");
   const [showEsqueceuSenha, setShowEsqueceuSenha] = useState(false);
@@ -27,91 +34,106 @@ const LoginScreen = ({ navigation }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async () => {
-    try {
-      const API = API_HOST;
-      const respose = await fetch(`${API}/api/usuarios/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ra: unmaskRA(ra), senha }),
-      });
+    navigation.navigate("Home");
+    // try {
+    //   const API = API_HOST;
+    //   const respose = await fetch(`${API}/api/usuarios/login`, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({ ra: unmaskRA(ra), senha }),
+    //   });
 
-      const data = await respose.json();
+    //   const data = await respose.json();
 
-      if (data.token) {
-        await AsyncStorage.setItem("token", data.token);
-        await AsyncStorage.setItem("userId", String(data.data.id_usuario));
+    //   if (data.token) {
+    //     await AsyncStorage.setItem("token", data.token);
+    //     await AsyncStorage.setItem("userId", String(data.data.id_usuario));
 
-        navigation.navigate("Home");
-      } else {
-        setErrorMessage(data.message || "Credenciais inválidas");
-        setShowErrorAlert(true);
-      }
-    } catch (error) {
-      console.error("Erro ao fazer login:", error);
-      setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
-      setShowErrorAlert(true);
-    }
+    //     navigation.navigate("Home");
+    //   } else {
+    //     setErrorMessage(data.message || "Credenciais inválidas");
+    //     setShowErrorAlert(true);
+    //   }
+    // } catch (error) {
+    //   console.error("Erro ao fazer login:", error);
+    //   setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+    //   setShowErrorAlert(true);
+    // }
   };
 
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <CustomAlert
-            visible={showEsqueceuSenha}
-            onClose={() => setShowEsqueceuSenha(false)}
-            title={"Aviso"}
-            message={"Funcionalidade em desenvolvimento"}
-            buttonText={"OK"}
-          />
-          <CustomAlert
-            visible={showErrorAlert}
-            onClose={() => setShowErrorAlert(false)}
-            title={"Erro"}
-            message={errorMessage}
-            buttonText={"OK"}
-          />
-          <Text style={styles.title}>Biblioteca Integrado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Registro (RA)"
-            placeholderTextColor="#BBBBBB"
-            keyboardType="numeric"
-            value={ra}
-            onChangeText={(text) => setRa(maskRA(text))}
-          />
-          <View style={styles.inputPasswordContainer}>
-            <TextInput
-              style={styles.inputPassword}
-              placeholder="Senha"
-              placeholderTextColor="#BBBBBB"
-              secureTextEntry={!showPassword}
-              value={senha}
-              onChangeText={setSenha}
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword((prev) => !prev)}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={
+              Platform.OS === "ios" ? 0 : StatusBar.currentHeight || 0
+            }
+          >
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
             >
-              <Ionicons
-                name={showPassword ? "eye" : "eye-off"}
-                size={24}
-                color="#888"
-              />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Entrar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowEsqueceuSenha(true)}>
-            <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
+              <View style={styles.inner}>
+                <CustomAlert
+                  visible={showEsqueceuSenha}
+                  onClose={() => setShowEsqueceuSenha(false)}
+                  title={"Aviso"}
+                  message={"Funcionalidade em desenvolvimento"}
+                  buttonText={"OK"}
+                />
+                <CustomAlert
+                  visible={showErrorAlert}
+                  onClose={() => setShowErrorAlert(false)}
+                  title={"Erro"}
+                  message={errorMessage}
+                  buttonText={"OK"}
+                />
+                <Text style={isSmall ? styles.titleSmall : styles.title}>
+                  Biblioteca Integrado
+                </Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Registro (RA)"
+                  placeholderTextColor="#BBBBBB"
+                  keyboardType="numeric"
+                  value={ra}
+                  onChangeText={(text) => setRa(maskRA(text))}
+                />
+                <View style={styles.inputPasswordContainer}>
+                  <TextInput
+                    style={styles.inputPassword}
+                    placeholder="Senha"
+                    placeholderTextColor="#BBBBBB"
+                    secureTextEntry={!showPassword}
+                    value={senha}
+                    onChangeText={setSenha}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword((prev) => !prev)}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye" : "eye-off"}
+                      size={24}
+                      color="#888"
+                    />
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                  <Text style={styles.buttonText}>Entrar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowEsqueceuSenha(true)}>
+                  <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -131,8 +153,19 @@ const styles = StyleSheet.create({
     flex: 1, // Ocupa todo o espaço disponível
     justifyContent: "center", // Centraliza verticalmente os itens
     alignItems: "center", // Centraliza horizontalmente os itens
-    padding: 20, // Espaçamento interno de 20 em todos os lados
+    padding: 0, // Padding movido para scrollContent para evitar duplicidade
     backgroundColor: "transparent", // Torna o fundo do container transparente
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: 420,
+    alignItems: "center",
   },
   title: {
     fontSize: 32, // Tamanho da fonte grande para o título
@@ -140,8 +173,14 @@ const styles = StyleSheet.create({
     color: "#E0E0E0", // Cor do texto (cinza claro)
     marginBottom: 50, // Espaço abaixo do título
   },
+  titleSmall: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#E0E0E0",
+    marginBottom: 36,
+  },
   input: {
-    width: "90%", // Largura de 90% do container
+    width: "100%", // Ocupar toda a largura do container interno
     height: 50, // Altura de 50 pixels
     backgroundColor: "#FFFFFF", // Fundo branco
     borderRadius: 10, // Bordas arredondadas
@@ -151,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 20, // Espaço abaixo do campo
   },
   inputPasswordContainer: {
-    width: "90%",
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
@@ -172,7 +211,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   button: {
-    width: "90%", // Largura de 90% do container
+    width: "100%", // Preencher largura do container interno
     height: 50, // Altura de 50 pixels
     backgroundColor: "#000000", // Fundo preto
     borderRadius: 10, // Bordas arredondadas

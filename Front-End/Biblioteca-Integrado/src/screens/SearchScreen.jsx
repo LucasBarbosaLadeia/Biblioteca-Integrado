@@ -11,7 +11,7 @@ import {
 
 import CampoLupa from "../components/CampoLupa";
 import BackgroundImage from "../assets/background.png";
-import TabBar from "../components/TagBar";
+import TabBar from "../components/home/TagBar";
 import BookItem from "../components/BookItens";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";

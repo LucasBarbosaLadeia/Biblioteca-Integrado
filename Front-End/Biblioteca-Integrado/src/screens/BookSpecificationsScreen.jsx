@@ -15,7 +15,7 @@ import { API_HOST } from "@env";
 import BackgroundImage from "../assets/background.png";
 import BookInfoCard from "../components/BookInfoCard";
 import AvailabilityCard from "../components/AvailabilityCard";
-import TabBar from "../components/TagBar";
+import TabBar from "../components/home/TagBar";
 import { toggleFavorito as toggleFavoritoAPI } from "../utils/favoritos";
 
 const BookSpecificationsScreen = ({ route, navigation }) => {

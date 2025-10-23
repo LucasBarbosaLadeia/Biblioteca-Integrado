@@ -10,7 +10,7 @@ import {
 
 import BackgroundImage from "../assets/background.png";
 import ProfileHeader from "../components/Profile";
-import TabBar from "../components/TagBar";
+import TabBar from "../components/home/TagBar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { maskRA } from "../utils/mask";

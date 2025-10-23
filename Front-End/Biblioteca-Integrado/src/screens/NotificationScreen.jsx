@@ -12,7 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import BackgroundImage from "../assets/background.png";
 import ProfileHeader from "../components/Profile";
-import TabBar from "../components/TagBar";
+import TabBar from "../components/home/TagBar";
 import Notification from "../components/Notification";
 import CustomAlert from "../components/CustomAlert";
 

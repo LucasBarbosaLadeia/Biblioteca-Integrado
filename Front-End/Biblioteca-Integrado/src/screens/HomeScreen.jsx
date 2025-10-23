@@ -1,143 +1,170 @@
-import React from "react";
-import {
-  View,
-  StyleSheet,
-  SafeAreaView,
-  ImageBackground,
-  Text,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, SafeAreaView, Text, FlatList } from "react-native";
+import TabBar from "../components/home/TagBar";
+import HomeHeader from "../components/home/HomeHeader";
+import SearchBarWithFilter from "../components/home/SearchBarWithFilter";
+import SectionHeader from "../components/home/SectionHeader";
+import BookCard from "../components/home/BookCard";
+import CleanCodeCover from "../assets/Clean-Code.jpg";
+import DrawerMenu from "../components/home/DrawerMenu";
 
-import MenuButton from "../components/Botao";
-import ProfileHeader from "../components/Profile";
-import TabBar from "../components/TagBar";
-import { useEffect, useState } from "react";
-import BackgroundImage from "../assets/background.png";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_HOST } from "@env";
-import getFirstAndLast from "../utils/name";
+const mockBooks = [
+  {
+    id: "1",
+    title: "Harry Potter",
+    autor: "J.K. Rowling",
+    cover: CleanCodeCover,
+  },
+  {
+    id: "2",
+    title: "Way of Kings",
+    autor: "Brandon Sanderson",
+    cover: CleanCodeCover,
+  },
+  {
+    id: "3",
+    title: "Mistborn",
+    autor: "Brandon Sanderson",
+    cover: CleanCodeCover,
+  },
+];
+const mockBooksRecommended = [
+  {
+    id: "4",
+    title: "The Hobbit",
+    autor: "J.R.R. Tolkien",
+    cover: CleanCodeCover,
+  },
+  { id: "5", title: "1984", autor: "George Orwell", cover: CleanCodeCover },
+  {
+    id: "6",
+    title: "To Kill a Mockingbird",
+    autor: "Harper Lee",
+    cover: CleanCodeCover,
+  },
+];
+
+//
 
 const HomeScreen = ({ navigation }) => {
-  const [user, setUser] = useState(null);
+  const [query, setQuery] = useState("");
+  const [favorites, setFavorites] = useState({});
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
-  // Utilitário de nome movido para src/utils/name.jsx
+  const mockUser = { name: "João Silva", role: "Estudante" };
 
-  const fetchUser = async () => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const userId = await AsyncStorage.getItem("userId");
-      const API = API_HOST;
-      const response = await fetch(`${API}/api/usuarios/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-      if (data.success) {
-        setUser(data.data);
-      }
-    } catch (error) {
-      console.error("Erro ao buscar dados do usuário:", error);
-    }
+  const handleLogout = () => {
+    // basic logout stub: navigate to Login (adjust as needed)
+    navigation.navigate("Login");
   };
-  useEffect(() => {
-    fetchUser();
-  }, []);
 
-  const handPesquisar = () => {
-    navigation.navigate("Pesquisa");
+  const onSearch = () => navigation.navigate("Pesquisa");
+  const onFilter = () => navigation.navigate("Pesquisa");
+
+  const toggleFav = (id) => {
+    setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-  const handFavoritos = () => {
-    navigation.navigate("Favoritos");
-  };
-  const handMeusDados = () => {
-    navigation.navigate("YourDetails");
+
+  const openBook = (book) => {
+    navigation.navigate("EspecificacoesLivro", {
+      book: { title: book.title, coverImage: book.cover },
+    });
   };
 
   return (
-    <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <View style={styles.headerContainer}>
-            <View style={styles.profileRow}>
-              <ProfileHeader />
-              <Text
-                style={styles.userName}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                Olá, {user ? getFirstAndLast(user.nome) : "Carregando..."}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.menuContainer}>
-            <MenuButton
-              title="Buscar Livros"
-              iconName="search"
-              onPress={() => handPesquisar("Pesquisa")}
-              style={{ marginBottom: 30 }}
-            />
-            <MenuButton
-              title="Favoritos"
-              iconName="book"
-              onPress={() => handFavoritos("Favoritos")}
-              style={{ marginBottom: 30 }}
-            />
-            <MenuButton
-              title="Meus Dados"
-              iconName="profile"
-              onPress={() => handMeusDados("Meus Dados")}
-              style={{ marginBottom: 330 }}
-            />
-          </View>
+        <View style={styles.page}>
+          <HomeHeader
+            onMenuPress={() => setDrawerVisible(true)}
+            onBellPress={() => navigation.navigate("Notification")}
+            hasAlert
+          />
+
+          <Text style={styles.heroTitle}>
+            Qual livro você{"\n"}deseja encontrar?
+          </Text>
+
+          <SearchBarWithFilter
+            value={query}
+            onChangeText={setQuery}
+            onSearch={onSearch}
+            onFilterPress={onFilter}
+          />
+
+          <SectionHeader title="Populares" onPress={() => {}} />
+          <FlatList
+            data={mockBooks}
+            horizontal
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingRight: 8 }}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <BookCard
+                imageSource={item.cover}
+                title={item.title}
+                price={item.price}
+                isFavorite={!!favorites[item.id]}
+                onToggleFavorite={() => toggleFav(item.id)}
+                onPress={() => openBook(item)}
+              />
+            )}
+            style={{ marginTop: 8 }}
+          />
+
+          <SectionHeader title="Recomendados" />
+          <FlatList
+            data={mockBooksRecommended}
+            horizontal
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingRight: 8 }}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <BookCard
+                imageSource={item.cover}
+                title={item.title}
+                price={item.price}
+                isFavorite={!!favorites[item.id]}
+                onToggleFavorite={() => toggleFav(item.id)}
+                onPress={() => openBook(item)}
+              />
+            )}
+            style={{ marginTop: 8 }}
+          />
         </View>
         <TabBar />
+        <DrawerMenu
+          visible={drawerVisible}
+          onClose={() => setDrawerVisible(false)}
+          navigation={navigation}
+          user={mockUser}
+          onLogout={handleLogout}
+          activeRoute={"Home"}
+        />
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  backgroundImage: {
+  container: {
     flex: 1,
-    resizeMode: "cover",
+    backgroundColor: "#020618",
   },
   safeArea: {
     flex: 1,
   },
-  container: {
-    flex: 30,
+  page: {
+    flex: 1,
     paddingHorizontal: 20,
-    alignItems: "center",
-    marginTop: 50,
+    paddingTop: 50,
   },
-  headerContainer: {
-    width: "90%",
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    marginTop: 30,
-  },
-  profileRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    width: "100%",
-  },
-  userName: {
-    fontSize: 22,
-    fontWeight: "bold",
+  heroTitle: {
     color: "#FFFFFF",
-    maxWidth: "70%",
-    flexShrink: 1,
-  },
-  menuContainer: {
-    width: 350,
-    height: 600,
-    marginBottom: 40,
-    padding: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
-    borderRadius: 10,
-    marginTop: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
+    fontSize: 24,
+    fontWeight: "800",
+    marginVertical: 16,
+    lineHeight: 32,
   },
 });
 
