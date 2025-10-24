@@ -47,6 +47,7 @@ const AppNavigator = () => {
         <Stack.Screen name="YourDetails" component={YourDetailsScreen} />
         <Stack.Screen name="Favoritos" component={FavoritesScreen} />
         <Stack.Screen name="Notification" component={NotificationScreen} />
+
         <Stack.Screen
           name="EspecificacoesLivro"
           component={BookSpecificationsScreen}
