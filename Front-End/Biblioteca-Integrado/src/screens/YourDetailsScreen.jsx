@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_HOST } from "@env";
 import Header from "../components/Perfil/Header";
 import UserCard from "../components/Perfil/UserCard";
 import StatsCards from "../components/Perfil/StatsCards";
@@ -13,7 +15,7 @@ import AlertCard from "../components/Perfil/AlertCard";
 import LoanCard from "../components/Perfil/LoanCard";
 import TabBar from "../components/home/TagBar";
 
-// Example screen "Meu Perfil" using NativeWind className for styling
+// Example fallback used if network calls fail
 const exampleApiResponse = {
   name: "João Silva",
   registration: "2023001234",
@@ -32,38 +34,6 @@ const exampleApiResponse = {
       loanDate: "2025-09-30",
       returnDate: "2025-10-28",
     },
-    {
-      title: "Harry Potter e a Pedra Filosofal",
-      status: "Devolvido",
-      loanDate: "2025-09-14",
-      returnDate: "2025-10-14",
-      returnedAt: "2025-10-13",
-    },
-    {
-      title: "Algoritmos e Estruturas de Dados",
-      status: "Atrasado",
-      loanDate: "2025-09-19",
-      returnDate: "2025-10-19",
-    },
-    {
-      title: "Design Patterns",
-      status: "Atrasado",
-      loanDate: "2025-09-25",
-      returnDate: "2025-10-25",
-    },
-    {
-      title: "Clean Code",
-      status: "Ativo",
-      loanDate: "2025-09-30",
-      returnDate: "2025-10-28",
-    },
-    {
-      title: "Harry Potter e a Pedra Filosofal",
-      status: "Devolvido",
-      loanDate: "2025-09-14",
-      returnDate: "2025-10-14",
-      returnedAt: "2025-10-13",
-    },
   ],
 };
 
@@ -76,20 +46,131 @@ const MeuPerfilScreen = ({ navigation }) => {
     const controller = new AbortController();
 
     const fetchProfile = async () => {
+      const API = API_HOST || "http://localhost:3001";
       try {
         setLoading(true);
         setError(null);
 
-        // Simulate fetch delay; replace with actual fetch/axios in production
-        await new Promise((res) => setTimeout(res, 900));
-        // Simulate success
-        // const res = await fetch('/api/profile', { signal: controller.signal });
-        // const data = await res.json();
-        const data = exampleApiResponse;
-        setProfile(data);
+        const token = await AsyncStorage.getItem("token");
+        const usuarioId = await AsyncStorage.getItem("userId");
+        if (!usuarioId) {
+          // if no logged user, fallback to example
+          setProfile(exampleApiResponse);
+          return;
+        }
+
+        // Fetch profile, loans and favorites in parallel
+        const headers = token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined;
+
+        const [resProfile, resLoans, resFavs] = await Promise.all([
+          fetch(`${API}/api/usuarios/${usuarioId}`, {
+            headers,
+            signal: controller.signal,
+          }),
+          fetch(`${API}/api/emprestimos/usuario/${usuarioId}`, {
+            headers,
+            signal: controller.signal,
+          }),
+          fetch(`${API}/api/favoritos/usuario/${usuarioId}`, {
+            headers,
+            signal: controller.signal,
+          }),
+        ]);
+
+        const [profileJson, loansJson, favsJson] = await Promise.all([
+          resProfile.ok ? resProfile.json() : null,
+          resLoans.ok ? resLoans.json() : null,
+          resFavs.ok ? resFavs.json() : null,
+        ]);
+
+        // Map profile
+        let mappedProfile = {
+          name:
+            profileJson && profileJson.success && profileJson.data
+              ? profileJson.data.nome || profileJson.data.name
+              : undefined,
+          registration:
+            profileJson && profileJson.success && profileJson.data
+              ? profileJson.data.RA || profileJson.data.registration
+              : undefined,
+          email:
+            profileJson && profileJson.success && profileJson.data
+              ? profileJson.data.email
+              : undefined,
+          phone:
+            profileJson && profileJson.success && profileJson.data
+              ? profileJson.data.phone
+              : undefined,
+        };
+
+        // Map loans (history) and stats
+        const loansArray =
+          loansJson && loansJson.success && Array.isArray(loansJson.data)
+            ? loansJson.data
+            : [];
+        const favsArray =
+          favsJson && favsJson.success && Array.isArray(favsJson.data)
+            ? favsJson.data
+            : [];
+
+        const history = loansArray.map((l) => {
+          const livro = l.livro || l.book || l;
+          return {
+            title:
+              livro.titulo ||
+              livro.title ||
+              l.titulo ||
+              l.title ||
+              "Sem título",
+            status:
+              l.status || l.estado || (l.devolvido ? "Devolvido" : "Ativo"),
+            loanDate: l.data_emprestimo || l.loanDate || l.data || null,
+            returnDate: l.data_devolucao_prevista || l.returnDate || null,
+            returnedAt: l.data_devolvido || l.returnedAt || null,
+          };
+        });
+
+        const loansCount = loansArray.length;
+        const returnedCount = loansArray.filter(
+          (x) =>
+            (x.status || x.estado || (x.devolvido ? "Devolvido" : "Ativo")) ===
+            "Devolvido"
+        ).length;
+        const favoritesCount = favsArray.length;
+
+        const hasOverdue = loansArray.some(
+          (x) =>
+            (x.status || x.estado || (x.atrasado ? "Atrasado" : null)) ===
+            "Atrasado"
+        );
+        const alert = hasOverdue
+          ? {
+              hasOverdue: true,
+              message: "Você tem livros em atraso. Verifique seu histórico.",
+            }
+          : { hasOverdue: false };
+
+        setProfile({
+          name: mappedProfile.name || exampleApiResponse.name,
+          registration:
+            mappedProfile.registration || exampleApiResponse.registration,
+          email: mappedProfile.email || exampleApiResponse.email,
+          phone: mappedProfile.phone || exampleApiResponse.phone,
+          stats: {
+            loans: loansCount,
+            favorites: favoritesCount,
+            returned: returnedCount,
+          },
+          alert,
+          history: history.length ? history : exampleApiResponse.history,
+        });
       } catch (err) {
         if (err.name !== "AbortError") {
-          setError("Erro ao carregar perfil");
+          console.error("Erro ao carregar perfil do usuário:", err);
+          setError("Erro ao carregar perfil. Usando dados locais.");
+          setProfile(exampleApiResponse);
         }
       } finally {
         setLoading(false);

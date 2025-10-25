@@ -15,6 +15,7 @@ import { API_HOST } from "@env";
 import BackgroundImage from "../assets/background.png";
 import TabBar from "../components/home/TagBar";
 import { toggleFavorito as toggleFavoritoAPI } from "../utils/favoritos";
+import { emit } from "../utils/eventBus";
 
 import HeaderDetalhes from "../components/DetalhesDoLivro/HeaderDetalhes";
 import CoverImage from "../components/DetalhesDoLivro/CoverImage";
@@ -26,6 +27,21 @@ import ReserveButton from "../components/DetalhesDoLivro/ReserveButton";
 
 const BookSpecificationsScreen = ({ route, navigation }) => {
   const { book } = route.params;
+  // suportar dois formatos: o `book` vindo do Home pode ser o item mapeado
+  // (contendo `raw`) ou o próprio objeto `raw` do backend.
+  const raw = book?.raw || book || {};
+  const id = raw.id_livro ?? raw.id;
+  const title = raw.titulo ?? raw.title ?? book?.title ?? "";
+  const author = raw.autor ?? raw.author ?? book?.autor ?? "";
+  const cover = book?.cover ?? (raw.capa_url ? { uri: raw.capa_url } : null);
+  const isAvailable = (raw.qt_atual ?? raw.qtAtual ?? 0) > 0;
+  const copies = raw.qt_total ?? raw.qtTotal ?? 0;
+  const pages = raw.paginas ?? raw.pages ?? 0;
+  const year = raw.ano_publicacao ?? raw.year ?? null;
+  const editora = raw.editora ?? null;
+  const isbn = raw.isbn ?? null;
+  const localizacao = raw.prateleira ?? null;
+  const description = raw.sinopse ?? raw.description ?? null;
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(true);
 
@@ -47,7 +63,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
 
       if (result.success && Array.isArray(result.data)) {
         const isFav = result.data.some(
-          (fav) => fav.id_livro === book.id || fav.livro?.id_livro === book.id
+          (fav) => fav.id_livro === id || fav.livro?.id_livro === id
         );
         setIsFavorited(isFav);
       } else {
@@ -69,10 +85,12 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
 
-      const response = await toggleFavoritoAPI(usuarioId, book.id, token);
+      const response = await toggleFavoritoAPI(usuarioId, id, token);
 
       if (response.success) {
         setIsFavorited((prev) => !prev);
+        // emitir evento para atualizar a Home sem precisar re-fetch
+        emit("favoriteChanged", { id, isFavorito: !isFavorited });
       } else {
         console.warn(
           "Erro ao favoritar:",
@@ -83,24 +101,6 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       console.error("Erro ao alternar favorito:", error);
     }
   };
-
-  // Normalizar campos do book com fallbacks
-  const cover = book?.coverImage || book?.capa || book?.cover || null;
-  const title = book?.title || book?.titulo || book?.nome || "";
-  const author = book?.autor || book?.author || book?.autor_nome || "";
-  const isAvailable = book?.isAvailable ?? book?.qt_atual > 0;
-  const copies = book?.qt_atual || book?.copies || 0;
-  const pages = book?.number_pags || book?.paginas || book?.pages;
-  const year = book?.first_publish_year || book?.ano || book?.year;
-  const editora = book?.editora || book?.publisher;
-  const isbn = book?.isbn || book?.ISBN || book?.isbn_13 || book?.codigo_isbn;
-  const localizacao =
-    book?.localizacao ||
-    (book?.prateleira
-      ? `Seção A - Prateleira ${book.prateleira}`
-      : book?.shelf);
-  const description =
-    book?.sinopse || book?.description || book?.descricao || book?.about;
 
   return (
     <View style={styles.Backgroundcontainer}>
@@ -159,6 +159,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginLeft: 30,
+  },
+  bookTitle: {
+    color: "white",
+    fontSize: 18,
+    textAlign: "center",
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  bookAuthor: {
+    color: "#cfcfcf",
+    fontSize: 13,
+    marginBottom: 10,
+    textAlign: "center",
   },
   fab: {
     position: "absolute",

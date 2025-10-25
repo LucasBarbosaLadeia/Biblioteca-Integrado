@@ -34,33 +34,41 @@ const LoginScreen = ({ navigation }) => {
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async () => {
-    navigation.navigate("Home");
-    // try {
-    //   const API = API_HOST;
-    //   const respose = await fetch(`${API}/api/usuarios/login`, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({ ra: unmaskRA(ra), senha }),
-    //   });
+    try {
+      const API = API_HOST;
+      const respose = await fetch(`${API}/api/usuarios/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ra: unmaskRA(ra), senha }),
+      });
 
-    //   const data = await respose.json();
+      const data = await respose.json();
 
-    //   if (data.token) {
-    //     await AsyncStorage.setItem("token", data.token);
-    //     await AsyncStorage.setItem("userId", String(data.data.id_usuario));
+      if (data.token) {
+        await AsyncStorage.setItem("token", data.token);
+        await AsyncStorage.setItem("userId", String(data.data.id_usuario));
+        // save user name and role quickly so drawer/profile can show immediately without extra fetch
+        try {
+          const nome = data.data?.nome || data.data?.name || "";
+          const tipo = data.data?.tipo || data.data?.role || "";
+          if (nome) await AsyncStorage.setItem("userName", String(nome));
+          if (tipo) await AsyncStorage.setItem("userRole", String(tipo));
+        } catch (e) {
+          // ignore storage errors
+        }
 
-    //     navigation.navigate("Home");
-    //   } else {
-    //     setErrorMessage(data.message || "Credenciais inválidas");
-    //     setShowErrorAlert(true);
-    //   }
-    // } catch (error) {
-    //   console.error("Erro ao fazer login:", error);
-    //   setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
-    //   setShowErrorAlert(true);
-    // }
+        navigation.navigate("Home");
+      } else {
+        setErrorMessage(data.message || "Credenciais inválidas");
+        setShowErrorAlert(true);
+      }
+    } catch (error) {
+      console.error("Erro ao fazer login:", error);
+      setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+      setShowErrorAlert(true);
+    }
   };
 
   return (

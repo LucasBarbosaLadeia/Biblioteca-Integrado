@@ -55,7 +55,9 @@ const BookCard = ({
             </View>
           </TouchableOpacity>
         </View>
-        <Text style={styles.price}>{autor}</Text>
+        <Text style={styles.price} numberOfLines={1}>
+          {autor}
+        </Text>
       </View>
     </TouchableOpacity>
   );

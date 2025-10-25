@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
 import { View, StyleSheet, SafeAreaView, Text, FlatList } from "react-native";
 import TabBar from "../components/home/TagBar";
 import HomeHeader from "../components/home/HomeHeader";
@@ -7,69 +8,214 @@ import SectionHeader from "../components/home/SectionHeader";
 import BookCard from "../components/home/BookCard";
 import CleanCodeCover from "../assets/Clean-Code.jpg";
 import DrawerMenu from "../components/home/DrawerMenu";
-
-const mockBooks = [
-  {
-    id: "1",
-    title: "Harry Potter",
-    autor: "J.K. Rowling",
-    cover: CleanCodeCover,
-  },
-  {
-    id: "2",
-    title: "Way of Kings",
-    autor: "Brandon Sanderson",
-    cover: CleanCodeCover,
-  },
-  {
-    id: "3",
-    title: "Mistborn",
-    autor: "Brandon Sanderson",
-    cover: CleanCodeCover,
-  },
-];
-const mockBooksRecommended = [
-  {
-    id: "4",
-    title: "The Hobbit",
-    autor: "J.R.R. Tolkien",
-    cover: CleanCodeCover,
-  },
-  { id: "5", title: "1984", autor: "George Orwell", cover: CleanCodeCover },
-  {
-    id: "6",
-    title: "To Kill a Mockingbird",
-    autor: "Harper Lee",
-    cover: CleanCodeCover,
-  },
-];
-
-//
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { toggleFavorito } from "../utils/favoritos";
+import { API_HOST } from "@env";
+import { on as onEvent, off as offEvent } from "../utils/eventBus";
 
 const HomeScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState({});
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [recentes, setRecentes] = useState([]);
+  const [recomendados, setRecomendados] = useState([]);
+  const [loadingRecents, setLoadingRecents] = useState(false);
+  const [loadingRecomendados, setLoadingRecomendados] = useState(false);
+  const isFocused = useIsFocused();
 
-  const mockUser = { name: "João Silva", role: "Estudante" };
+  const [user, setUser] = useState({});
 
   const handleLogout = () => {
-    // basic logout stub: navigate to Login (adjust as needed)
-    navigation.navigate("Login");
+    // clear token/userId and go to login
+    (async () => {
+      try {
+        await AsyncStorage.removeItem("token");
+        await AsyncStorage.removeItem("userId");
+      } catch (e) {
+        // ignore
+      } finally {
+        navigation.navigate("Login");
+      }
+    })();
   };
+
+  // fetch logged user profile to show in drawer
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const usuarioId = await AsyncStorage.getItem("userId");
+        if (!usuarioId) return;
+        const API = API_HOST || "http://localhost:3001";
+        const res = await fetch(`${API}/api/usuarios/${usuarioId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const data = await res.json();
+        if (data && data.success && data.data) {
+          const profile = data.data;
+          setUser({
+            name: profile.nome || profile.name,
+            role: profile.tipo || profile.role,
+            // if backend provides avatar url, map it here (e.g. profile.avatar)
+            avatar: profile.capa_url ? { uri: profile.capa_url } : undefined,
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar perfil do usuário:", err);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const onSearch = () => navigation.navigate("Pesquisa");
   const onFilter = () => navigation.navigate("Pesquisa");
 
-  const toggleFav = (id) => {
+  const toggleFav = async (id) => {
     setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const usuarioId = await AsyncStorage.getItem("userId");
+      await toggleFavorito(usuarioId, id, token);
+    } catch (error) {
+      console.error("Erro ao alternar favorito:", error);
+      // Reverter caso de erro
+      setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
+    }
   };
 
   const openBook = (book) => {
-    navigation.navigate("EspecificacoesLivro", {
-      book: { title: book.title, coverImage: book.cover },
-    });
+    // navegar passando o objeto inteiro (inclui `raw` quando disponível)
+    navigation.navigate("EspecificacoesLivro", { book });
   };
+
+  useEffect(() => {
+    const API = API_HOST || "http://localhost:3001";
+
+    const fetchRecentes = async () => {
+      setLoadingRecents(true);
+      try {
+        const res = await fetch(`${API}/api/livros/recentes?limit=10`);
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.data)) {
+          const parsed = data.data.map((l) => ({
+            id: String(l.id_livro),
+            title: l.titulo,
+            autor: l.autor,
+            cover: l.capa_url ? { uri: l.capa_url } : CleanCodeCover,
+            raw: l,
+          }));
+          setRecentes(parsed);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar livros recentes:", err);
+      } finally {
+        setLoadingRecents(false);
+      }
+    };
+
+    const fetchRecomendados = async () => {
+      setLoadingRecomendados(true);
+      try {
+        const res = await fetch(`${API}/api/livros/recomendados?limit=10`);
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.data)) {
+          const parsed = data.data.map((l) => ({
+            id: String(l.id_livro),
+            title: l.titulo,
+            autor: l.autor,
+            cover: l.capa_url ? { uri: l.capa_url } : CleanCodeCover,
+            raw: l,
+          }));
+          setRecomendados(parsed);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar livros recomendados:", err);
+      } finally {
+        setLoadingRecomendados(false);
+      }
+    };
+
+    const fetchFavoritos = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const usuarioId = await AsyncStorage.getItem("userId");
+        if (!usuarioId) return;
+        const res = await fetch(`${API}/api/favoritos/usuario/${usuarioId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.data)) {
+          const favMap = {};
+          data.data.forEach((f) => {
+            const livroId = f.id_livro ?? f.livro?.id_livro ?? f.livro?.id;
+            if (livroId !== undefined && livroId !== null)
+              favMap[String(livroId)] = true;
+          });
+          setFavorites(favMap);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar favoritos do usuário:", err);
+      }
+    };
+
+    // fetch lists once on mount
+    fetchRecentes();
+    fetchRecomendados();
+    // also fetch favorites once on mount
+    fetchFavoritos();
+  }, []);
+
+  // Re-fetch favorites whenever the screen becomes focused (e.g. after navigating back)
+  useEffect(() => {
+    if (!isFocused) return;
+
+    const API = API_HOST || "http://localhost:3001";
+
+    const fetchFavoritosOnFocus = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const usuarioId = await AsyncStorage.getItem("userId");
+        if (!usuarioId) return;
+        const res = await fetch(`${API}/api/favoritos/usuario/${usuarioId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.data)) {
+          const favMap = {};
+          data.data.forEach((f) => {
+            const livroId = f.id_livro ?? f.livro?.id_livro ?? f.livro?.id;
+            if (livroId !== undefined && livroId !== null)
+              favMap[String(livroId)] = true;
+          });
+          setFavorites(favMap);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar favoritos do usuário on focus:", err);
+      }
+    };
+
+    fetchFavoritosOnFocus();
+  }, [isFocused]);
+
+  // atualizar favoritos localmente quando evento é emitido (p.ex. vindo da tela de detalhes)
+  useEffect(() => {
+    const handler = (payload) => {
+      if (!payload || payload.id == null) return;
+      const key = String(payload.id);
+      setFavorites((prev) => ({ ...prev, [key]: !!payload.isFavorito }));
+    };
+
+    const unsubscribe = onEvent("favoriteChanged", handler);
+    return () => {
+      try {
+        unsubscribe();
+      } catch (e) {
+        offEvent("favoriteChanged", handler);
+      }
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -92,9 +238,9 @@ const HomeScreen = ({ navigation }) => {
             onFilterPress={onFilter}
           />
 
-          <SectionHeader title="Populares" onPress={() => {}} />
+          <SectionHeader title="Adicionados recentemente" onPress={() => {}} />
           <FlatList
-            data={mockBooks}
+            data={recentes}
             horizontal
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingRight: 8 }}
@@ -103,7 +249,7 @@ const HomeScreen = ({ navigation }) => {
               <BookCard
                 imageSource={item.cover}
                 title={item.title}
-                price={item.price}
+                autor={item.autor}
                 isFavorite={!!favorites[item.id]}
                 onToggleFavorite={() => toggleFav(item.id)}
                 onPress={() => openBook(item)}
@@ -114,7 +260,7 @@ const HomeScreen = ({ navigation }) => {
 
           <SectionHeader title="Recomendados" />
           <FlatList
-            data={mockBooksRecommended}
+            data={recomendados}
             horizontal
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ paddingRight: 8 }}
@@ -123,7 +269,7 @@ const HomeScreen = ({ navigation }) => {
               <BookCard
                 imageSource={item.cover}
                 title={item.title}
-                price={item.price}
+                autor={item.autor}
                 isFavorite={!!favorites[item.id]}
                 onToggleFavorite={() => toggleFav(item.id)}
                 onPress={() => openBook(item)}
@@ -137,7 +283,7 @@ const HomeScreen = ({ navigation }) => {
           visible={drawerVisible}
           onClose={() => setDrawerVisible(false)}
           navigation={navigation}
-          user={mockUser}
+          user={user}
           onLogout={handleLogout}
           activeRoute={"Home"}
         />
