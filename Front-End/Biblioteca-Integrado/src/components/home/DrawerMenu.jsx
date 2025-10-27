@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   View,
@@ -9,6 +9,7 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const DRAWER_WIDTH = Math.min(280, SCREEN_W * 0.78);
@@ -21,11 +22,29 @@ const DrawerMenu = ({
   onLogout,
   activeRoute,
 }) => {
+  const [localUser, setLocalUser] = useState(user || {});
   // open from left: start off-screen to the left
   const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayOpacity = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
+    // if no user provided or name missing, try to read from AsyncStorage (fast path)
+    const readUserFromStorage = async () => {
+      try {
+        if (!user || !user.name) {
+          const name = await AsyncStorage.getItem("userName");
+          const role = await AsyncStorage.getItem("userRole");
+          if (name) setLocalUser((prev) => ({ ...prev, name }));
+          if (role) setLocalUser((prev) => ({ ...prev, role }));
+        } else {
+          setLocalUser(user);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    readUserFromStorage();
+
     if (visible) {
       Animated.parallel([
         Animated.timing(translateX, {
@@ -91,17 +110,19 @@ const DrawerMenu = ({
 
           <View style={styles.userRow}>
             <View style={styles.avatarPlaceholder}>
-              {user.avatar ? (
-                <Image source={user.avatar} style={styles.avatarImage} />
+              {localUser.avatar ? (
+                <Image source={localUser.avatar} style={styles.avatarImage} />
               ) : (
                 <Text style={styles.avatarInitial}>
-                  {(user.name && user.name[0]) || "U"}
+                  {(localUser.name && localUser.name[0]) || "U"}
                 </Text>
               )}
             </View>
             <View style={{ marginLeft: 12 }}>
-              <Text style={styles.userName}>{user.name || "Usuário"}</Text>
-              <Text style={styles.userRole}>{user.role || "Estudante"}</Text>
+              <Text style={styles.userName}>{localUser.name || "Usuário"}</Text>
+              <Text style={styles.userRole}>
+                {localUser.role || "Estudante"}
+              </Text>
             </View>
           </View>
         </View>
