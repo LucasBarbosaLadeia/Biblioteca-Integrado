@@ -2,11 +2,12 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { maskRA } from "../../utils/mask";
 
 const UserCard = ({ name, registration, email, phone }) => {
   return (
     <LinearGradient
-      colors={["#1B243D", "#2A2F63"]} // 🔥 gradiente igual ao da imagem
+      colors={["#420a3cff", "#302a63ff"]} // 🔥 gradiente igual ao da imagem
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -18,7 +19,7 @@ const UserCard = ({ name, registration, email, phone }) => {
 
         <View style={styles.info}>
           <Text style={styles.name}>{name || "Nome"}</Text>
-          <Text style={styles.meta}>RA: {registration || "—"}</Text>
+          <Text style={styles.meta}>RA: {maskRA(registration) || "—"}</Text>
 
           <View style={styles.line}>
             <Ionicons name="mail-outline" size={14} color="#c6d1e6" />

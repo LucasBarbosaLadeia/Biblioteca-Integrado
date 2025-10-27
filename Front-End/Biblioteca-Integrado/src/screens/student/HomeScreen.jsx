@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { View, StyleSheet, SafeAreaView, Text, FlatList } from "react-native";
-import TabBar from "../components/home/TagBar";
-import HomeHeader from "../components/home/HomeHeader";
-import SearchBarWithFilter from "../components/home/SearchBarWithFilter";
-import SectionHeader from "../components/home/SectionHeader";
-import BookCard from "../components/home/BookCard";
-import CleanCodeCover from "../assets/Clean-Code.jpg";
-import DrawerMenu from "../components/home/DrawerMenu";
+import TabBar from "../../components/home/TagBar";
+import HomeHeader from "../../components/home/HomeHeader";
+import SearchBarWithFilter from "../../components/home/SearchBarWithFilter";
+import SectionHeader from "../../components/home/SectionHeader";
+import BookCard from "../../components/home/BookCard";
+import CleanCodeCover from "../../assets/Clean-Code.jpg";
+import DrawerMenu from "../../components/home/DrawerMenu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { toggleFavorito } from "../utils/favoritos";
+import { toggleFavorito } from "../../utils/favoritos";
 import { API_HOST } from "@env";
-import { on as onEvent, off as offEvent } from "../utils/eventBus";
+import { on as onEvent, off as offEvent } from "../../utils/eventBus";
 
 const HomeScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
@@ -26,20 +26,17 @@ const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState({});
 
   const handleLogout = () => {
-    // clear token/userId and go to login
     (async () => {
       try {
         await AsyncStorage.removeItem("token");
         await AsyncStorage.removeItem("userId");
       } catch (e) {
-        // ignore
       } finally {
         navigation.navigate("Login");
       }
     })();
   };
 
-  // fetch logged user profile to show in drawer
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -56,7 +53,6 @@ const HomeScreen = ({ navigation }) => {
           setUser({
             name: profile.nome || profile.name,
             role: profile.tipo || profile.role,
-            // if backend provides avatar url, map it here (e.g. profile.avatar)
             avatar: profile.capa_url ? { uri: profile.capa_url } : undefined,
           });
         }
@@ -80,13 +76,11 @@ const HomeScreen = ({ navigation }) => {
       await toggleFavorito(usuarioId, id, token);
     } catch (error) {
       console.error("Erro ao alternar favorito:", error);
-      // Reverter caso de erro
       setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
     }
   };
 
   const openBook = (book) => {
-    // navegar passando o objeto inteiro (inclui `raw` quando disponível)
     navigation.navigate("EspecificacoesLivro", { book });
   };
 
@@ -160,14 +154,11 @@ const HomeScreen = ({ navigation }) => {
       }
     };
 
-    // fetch lists once on mount
     fetchRecentes();
     fetchRecomendados();
-    // also fetch favorites once on mount
     fetchFavoritos();
   }, []);
 
-  // Re-fetch favorites whenever the screen becomes focused (e.g. after navigating back)
   useEffect(() => {
     if (!isFocused) return;
 
@@ -199,7 +190,6 @@ const HomeScreen = ({ navigation }) => {
     fetchFavoritosOnFocus();
   }, [isFocused]);
 
-  // atualizar favoritos localmente quando evento é emitido (p.ex. vindo da tela de detalhes)
   useEffect(() => {
     const handler = (payload) => {
       if (!payload || payload.id == null) return;

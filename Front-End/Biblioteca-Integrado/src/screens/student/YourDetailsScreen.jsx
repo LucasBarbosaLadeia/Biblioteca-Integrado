@@ -8,14 +8,13 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
-import Header from "../components/Perfil/Header";
-import UserCard from "../components/Perfil/UserCard";
-import StatsCards from "../components/Perfil/StatsCards";
-import AlertCard from "../components/Perfil/AlertCard";
-import LoanCard from "../components/Perfil/LoanCard";
-import TabBar from "../components/home/TagBar";
+import Header from "../../components/Perfil/Header";
+import UserCard from "../../components/Perfil/UserCard";
+import StatsCards from "../../components/Perfil/StatsCards";
+import AlertCard from "../../components/Perfil/AlertCard";
+import LoanCard from "../../components/Perfil/LoanCard";
+import TabBar from "../../components/home/TagBar";
 
-// Example fallback used if network calls fail
 const exampleApiResponse = {
   name: "João Silva",
   registration: "2023001234",
@@ -54,12 +53,10 @@ const MeuPerfilScreen = ({ navigation }) => {
         const token = await AsyncStorage.getItem("token");
         const usuarioId = await AsyncStorage.getItem("userId");
         if (!usuarioId) {
-          // if no logged user, fallback to example
           setProfile(exampleApiResponse);
           return;
         }
 
-        // Fetch profile, loans and favorites in parallel
         const headers = token
           ? { Authorization: `Bearer ${token}` }
           : undefined;
@@ -85,7 +82,6 @@ const MeuPerfilScreen = ({ navigation }) => {
           resFavs.ok ? resFavs.json() : null,
         ]);
 
-        // Map profile
         let mappedProfile = {
           name:
             profileJson && profileJson.success && profileJson.data
@@ -105,7 +101,6 @@ const MeuPerfilScreen = ({ navigation }) => {
               : undefined,
         };
 
-        // Map loans (history) and stats
         const loansArray =
           loansJson && loansJson.success && Array.isArray(loansJson.data)
             ? loansJson.data

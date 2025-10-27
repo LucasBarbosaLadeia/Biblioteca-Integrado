@@ -9,10 +9,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import CampoLupa from "../components/CampoLupa";
-import BackgroundImage from "../assets/background.png";
-import TabBar from "../components/home/TagBar";
-import BookItem from "../components/BookItens";
+import CampoLupa from "../../components/CampoLupa";
+import BackgroundImage from "../../assets/background.png";
+import TabBar from "../../components/home/TagBar";
+import BookItem from "../../components/BookItens";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
 
@@ -199,11 +199,11 @@ const styles = StyleSheet.create({
     height: 580,
     marginBottom: 40,
     padding: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)", // Fundo branco com transparência
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 10,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.5)", // Borda branca com transparência
+    borderColor: "rgba(255, 255, 255, 0.5)",
   },
   resultsTitle: {
     color: "#FFFFFF",

@@ -12,23 +12,21 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
 
-import BackgroundImage from "../assets/background.png";
-import TabBar from "../components/home/TagBar";
-import { toggleFavorito as toggleFavoritoAPI } from "../utils/favoritos";
-import { emit } from "../utils/eventBus";
+import BackgroundImage from "../../assets/background.png";
+import TabBar from "../../components/home/TagBar";
+import { toggleFavorito as toggleFavoritoAPI } from "../../utils/favoritos";
+import { emit } from "../../utils/eventBus";
 
-import HeaderDetalhes from "../components/DetalhesDoLivro/HeaderDetalhes";
-import CoverImage from "../components/DetalhesDoLivro/CoverImage";
-import AvailabilityBadge from "../components/DetalhesDoLivro/AvailabilityBadge";
-import InfoRowCards from "../components/DetalhesDoLivro/InfoRowCards";
-import DetailsCard from "../components/DetalhesDoLivro/DetailsCard";
-import AboutSection from "../components/DetalhesDoLivro/AboutSection";
-import ReserveButton from "../components/DetalhesDoLivro/ReserveButton";
+import HeaderDetalhes from "../../components/DetalhesDoLivro/HeaderDetalhes";
+import CoverImage from "../../components/DetalhesDoLivro/CoverImage";
+import AvailabilityBadge from "../../components/DetalhesDoLivro/AvailabilityBadge";
+import InfoRowCards from "../../components/DetalhesDoLivro/InfoRowCards";
+import DetailsCard from "../../components/DetalhesDoLivro/DetailsCard";
+import AboutSection from "../../components/DetalhesDoLivro/AboutSection";
+import ReserveButton from "../../components/DetalhesDoLivro/ReserveButton";
 
 const BookSpecificationsScreen = ({ route, navigation }) => {
   const { book } = route.params;
-  // suportar dois formatos: o `book` vindo do Home pode ser o item mapeado
-  // (contendo `raw`) ou o próprio objeto `raw` do backend.
   const raw = book?.raw || book || {};
   const id = raw.id_livro ?? raw.id;
   const title = raw.titulo ?? raw.title ?? book?.title ?? "";
@@ -89,7 +87,6 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
 
       if (response.success) {
         setIsFavorited((prev) => !prev);
-        // emitir evento para atualizar a Home sem precisar re-fetch
         emit("favoriteChanged", { id, isFavorito: !isFavorited });
       } else {
         console.warn(

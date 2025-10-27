@@ -8,11 +8,11 @@ import {
   FlatList,
   RefreshControl,
 } from "react-native";
-import ProfileHeader from "../components/Profile";
-import TabBar from "../components/home/TagBar";
+import ProfileHeader from "../../components/Profile";
+import TabBar from "../../components/home/TagBar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import BackgroundImage from "../assets/background.png";
-import FavoriteCard from "../components/FavoriteCard";
+import BackgroundImage from "../../assets/background.png";
+import FavoriteCard from "../../components/FavoriteCard";
 import { API_HOST } from "@env";
 
 const FavoritesScreen = ({ navigation }) => {

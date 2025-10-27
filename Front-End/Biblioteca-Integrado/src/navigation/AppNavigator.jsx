@@ -5,13 +5,13 @@ import {
   TransitionPresets,
 } from "@react-navigation/stack";
 
-import NotificationScreen from "../screens/NotificationScreen";
-import FavoritesScreen from "../screens/FavoritesScreen";
-import YourDetailsScreen from "../screens/YourDetailsScreen";
-import BookSpecificationsScreen from "../screens/BookSpecificationsScreen";
-import SearchScreen from "../screens/SearchScreen";
-import LoginScreen from "../screens/LoginScreen";
-import HomeScreen from "../screens/HomeScreen";
+import NotificationScreen from "../screens/student/NotificationScreen";
+import FavoritesScreen from "../screens/student/FavoritesScreen";
+import YourDetailsScreen from "../screens/student/YourDetailsScreen";
+import BookSpecificationsScreen from "../screens/student/BookSpecificationsScreen";
+import SearchScreen from "../screens/student/SearchScreen";
+import LoginScreen from "../screens/LoginScreen.jsx";
+import HomeScreen from "../screens/student/HomeScreen";
 
 const Stack = createStackNavigator();
 

@@ -35,7 +35,11 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const API = API_HOST;
+      // Fallback: when running on emulador Android via Expo, `localhost` won't work.
+      // Use API_HOST from env when available, otherwise try Android emulator loopback.
+      const API = API_HOST || "http://10.0.2.2:3001";
+      if (!API_HOST)
+        console.warn("API_HOST not defined — falling back to", API);
       const respose = await fetch(`${API}/api/usuarios/login`, {
         method: "POST",
         headers: {
