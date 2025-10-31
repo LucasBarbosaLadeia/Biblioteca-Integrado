@@ -6,9 +6,7 @@ import {
   FlatList,
   RefreshControl,
 } from "react-native";
-import TabBar from "../../components/home/TagBar";
-import BookCard from "../../components/Favorites/FavoriteBookCard";
-import HeaderFavorite from "../../components/Favorites/headerFavorite";
+import { TabBar, FavoriteBookCard as BookCard, HeaderFavorite } from "../../components/layout/LegacyStubs";
 import {
   on as onEvent,
   off as offEvent,

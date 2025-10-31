@@ -2,17 +2,19 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, SafeAreaView, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
-import TabBar from "../../components/home/TagBar";
+import { TabBar } from "../../components/layout/LegacyStubs";
 import { toggleFavorito as toggleFavoritoAPI } from "../../utils/favoritos";
 import { emit } from "../../utils/eventBus";
 
-import HeaderDetalhes from "../../components/DetalhesDoLivro/HeaderDetalhes";
-import CoverImage from "../../components/DetalhesDoLivro/CoverImage";
-import AvailabilityBadge from "../../components/DetalhesDoLivro/AvailabilityBadge";
-import InfoRowCards from "../../components/DetalhesDoLivro/InfoRowCards";
-import DetailsCard from "../../components/DetalhesDoLivro/DetailsCard";
-import AboutSection from "../../components/DetalhesDoLivro/AboutSection";
-import ReserveButton from "../../components/DetalhesDoLivro/ReserveButton";
+import {
+  HeaderDetalhes,
+  CoverImage,
+  AvailabilityBadge,
+  InfoRowCards,
+  DetailsCard,
+  AboutSection,
+  ReserveButton,
+} from "../../components/layout/LegacyStubs";
 
 const BookSpecificationsScreen = ({ route, navigation }) => {
   const { book } = route.params;
