@@ -14,6 +14,7 @@ import {
   ImageBackground,
   View,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -32,23 +33,50 @@ const LoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    setLoading(true);
+    // create an abort controller so we can timeout the request if it hangs
+    const controller = new AbortController();
+    const timeoutMs = 8000; // 8 seconds
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
       // Fallback: when running on emulador Android via Expo, `localhost` won't work.
       // Use API_HOST from env when available, otherwise try Android emulator loopback.
       const API = API_HOST || "http://10.0.2.2:3001";
       if (!API_HOST)
         console.warn("API_HOST not defined — falling back to", API);
-      const respose = await fetch(`${API}/api/usuarios/login`, {
+
+      const response = await fetch(`${API}/api/usuarios/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ ra: unmaskRA(ra), senha }),
+        signal: controller.signal,
       });
 
-      const data = await respose.json();
+      clearTimeout(timeoutId);
+
+      // handle non-2xx responses quickly
+      if (!response.ok) {
+        // try to parse a JSON error body if present
+        let errMsg = `Erro ${response.status}`;
+        try {
+          const errData = await response.json();
+          errMsg = errData.message || errMsg;
+        } catch (e) {
+          // ignore parse errors, use status text
+          errMsg = response.statusText || errMsg;
+        }
+        setErrorMessage(errMsg || "Credenciais inválidas");
+        setShowErrorAlert(true);
+        return;
+      }
+
+      const data = await response.json();
 
       if (data.token) {
         await AsyncStorage.setItem("token", data.token);
@@ -69,9 +97,19 @@ const LoginScreen = ({ navigation }) => {
         setShowErrorAlert(true);
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error("Erro ao fazer login:", error);
-      setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+      if (error.name === "AbortError") {
+        setErrorMessage(
+          "A requisição expirou. Verifique sua conexão e tente novamente."
+        );
+      } else {
+        setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+      }
       setShowErrorAlert(true);
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
   };
 
@@ -136,8 +174,19 @@ const LoginScreen = ({ navigation }) => {
                     />
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                  <Text style={styles.buttonText}>Entrar</Text>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    loading ? styles.buttonDisabled : null,
+                  ]}
+                  onPress={handleLogin}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Entrar</Text>
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setShowEsqueceuSenha(true)}>
                   <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
@@ -231,6 +280,9 @@ const styles = StyleSheet.create({
     alignItems: "center", // Centraliza o texto horizontalmente
     marginTop: 10, // Espaço acima do botão
     marginBottom: 20, // Espaço abaixo do botão
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: "#FFFFFF", // Cor do texto (branco)

@@ -2,28 +2,26 @@ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-// Definição das cores para manter a consistência
+// Componente copiado e adaptado de BookCard para uso na tela de Favoritos
 const COLORS = {
-  CARD_BG: "#111933ff", // Fundo principal do card (Azul Escuro)
-  WRAPPER_BG: "#3a3f55", // Fundo do wrapper do coração
-  TEXT_LIGHT: "#d5d5d5ff", // Texto principal (título)
-  TEXT_SECONDARY: "#b7b8c2", // Texto secundário (preço)
+  CARD_BG: "#111933ff",
+  WRAPPER_BG: "#3a3f55",
+  TEXT_LIGHT: "#d5d5d5ff",
+  TEXT_SECONDARY: "#b7b8c2",
   SPACING: 14,
-  HEART_BG: "#d2d2d2ff", // Fundo do coração
+  HEART_BG: "#d2d2d2ff",
 };
 
-const BookCard = ({
-  // imageSource DEVE ser um objeto { uri: '...' } ou require('./local-image.png')
+const FavoriteBookCard = ({
   imageSource,
   title,
-  autor = "Jaon Doe",
+  autor = "Autor desconhecido",
   isAvailable,
   isFavorite,
   onToggleFavorite,
   onPress,
 }) => {
   return (
-    // O onPress é aplicado ao TouchableOpacity externo (cartão inteiro)
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={onPress}
@@ -31,7 +29,6 @@ const BookCard = ({
     >
       <View style={styles.card}>
         <View style={styles.imageWrap}>
-          {/* availability badge (optional) - positioned over the image */}
           {typeof isAvailable !== "undefined" && (
             <View
               style={
@@ -44,12 +41,7 @@ const BookCard = ({
             </View>
           )}
 
-          <Image
-            // Use um fallback para evitar erros caso a imagem não seja carregada
-            source={imageSource}
-            style={styles.cover}
-            resizeMode="cover"
-          />
+          <Image source={imageSource} style={styles.cover} resizeMode="cover" />
         </View>
 
         <View style={styles.metaRow}>
@@ -57,7 +49,6 @@ const BookCard = ({
             {title}
           </Text>
 
-          {/* O onToggleFavorite é aplicado apenas ao coração */}
           <TouchableOpacity
             onPress={onToggleFavorite}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -66,7 +57,7 @@ const BookCard = ({
               <Ionicons
                 name={isFavorite ? "heart" : "heart-outline"}
                 size={18}
-                color={COLORS.HEART_BG} // Cor do coração é branca
+                color={COLORS.HEART_BG}
               />
             </View>
           </TouchableOpacity>
@@ -81,18 +72,18 @@ const BookCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginRight: COLORS.SPACING, // Movi a margem para o wrapper externo
+    marginRight: COLORS.SPACING,
   },
   card: {
-    width: 160,
-    height: 230,
+    width: 165,
+    height: 235,
     backgroundColor: COLORS.CARD_BG,
     borderRadius: 18,
     padding: 12,
   },
   cover: {
     width: "100%",
-    height: 150,
+    height: 155,
     borderRadius: 12,
     marginBottom: 10,
   },
@@ -108,7 +99,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_LIGHT,
     fontWeight: "600",
     fontSize: 14,
-    flex: 1, // Permite que o título ocupe o espaço restante
+    flex: 1,
     marginRight: 8,
   },
   heartWrap: {
@@ -121,9 +112,9 @@ const styles = StyleSheet.create({
   },
   badgeAvailable: {
     position: "absolute",
-    right: 1,
+    right: 2,
     bottom: 12,
-    backgroundColor: "#1abc9caa",
+    backgroundColor: "#1abc9c",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
@@ -131,9 +122,9 @@ const styles = StyleSheet.create({
   },
   badgeUnavailable: {
     position: "absolute",
-    right: 1,
+    right: 2,
     bottom: 12,
-    backgroundColor: "#e74d3cd9",
+    backgroundColor: "#e74c3c",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
@@ -151,4 +142,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BookCard;
+export default FavoriteBookCard;

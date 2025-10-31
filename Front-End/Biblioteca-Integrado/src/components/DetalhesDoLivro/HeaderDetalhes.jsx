@@ -1,5 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 const HeaderDetalhes = ({
@@ -8,6 +14,7 @@ const HeaderDetalhes = ({
   onToggleFavorite,
   isFavorited,
   disabled,
+  togglingFavorite,
 }) => {
   return (
     <View style={styles.container}>
@@ -20,13 +27,21 @@ const HeaderDetalhes = ({
         style={styles.rightBtn}
         disabled={disabled}
       >
-        <Ionicons
-          name={
-            disabled ? "heart-outline" : isFavorited ? "heart" : "heart-outline"
-          }
-          size={28}
-          color="white"
-        />
+        {togglingFavorite ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Ionicons
+            name={
+              disabled
+                ? "heart-outline"
+                : isFavorited
+                ? "heart"
+                : "heart-outline"
+            }
+            size={28}
+            color="white"
+          />
+        )}
       </TouchableOpacity>
     </View>
   );

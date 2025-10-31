@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  ImageBackground,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
-
-import BackgroundImage from "../../assets/background.png";
 import TabBar from "../../components/home/TagBar";
 import { toggleFavorito as toggleFavoritoAPI } from "../../utils/favoritos";
 import { emit } from "../../utils/eventBus";
@@ -42,6 +31,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
   const description = raw.sinopse ?? raw.description ?? null;
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(true);
+  const [togglingFavorite, setTogglingFavorite] = useState(false);
 
   const checkIfFavorited = async () => {
     try {
@@ -79,23 +69,36 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
   }, []);
 
   const handleToggleFavorito = async () => {
+    if (togglingFavorite) return;
+    setTogglingFavorite(true);
+
+    // optimistic update: flip immediately for snappy UI
+    const prev = isFavorited;
+    setIsFavorited(!prev);
+    // emit optimistically so other screens update
+    emit("favoriteChanged", { id, isFavorito: !prev, book: raw });
+
     try {
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
 
       const response = await toggleFavoritoAPI(usuarioId, id, token);
 
-      if (response.success) {
-        setIsFavorited((prev) => !prev);
-        emit("favoriteChanged", { id, isFavorito: !isFavorited });
-      } else {
+      if (!response || !response.success) {
+        // revert optimistic change
+        setIsFavorited(prev);
+        emit("favoriteChanged", { id, isFavorito: prev });
         console.warn(
           "Erro ao favoritar:",
-          response.message || "Erro desconhecido"
+          response?.message || "Erro desconhecido"
         );
       }
     } catch (error) {
       console.error("Erro ao alternar favorito:", error);
+      setIsFavorited(prev);
+      emit("favoriteChanged", { id, isFavorito: prev });
+    } finally {
+      setTogglingFavorite(false);
     }
   };
 
@@ -107,7 +110,8 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
           onBack={() => navigation.goBack()}
           onToggleFavorite={handleToggleFavorito}
           isFavorited={isFavorited}
-          disabled={loadingFavorite}
+          disabled={loadingFavorite || togglingFavorite}
+          togglingFavorite={togglingFavorite}
         />
 
         <ScrollView contentContainerStyle={styles.container}>

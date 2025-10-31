@@ -133,31 +133,6 @@ const DrawerMenu = ({
           <TouchableOpacity
             style={[
               styles.menuItem,
-              activeRoute === "Pesquisa" ? styles.menuItemActive : null,
-            ]}
-            onPress={() => handleNavigate("Pesquisa")}
-          >
-            <Ionicons
-              name="search-outline"
-              size={18}
-              color={
-                activeRoute === "Pesquisa" ? "#fff" : "rgba(255,255,255,0.72)"
-              }
-              style={styles.menuIcon}
-            />
-            <Text
-              style={[
-                styles.menuText,
-                activeRoute === "Pesquisa" ? styles.menuTextActive : null,
-              ]}
-            >
-              Pesquisar
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.menuItem,
               activeRoute === "Favoritos" ? styles.menuItemActive : null,
             ]}
             onPress={() => handleNavigate("Favoritos")}

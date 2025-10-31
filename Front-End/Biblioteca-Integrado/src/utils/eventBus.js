@@ -17,7 +17,6 @@ export const emit = (event, data) => {
     try {
       cb(data);
     } catch (e) {
-      // swallow listener errors so one bad listener doesn't break others
       console.error("eventBus listener error", e);
     }
   });
