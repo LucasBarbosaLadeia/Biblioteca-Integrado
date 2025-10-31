@@ -1,13 +1,25 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { on as onEvent } from "../../utils/eventBus";
 
 const HomeHeader = ({
   title = "Biblioteca",
   onMenuPress,
   onBellPress,
-  hasAlert,
+  hasAlert = false,
 }) => {
+  const [alert, setAlert] = useState(!!hasAlert);
+
+  useEffect(() => {
+    const unsubscribe = onEvent("notificationsUpdated", (payload) => {
+      if (payload && typeof payload.unreadCount === "number") {
+        setAlert(payload.unreadCount > 0);
+      }
+    });
+    return () => unsubscribe && unsubscribe();
+  }, []);
+
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.iconBtn} onPress={onMenuPress}>
@@ -18,7 +30,7 @@ const HomeHeader = ({
 
       <TouchableOpacity style={styles.iconBtn} onPress={onBellPress}>
         <Ionicons name="notifications-outline" size={20} color="#fff" />
-        {hasAlert ? <View style={styles.badge} /> : null}
+        {alert ? <View style={styles.badge} /> : null}
       </TouchableOpacity>
     </View>
   );

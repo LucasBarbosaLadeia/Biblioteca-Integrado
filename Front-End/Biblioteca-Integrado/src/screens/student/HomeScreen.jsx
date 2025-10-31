@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
-import { View, StyleSheet, SafeAreaView, Text, FlatList } from "react-native";
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  Text,
+  FlatList,
+  ActivityIndicator,
+} from "react-native";
 import TabBar from "../../components/home/TagBar";
 import HomeHeader from "../../components/home/HomeHeader";
 import SearchBarWithFilter from "../../components/home/SearchBarWithFilter";
@@ -11,7 +18,11 @@ import DrawerMenu from "../../components/home/DrawerMenu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { toggleFavorito } from "../../utils/favoritos";
 import { API_HOST } from "@env";
-import { on as onEvent, off as offEvent } from "../../utils/eventBus";
+import {
+  on as onEvent,
+  off as offEvent,
+  emit as emitEvent,
+} from "../../utils/eventBus";
 
 const HomeScreen = ({ navigation }) => {
   const [query, setQuery] = useState("");
@@ -19,8 +30,8 @@ const HomeScreen = ({ navigation }) => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [recentes, setRecentes] = useState([]);
   const [recomendados, setRecomendados] = useState([]);
-  const [loadingRecents, setLoadingRecents] = useState(false);
-  const [loadingRecomendados, setLoadingRecomendados] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const isFocused = useIsFocused();
 
   const [user, setUser] = useState({});
@@ -64,11 +75,17 @@ const HomeScreen = ({ navigation }) => {
     fetchUserProfile();
   }, []);
 
-  const onSearch = () => navigation.navigate("Pesquisa");
   const onFilter = () => navigation.navigate("Pesquisa");
 
-  const toggleFav = async (id) => {
-    setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
+  const toggleFav = async (id, book) => {
+    // optimistic update
+    setFavorites((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try {
+        emitEvent("favoriteChanged", { id, isFavorito: !!next[id], book });
+      } catch (e) {}
+      return next;
+    });
 
     try {
       const token = await AsyncStorage.getItem("token");
@@ -76,7 +93,11 @@ const HomeScreen = ({ navigation }) => {
       await toggleFavorito(usuarioId, id, token);
     } catch (error) {
       console.error("Erro ao alternar favorito:", error);
+      // revert on error
       setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
+      try {
+        emitEvent("favoriteChanged", { id, isFavorito: !!favorites[id] });
+      } catch (e) {}
     }
   };
 
@@ -86,9 +107,56 @@ const HomeScreen = ({ navigation }) => {
 
   useEffect(() => {
     const API = API_HOST || "http://localhost:3001";
+    if (query.trim() === "") {
+      setSearchResults([]);
+      setLoadingSearch(false);
+      return;
+    }
+
+    let mounted = true;
+    setLoadingSearch(true);
+    const handle = setTimeout(async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const response = await fetch(
+          `${API}/api/livros?search=${encodeURIComponent(query)}`,
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          }
+        );
+        const data = await response.json();
+        if (!mounted) return;
+        // mark that we performed a search (kept verbally via loadingSearch)
+        if (data && data.success && Array.isArray(data.data)) {
+          const parsed = data.data.map((l) => ({
+            id: String(l.id_livro ?? l.id),
+            title: l.titulo,
+            autor: l.autor,
+            cover: l.capa_url ? { uri: l.capa_url } : CleanCodeCover,
+            raw: l,
+          }));
+          setSearchResults(parsed);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar livros (search):", err);
+        setSearchResults([]);
+      } finally {
+        if (mounted) setLoadingSearch(false);
+      }
+    }, 350);
+
+    return () => {
+      mounted = false;
+      clearTimeout(handle);
+    };
+  }, [query]);
+
+  useEffect(() => {
+    const API = API_HOST || "http://localhost:3001";
 
     const fetchRecentes = async () => {
-      setLoadingRecents(true);
       try {
         const res = await fetch(`${API}/api/livros/recentes?limit=10`);
         const data = await res.json();
@@ -104,13 +172,10 @@ const HomeScreen = ({ navigation }) => {
         }
       } catch (err) {
         console.error("Erro ao carregar livros recentes:", err);
-      } finally {
-        setLoadingRecents(false);
       }
     };
 
     const fetchRecomendados = async () => {
-      setLoadingRecomendados(true);
       try {
         const res = await fetch(`${API}/api/livros/recomendados?limit=10`);
         const data = await res.json();
@@ -126,8 +191,6 @@ const HomeScreen = ({ navigation }) => {
         }
       } catch (err) {
         console.error("Erro ao carregar livros recomendados:", err);
-      } finally {
-        setLoadingRecomendados(false);
       }
     };
 
@@ -224,49 +287,112 @@ const HomeScreen = ({ navigation }) => {
           <SearchBarWithFilter
             value={query}
             onChangeText={setQuery}
-            onSearch={onSearch}
+            onSearch={() => {}}
             onFilterPress={onFilter}
           />
-
-          <SectionHeader title="Adicionados recentemente" onPress={() => {}} />
-          <FlatList
-            data={recentes}
-            horizontal
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingRight: 8 }}
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <BookCard
-                imageSource={item.cover}
-                title={item.title}
-                autor={item.autor}
-                isFavorite={!!favorites[item.id]}
-                onToggleFavorite={() => toggleFav(item.id)}
-                onPress={() => openBook(item)}
+          {query.trim() !== "" ? (
+            <View
+              style={{
+                marginTop: 8,
+                paddingBottom: 215,
+              }}
+            >
+              {loadingSearch ? (
+                <ActivityIndicator size="large" color="#FFFFFF" />
+              ) : (
+                <>
+                  <SectionHeader title={`Resultados para "${query}"`} />
+                  {searchResults.length === 0 ? (
+                    <Text style={{ color: "#BBBBBB", marginTop: 12 }}>
+                      Nenhum livro encontrado para "{query}"
+                    </Text>
+                  ) : (
+                    <FlatList
+                      data={searchResults}
+                      keyExtractor={(item) => item.id}
+                      showsVerticalScrollIndicator={false}
+                      // render as a 2-column grid
+                      numColumns={2}
+                      columnWrapperStyle={{ justifyContent: "space-between" }}
+                      contentContainerStyle={{
+                        paddingTop: 8,
+                        // reserve space at bottom so TabBar doesn't overlap results
+                        paddingBottom: 220,
+                      }}
+                      renderItem={({ item, index }) => (
+                        <View
+                          style={{
+                            flex: 1,
+                            marginRight: index % 2 === 0 ? 10 : 0,
+                            marginBottom: 10,
+                          }}
+                        >
+                          <BookCard
+                            imageSource={item.cover}
+                            title={item.title}
+                            autor={item.autor}
+                            isAvailable={!!item.raw?.qt_atual}
+                            isFavorite={!!favorites[item.id]}
+                            onToggleFavorite={() =>
+                              toggleFav(item.id, item.raw)
+                            }
+                            onPress={() => openBook(item)}
+                          />
+                        </View>
+                      )}
+                    />
+                  )}
+                </>
+              )}
+            </View>
+          ) : (
+            <>
+              <SectionHeader
+                title="Adicionados recentemente"
+                onPress={() => {}}
               />
-            )}
-            style={{ marginTop: 8 }}
-          />
-
-          <SectionHeader title="Recomendados" />
-          <FlatList
-            data={recomendados}
-            horizontal
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingRight: 8 }}
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <BookCard
-                imageSource={item.cover}
-                title={item.title}
-                autor={item.autor}
-                isFavorite={!!favorites[item.id]}
-                onToggleFavorite={() => toggleFav(item.id)}
-                onPress={() => openBook(item)}
+              <FlatList
+                data={recentes}
+                horizontal
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ paddingRight: 8 }}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <BookCard
+                    imageSource={item.cover}
+                    title={item.title}
+                    autor={item.autor}
+                    isAvailable={!!item.raw?.qt_atual}
+                    isFavorite={!!favorites[item.id]}
+                    onToggleFavorite={() => toggleFav(item.id, item.raw)}
+                    onPress={() => openBook(item)}
+                  />
+                )}
+                style={{ marginTop: 8 }}
               />
-            )}
-            style={{ marginTop: 8 }}
-          />
+
+              <SectionHeader title="Recomendados" />
+              <FlatList
+                data={recomendados}
+                horizontal
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ paddingRight: 8 }}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <BookCard
+                    imageSource={item.cover}
+                    title={item.title}
+                    autor={item.autor}
+                    isAvailable={!!item.raw?.qt_atual}
+                    isFavorite={!!favorites[item.id]}
+                    onToggleFavorite={() => toggleFav(item.id, item.raw)}
+                    onPress={() => openBook(item)}
+                  />
+                )}
+                style={{ marginTop: 8 }}
+              />
+            </>
+          )}
         </View>
         <TabBar />
         <DrawerMenu
@@ -301,6 +427,11 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginVertical: 16,
     lineHeight: 32,
+  },
+  gridWrap: {
+    width: "100%",
+    // paddingBottom: 250,
+    backgroundColor: "#ff0000ff",
   },
 });
 
