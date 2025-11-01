@@ -22,7 +22,7 @@ import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { maskRA, unmaskRA } from "../utils/mask";
 import { API_HOST } from "@env";
-import CustomAlert from "../components/feedback/CustomAlert";
+import CustomAlert from "../components/CustomAlert";
 
 const LoginScreen = ({ navigation }) => {
   const { width } = useWindowDimensions();
