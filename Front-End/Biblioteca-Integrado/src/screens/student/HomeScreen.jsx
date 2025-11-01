@@ -8,14 +8,12 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
-import {
-  TabBar,
-  HomeHeader,
-  SearchBarWithFilter,
-  SectionHeader,
-  BookCard,
-  DrawerMenu,
-} from "../../components/layout/LegacyStubs";
+import TabBar from "./components/home/TagBar";
+import HomeHeader from "./components/home/HomeHeader";
+import SearchBarWithFilter from "./components/home/SearchBarWithFilter";
+import SectionHeader from "./components/home/SectionHeader";
+import BookCard from "./components/home/BookCard";
+import DrawerMenu from "./components/home/DrawerMenu";
 import CleanCodeCover from "../../assets/Clean-Code.jpg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { toggleFavorito } from "../../utils/favoritos";

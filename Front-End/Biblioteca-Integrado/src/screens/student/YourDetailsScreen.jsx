@@ -8,14 +8,12 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
-import {
-  Header,
-  UserCard,
-  StatsCards,
-  AlertCard,
-  LoanCard,
-  TabBar,
-} from "../../components/layout/LegacyStubs";
+import Header from "./components/Perfil/Header";
+import UserCard from "./components/Perfil/UserCard";
+import StatsCards from "./components/Perfil/StatsCards";
+import AlertCard from "./components/Perfil/AlertCard";
+import LoanCard from "./components/Perfil/LoanCard";
+import TabBar from "./components/home/TagBar";
 
 const exampleApiResponse = {
   name: "João Silva",

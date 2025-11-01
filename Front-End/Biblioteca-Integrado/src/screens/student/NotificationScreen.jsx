@@ -10,12 +10,10 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import BackgroundImage from "../../assets/background.png";
-import {
-  NotificationHeader,
-  TabBar,
-  NotificationList,
-  CustomAlert,
-} from "../../components/layout/LegacyStubs";
+import NotificationHeader from "./components/Notification/NotificationHeader";
+import TabBar from "./components/home/TagBar";
+import NotificationList from "./components/Notification/NotificationList";
+import CustomAlert from "../../components/feedback/CustomAlert";
 
 const NotificationScreen = ({ navigation }) => {
   const [showTelaDesenvolvimento, setShowTelaDesenvolvimento] =
