@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+﻿import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -6,9 +6,9 @@ import {
   FlatList,
   RefreshControl,
 } from "react-native";
-import TabBar from "./components/home/TagBar";
-import BookCard from "./components/Favorites/FavoriteBookCard";
-import HeaderFavorite from "./components/Favorites/headerFavorite";
+import TabBar from "..\/..\/components\/home/TagBar";
+import BookCard from "..\/..\/components\/Favorites/FavoriteBookCard";
+import HeaderFavorite from "..\/..\/components\/Favorites/headerFavorite";
 import {
   on as onEvent,
   off as offEvent,

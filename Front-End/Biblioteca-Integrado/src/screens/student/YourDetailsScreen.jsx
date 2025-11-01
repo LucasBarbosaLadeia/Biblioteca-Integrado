@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,15 +8,15 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_HOST } from "@env";
-import Header from "./components/Perfil/Header";
-import UserCard from "./components/Perfil/UserCard";
-import StatsCards from "./components/Perfil/StatsCards";
-import AlertCard from "./components/Perfil/AlertCard";
-import LoanCard from "./components/Perfil/LoanCard";
-import TabBar from "./components/home/TagBar";
+import Header from "..\/..\/components\/Perfil/Header";
+import UserCard from "..\/..\/components\/Perfil/UserCard";
+import StatsCards from "..\/..\/components\/Perfil/StatsCards";
+import AlertCard from "..\/..\/components\/Perfil/AlertCard";
+import LoanCard from "..\/..\/components\/Perfil/LoanCard";
+import TabBar from "..\/..\/components\/home/TagBar";
 
 const exampleApiResponse = {
-  name: "João Silva",
+  name: "JoÃ£o Silva",
   registration: "2023001234",
   email: "joao.silva@universidade.edu.br",
   phone: "(11) 98765-4321",
@@ -24,7 +24,7 @@ const exampleApiResponse = {
   alert: {
     hasOverdue: true,
     message:
-      "Você tem 1 livro em atraso. Devolva o mais rápido possível para evitar multas.",
+      "VocÃª tem 1 livro em atraso. Devolva o mais rÃ¡pido possÃ­vel para evitar multas.",
   },
   history: [
     {
@@ -118,7 +118,7 @@ const MeuPerfilScreen = ({ navigation }) => {
               livro.title ||
               l.titulo ||
               l.title ||
-              "Sem título",
+              "Sem tÃ­tulo",
             status:
               l.status || l.estado || (l.devolvido ? "Devolvido" : "Ativo"),
             loanDate: l.data_emprestimo || l.loanDate || l.data || null,
@@ -143,7 +143,7 @@ const MeuPerfilScreen = ({ navigation }) => {
         const alert = hasOverdue
           ? {
               hasOverdue: true,
-              message: "Você tem livros em atraso. Verifique seu histórico.",
+              message: "VocÃª tem livros em atraso. Verifique seu histÃ³rico.",
             }
           : { hasOverdue: false };
 
@@ -163,7 +163,7 @@ const MeuPerfilScreen = ({ navigation }) => {
         });
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Erro ao carregar perfil do usuário:", err);
+          console.error("Erro ao carregar perfil do usuÃ¡rio:", err);
           setError("Erro ao carregar perfil. Usando dados locais.");
           setProfile(exampleApiResponse);
         }
@@ -208,7 +208,7 @@ const MeuPerfilScreen = ({ navigation }) => {
           )}
 
           <View style={styles.historyHeader}>
-            <Text style={styles.historyTitle}>Histórico de Empréstimos</Text>
+            <Text style={styles.historyTitle}>HistÃ³rico de EmprÃ©stimos</Text>
           </View>
 
           {Array.isArray(profile.history) && profile.history.length > 0 ? (
@@ -217,7 +217,7 @@ const MeuPerfilScreen = ({ navigation }) => {
             ))
           ) : (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>Nenhum histórico encontrado.</Text>
+              <Text style={styles.emptyText}>Nenhum histÃ³rico encontrado.</Text>
             </View>
           )}
         </ScrollView>

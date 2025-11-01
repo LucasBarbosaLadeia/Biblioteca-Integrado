@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   View,
   Text,
@@ -10,9 +10,9 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 import BackgroundImage from "../../assets/background.png";
-import NotificationHeader from "./components/Notification/NotificationHeader";
-import TabBar from "./components/home/TagBar";
-import NotificationList from "./components/Notification/NotificationList";
+import NotificationHeader from "..\/..\/components\/Notification/NotificationHeader";
+import TabBar from "..\/..\/components\/home/TagBar";
+import NotificationList from "..\/..\/components\/Notification/NotificationList";
 import CustomAlert from "../../components/feedback/CustomAlert";
 
 const NotificationScreen = ({ navigation }) => {
@@ -28,7 +28,7 @@ const NotificationScreen = ({ navigation }) => {
           visible={showTelaDesenvolvimento}
           title="Aviso"
           message={
-            "🚧 Tela em Desenvolvimento\nEsta página está em fase de construção. Ela foi adicionada para que você possa visualizar onde a funcionalidade ficará no futuro."
+            "ðŸš§ Tela em Desenvolvimento\nEsta pÃ¡gina estÃ¡ em fase de construÃ§Ã£o. Ela foi adicionada para que vocÃª possa visualizar onde a funcionalidade ficarÃ¡ no futuro."
           }
           onClose={() => setShowTelaDesenvolvimento(false)}
           buttonText="OK"

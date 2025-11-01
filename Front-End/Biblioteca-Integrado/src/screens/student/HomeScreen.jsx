@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import {
   View,
@@ -8,12 +8,12 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
-import TabBar from "./components/home/TagBar";
-import HomeHeader from "./components/home/HomeHeader";
-import SearchBarWithFilter from "./components/home/SearchBarWithFilter";
-import SectionHeader from "./components/home/SectionHeader";
-import BookCard from "./components/home/BookCard";
-import DrawerMenu from "./components/home/DrawerMenu";
+import TabBar from "..\/..\/components\/home/TagBar";
+import HomeHeader from "..\/..\/components\/home/HomeHeader";
+import SearchBarWithFilter from "..\/..\/components\/home/SearchBarWithFilter";
+import SectionHeader from "..\/..\/components\/home/SectionHeader";
+import BookCard from "..\/..\/components\/home/BookCard";
+import DrawerMenu from "..\/..\/components\/home/DrawerMenu";
 import CleanCodeCover from "../../assets/Clean-Code.jpg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { toggleFavorito } from "../../utils/favoritos";
@@ -68,7 +68,7 @@ const HomeScreen = ({ navigation }) => {
           });
         }
       } catch (err) {
-        console.error("Erro ao buscar perfil do usuário:", err);
+        console.error("Erro ao buscar perfil do usuÃ¡rio:", err);
       }
     };
 
@@ -213,7 +213,7 @@ const HomeScreen = ({ navigation }) => {
           setFavorites(favMap);
         }
       } catch (err) {
-        console.error("Erro ao buscar favoritos do usuário:", err);
+        console.error("Erro ao buscar favoritos do usuÃ¡rio:", err);
       }
     };
 
@@ -246,7 +246,7 @@ const HomeScreen = ({ navigation }) => {
           setFavorites(favMap);
         }
       } catch (err) {
-        console.error("Erro ao buscar favoritos do usuário on focus:", err);
+        console.error("Erro ao buscar favoritos do usuÃ¡rio on focus:", err);
       }
     };
 
@@ -281,7 +281,7 @@ const HomeScreen = ({ navigation }) => {
           />
 
           <Text style={styles.heroTitle}>
-            Qual livro você{"\n"}deseja encontrar?
+            Qual livro vocÃª{"\n"}deseja encontrar?
           </Text>
 
           <SearchBarWithFilter
