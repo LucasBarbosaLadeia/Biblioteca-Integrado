@@ -33,6 +33,11 @@ POST /api/usuarios
 }
 ```
 
+**Tipos de usuário disponíveis:**
+- `"adm"` - Administrador
+- `"funcionario"` - Funcionário
+- `"aluno"` - Aluno
+
 ### 📖 **Livros** (`/livros`)
 
 | Método | Endpoint                         | Descrição                            |
