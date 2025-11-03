@@ -104,10 +104,10 @@ export class UsuarioController {
         return;
       }
 
-      if (!["aluno", "funcionario"].includes(tipo)) {
+      if (!["adm", "funcionario", "aluno"].includes(tipo)) {
         res.status(400).json({
           success: false,
-          message: "Tipo deve ser 'aluno' ou 'funcionario'",
+          message: "Tipo deve ser 'adm', 'funcionario' ou 'aluno'",
         });
         return;
       }
@@ -180,10 +180,10 @@ export class UsuarioController {
       }
 
       // Validação do tipo se fornecido
-      if (tipo && !["aluno", "funcionario"].includes(tipo)) {
+      if (tipo && !["adm", "funcionario", "aluno"].includes(tipo)) {
         res.status(400).json({
           success: false,
-          message: "Tipo deve ser 'aluno' ou 'funcionario'",
+          message: "Tipo deve ser 'adm', 'funcionario' ou 'aluno'",
         });
         return;
       }
