@@ -10,8 +10,9 @@ import FavoritesScreen from "../screens/student/FavoritesScreen";
 import YourDetailsScreen from "../screens/student/YourDetailsScreen";
 import BookSpecificationsScreen from "../screens/student/BookSpecificationsScreen";
 import LoginScreen from "../screens/LoginScreen.jsx";
-import HomeScreen from "../screens/student/HomeScreen";
+// import HomeScreen from "../screens/student/HomeScreen";
 import ErrorBoundary from "../components/common/ErrorBoundary";
+import HomeLibrarian from "../screens/librarian/HomeLibrarian";
 
 const Stack = createStackNavigator();
 
@@ -43,7 +44,7 @@ const AppNavigator = () => {
           }}
         >
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Home" component={HomeLibrarian} />
           <Stack.Screen name="YourDetails" component={YourDetailsScreen} />
           <Stack.Screen name="Favoritos" component={FavoritesScreen} />
           <Stack.Screen name="Notification" component={NotificationScreen} />
