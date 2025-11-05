@@ -14,7 +14,7 @@ import {
   RecentLoans,
 } from "../../components/librarian";
 
-const HomeLibrarian = ({ navigation }) => {
+const HomeLibrarian = ({ navigation, setRole }) => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [user, setUser] = useState({});
   const [statsCounts, setStatsCounts] = useState({
@@ -230,7 +230,21 @@ const HomeLibrarian = ({ navigation }) => {
           onClose={() => setDrawerVisible(false)}
           navigation={navigation}
           user={user}
-          onLogout={() => navigation.navigate("Login")}
+          onLogout={async () => {
+            try {
+              await AsyncStorage.removeItem("token");
+              await AsyncStorage.removeItem("userId");
+              await AsyncStorage.removeItem("userName");
+              await AsyncStorage.removeItem("userRole");
+              await AsyncStorage.removeItem("userRoleNormalized");
+            } catch (e) {}
+            try {
+              if (typeof setRole === "function") setRole(null);
+              else navigation.navigate("Login");
+            } catch (e) {
+              navigation.navigate("Login");
+            }
+          }}
           activeRoute={"Home"}
         />
       </SafeAreaView>

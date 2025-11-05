@@ -24,7 +24,7 @@ import {
   emit as emitEvent,
 } from "../../utils/eventBus";
 
-const HomeScreen = ({ navigation }) => {
+const HomeScreen = ({ navigation, setRole }) => {
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState({});
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -41,9 +41,18 @@ const HomeScreen = ({ navigation }) => {
       try {
         await AsyncStorage.removeItem("token");
         await AsyncStorage.removeItem("userId");
+        await AsyncStorage.removeItem("userName");
+        await AsyncStorage.removeItem("userRole");
+        await AsyncStorage.removeItem("userRoleNormalized");
       } catch (e) {
       } finally {
-        navigation.navigate("Login");
+        try {
+          if (typeof setRole === "function") setRole(null);
+          else navigation.replace("Login");
+        } catch (e) {
+          // fallback
+          navigation.replace("Login");
+        }
       }
     })();
   };

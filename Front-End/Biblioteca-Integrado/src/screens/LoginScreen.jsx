@@ -24,7 +24,7 @@ import { maskRA, unmaskRA } from "../utils/mask";
 import { API_HOST } from "@env";
 import CustomAlert from "../components/CustomAlert";
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation, setRole }) => {
   const { width } = useWindowDimensions();
   const isSmall = width < 360;
   const [ra, setRa] = useState("");
@@ -83,15 +83,99 @@ const LoginScreen = ({ navigation }) => {
         await AsyncStorage.setItem("userId", String(data.data.id_usuario));
         // save user name and role quickly so drawer/profile can show immediately without extra fetch
         try {
+          // debug: show returned payload (remove in production)
+          try {
+            console.log("[Login] response data:", data);
+          } catch (e) {}
+
           const nome = data.data?.nome || data.data?.name || "";
-          const tipo = data.data?.tipo || data.data?.role || "";
+          const rawTipo = data.data?.tipo ?? data.data?.role ?? "";
+
+          // normalize role to either 'student' or 'librarian'
+          // Heuristics cover common values returned by backends:
+          // - Portuguese strings: 'ALUNO', 'aluno', 'bibliotecario', 'BIB', etc.
+          // - English strings: 'student', 'librarian', 'admin'
+          // - Numeric ids: '1' -> student, '2' -> librarian (adjust if your backend uses different ids)
+          let roleToSet = "student";
+          if (rawTipo !== "") {
+            const rStr = String(rawTipo).trim();
+            const r = rStr.toLowerCase();
+
+            // numeric id mapping (common conventions; change if your backend differs)
+            if (/^\d+$/.test(rStr)) {
+              if (rStr === "1") roleToSet = "student";
+              else if (rStr === "2") roleToSet = "librarian";
+              else roleToSet = "student"; // safe default for unknown numeric ids
+            }
+            // explicit textual matches for students
+            else if (
+              ["aluno", "estudante", "student"].some(
+                (k) => r === k || r.includes(k)
+              )
+            ) {
+              roleToSet = "student";
+            }
+            // explicit textual matches for librarians/admins
+            else if (
+              [
+                "bibliotecario",
+                "bibliotecaria",
+                "bib",
+                "funcionario",
+                "funcionário",
+                "admin",
+                "librarian",
+                "librar",
+                "bibliotec",
+              ].some((k) => r === k || r.includes(k))
+            ) {
+              roleToSet = "librarian";
+            } else {
+              // fallback to simple substring check and default to student
+              if (
+                r.includes("bibliotec") ||
+                r.includes("librar") ||
+                r.includes("admin") ||
+                r.includes("librarian")
+              ) {
+                roleToSet = "librarian";
+              } else {
+                roleToSet = "student";
+              }
+            }
+          }
+
           if (nome) await AsyncStorage.setItem("userName", String(nome));
-          if (tipo) await AsyncStorage.setItem("userRole", String(tipo));
+          if (rawTipo) await AsyncStorage.setItem("userRole", String(rawTipo));
+
+          await AsyncStorage.setItem("userRoleNormalized", roleToSet);
+          try {
+            if (typeof setRole === "function") {
+              console.log("[Login] setting role to", roleToSet);
+              setRole(roleToSet);
+            } else if (
+              navigation &&
+              typeof navigation.navigate === "function"
+            ) {
+              console.log("[Login] navigating to Home via navigation.navigate");
+              navigation.navigate("Home");
+            } else {
+              console.warn(
+                "[Login] neither setRole nor navigation.navigate available after login"
+              );
+            }
+          } catch (e) {
+            console.error("[Login] error applying role/navigation:", e);
+            // try a safe fallback
+            try {
+              navigation && navigation.navigate && navigation.navigate("Home");
+            } catch (err) {
+              console.error("[Login] fallback navigation also failed:", err);
+            }
+          }
         } catch (e) {
           // ignore storage errors
         }
-
-        navigation.navigate("Home");
       } else {
         setErrorMessage(data.message || "Credenciais inválidas");
         setShowErrorAlert(true);
