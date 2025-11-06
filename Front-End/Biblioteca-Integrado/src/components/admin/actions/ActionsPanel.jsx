@@ -1,23 +1,27 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import ActionCard from "./ActionCard";
+import { useNavigation } from "@react-navigation/native";
 
 const ActionsPanel = () => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.header}>Ações Rápidas</Text>
+      <Text style={styles.header}>Ações Rápidas da Biblioteca</Text>
 
       <ActionCard
-        title="Adicionar Usuário"
-        subtitle="Cadastrar aluno ou bibliotecário"
-        iconName="account-plus"
+        title="Gerenciar Livros"
+        subtitle="Adicionar, editar ou remover acervo"
+        iconName="book-open-page-variant"
         iconColor="#60a5fa"
+        onPress={() => navigation.navigate("ManageBooks")}
       />
 
       <ActionCard
-        title="Gerenciar Usuários"
-        subtitle="6 usuários cadastrados"
-        iconName="account-group"
+        title="Análise Detalhada"
+        subtitle="Relatórios e gráficos"
+        iconName="chart-box"
         iconColor="#8b5cf6"
       />
 

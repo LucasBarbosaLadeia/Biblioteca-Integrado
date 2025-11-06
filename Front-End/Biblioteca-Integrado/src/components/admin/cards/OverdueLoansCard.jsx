@@ -5,10 +5,9 @@ const OverdueLoansCard = {
   icon: <MaterialCommunityIcons name="clock-alert" size={22} color="#fff" />,
   value: 1,
   title: "Empréstimos Atrasados",
-  subtitle: "2 pendentes",
   color: "#fff",
-  backgroundColor: "#27091B",
-  borderColor: "#ff00004b",
+  backgroundColor: "#2D0C1D",
+  borderColor: "#780d1fff",
 };
 
 export default OverdueLoansCard;

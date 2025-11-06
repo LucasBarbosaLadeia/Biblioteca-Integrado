@@ -14,6 +14,7 @@ const MetricGrid = ({ metrics = [] }) => {
             subtitle={m.subtitle}
             color={m.color}
             backgroundColor={m.backgroundColor}
+            borderColor={m.borderColor}
           />
         </View>
       ))}

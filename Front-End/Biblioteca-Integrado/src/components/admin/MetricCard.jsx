@@ -5,10 +5,9 @@ const MetricCard = ({
   icon,
   value,
   title,
-  subtitle,
   color = "#fff",
   backgroundColor = "#0b1220",
-  borderColor = "rgba(255,255,255,0.04)",
+  borderColor = "rgba(255, 0, 0, 1)",
 }) => {
   const renderIcon = () => {
     if (React.isValidElement(icon)) return icon;
@@ -23,7 +22,6 @@ const MetricCard = ({
       <View style={styles.content}>
         <Text style={[styles.value, { color }]}>{value ?? 0}</Text>
         <Text style={styles.title}>{title ?? ""}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
     </View>
   );
@@ -31,12 +29,12 @@ const MetricCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 14,
+    borderRadius: 15,
     padding: 14,
     minHeight: 150,
     margin: 0,
     justifyContent: "flex-start",
-    borderWidth: 1,
+    borderWidth: 2,
 
     // shadow
     ...Platform.select({
@@ -77,12 +75,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     color: "#cbd5e1",
-    marginTop: 6,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: "#93c5fd",
-    marginTop: 4,
+    marginTop: 25,
+    fontWeight: "700",
+    textAlign: "left",
   },
 });
 

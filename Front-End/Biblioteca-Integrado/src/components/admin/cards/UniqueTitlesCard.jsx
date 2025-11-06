@@ -11,10 +11,9 @@ const UniqueTitlesCard = {
   ),
   value: 8,
   title: "Títulos Únicos",
-  subtitle: "19 cópias totais",
   color: "#e6fffa",
-  backgroundColor: "#063f3f",
-  borderColor: "#027a6cff",
+  backgroundColor: "#022521",
+  borderColor: "#01522D",
 };
 
 export default UniqueTitlesCard;
