@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import LoanCard from "./LoanCard";
-import { API_HOST } from "@env";
+import { api } from "../../../services/api";
 
 const RecentLoans = ({ limit = 4 }) => {
   const [loading, setLoading] = useState(true);
@@ -9,12 +9,10 @@ const RecentLoans = ({ limit = 4 }) => {
 
   useEffect(() => {
     let mounted = true;
-    const API = API_HOST || "http://localhost:3001";
 
     const fetchRecent = async () => {
       try {
-        const res = await fetch(`${API}/api/emprestimos?page=1&limit=${limit}`);
-        const body = await res.json();
+        const body = await api.get(`emprestimos?page=1&limit=${limit}`);
         const data = body?.data ?? [];
         if (!mounted) return;
         setLoans(data);

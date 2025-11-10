@@ -1,8 +1,8 @@
 import React from "react";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Users } from "phosphor-react-native";
 
 const TotalUsersCard = {
-  icon: <MaterialCommunityIcons name="account-group" size={22} color="#fff" />,
+  icon: <Users size={22} color="#fff" weight="bold" />,
   value: 6,
   title: "Total de Usuários",
   color: "#fff",

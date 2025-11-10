@@ -1,7 +1,7 @@
 import ActionsPanel from "../../components/admin/actions/ActionsPanel";
 import React, { useEffect, useState } from "react";
 import { ScrollView, View, Text, StyleSheet } from "react-native";
-import { API_HOST } from "@env";
+import { api } from "../../services/api";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MetricGrid from "../../components/admin/MetricGrid";
 import MonthlyActivity from "../../components/admin/MonthlyActivity";
@@ -13,51 +13,31 @@ import TotalUsersCard from "../../components/admin/cards/TotalUsersCard";
 import UniqueTitlesCard from "../../components/admin/cards/UniqueTitlesCard";
 import ActiveLoansCard from "../../components/admin/cards/ActiveLoansCard";
 import OverdueLoansCard from "../../components/admin/cards/OverdueLoansCard";
+import PlaceholderCard from "../../components/common/PlaceholderCard";
 
-// Defaults (used as fallback)
-const defaultActivity = { loans: 45, returns: 38, newUsers: 12 };
-const defaultTeam = { students: 4, librarians: 2 };
-const defaultTopBooks = [
-  {
-    title: "Algoritmos e Estruturas de Dados",
-    author: "Thomas H. Cormen",
-    timesLoaned: 2,
-  },
-  { title: "Clean Code", author: "Robert C. Martin", timesLoaned: 1 },
-  {
-    title: "Harry Potter e a Pedra Filosofal",
-    author: "J.K. Rowling",
-    timesLoaned: 1,
-  },
-];
+// Defaults removed: do not present mocked examples in the admin dashboard.
+// Use empty arrays / zero-values so the UI reflects real backend data (or empty state).
 
 const HomeAdmin = () => {
-  const [metrics, setMetrics] = useState([
-    TotalUsersCard,
-    UniqueTitlesCard,
-    ActiveLoansCard,
-    OverdueLoansCard,
-  ]);
+  const [metrics, setMetrics] = useState([]);
 
-  const [activity, setActivity] = useState(defaultActivity);
-  const [team, setTeam] = useState(defaultTeam);
-  const [topBooks, setTopBooks] = useState(defaultTopBooks);
+  // Start with empty/zero values; real values will be populated from the API.
+  const [activity, setActivity] = useState({ loans: 0, returns: 0, newUsers: 0 });
+  const [team, setTeam] = useState({ students: 0, librarians: 0 });
+  const [topBooks, setTopBooks] = useState([]);
   const [circulation, setCirculation] = useState({
-    circulationRate: 5.3,
-    returnRate: 84,
-    inCirculation: 19,
-    available: 18,
+    circulationRate: 0,
+    returnRate: 0,
+    inCirculation: 0,
+    available: 0,
   });
 
   useEffect(() => {
     let mounted = true;
-    const API = API_HOST || "http://localhost:3001";
-
     const fetchData = async () => {
       try {
         // Users: get total and breakdown by tipo
-        const resUsers = await fetch(`${API}/api/usuarios?page=1&limit=1000`);
-        const dataUsers = await resUsers.json();
+        const dataUsers = await api.get("usuarios?page=1&limit=1000");
         const users = dataUsers?.data ?? [];
         const totalUsers = Array.isArray(users)
           ? users.length
@@ -68,24 +48,19 @@ const HomeAdmin = () => {
         ).length;
 
         // Books: total and available
-        const resBooks = await fetch(`${API}/api/livros?page=1&limit=1`);
-        const dataBooks = await resBooks.json();
+        const dataBooks = await api.get("livros?page=1&limit=1");
         const totalBooks = dataBooks?.pagination?.total ?? null;
-
-        const resBooksAvail = await fetch(
-          `${API}/api/livros/disponiveis?page=1&limit=1`
+        const dataBooksAvail = await api.get(
+          "livros/disponiveis?page=1&limit=1"
         );
-        const dataBooksAvail = await resBooksAvail.json();
         const availableBooks = dataBooksAvail?.pagination?.total ?? null;
 
         // Empréstimos estatísticas
-        const resLoans = await fetch(`${API}/api/emprestimos/estatisticas`);
-        const dataLoans = await resLoans.json();
+        const dataLoans = await api.get("emprestimos/estatisticas");
         const loanStats = dataLoans?.data ?? {};
 
         // Favoritos estatísticas (top livros favoritados)
-        const resFav = await fetch(`${API}/api/favoritos/estatisticas`);
-        const dataFav = await resFav.json();
+        const dataFav = await api.get("favoritos/estatisticas");
         const favStats = dataFav?.data ?? {};
 
         if (!mounted) return;
@@ -94,38 +69,36 @@ const HomeAdmin = () => {
         const builtMetrics = [
           {
             icon: TotalUsersCard.icon,
-            value: totalUsers ?? TotalUsersCard.value,
+            value: totalUsers ?? 0,
             title: "Total de Usuários",
-            subtitle: `${studentsCount} alunos`,
+            subtitle: `${studentsCount ?? 0} alunos`,
             color: TotalUsersCard.color,
             backgroundColor: TotalUsersCard.backgroundColor,
             borderColor: TotalUsersCard.borderColor,
           },
           {
             icon: UniqueTitlesCard.icon,
-            value: totalBooks ?? UniqueTitlesCard.value,
+            value: totalBooks ?? 0,
             title: "Títulos Únicos",
-            subtitle: availableBooks
-              ? `${availableBooks} disponíveis`
-              : UniqueTitlesCard.subtitle,
+            subtitle: availableBooks ? `${availableBooks} disponíveis` : `0 disponíveis`,
             color: UniqueTitlesCard.color,
             backgroundColor: UniqueTitlesCard.backgroundColor,
             borderColor: UniqueTitlesCard.borderColor,
           },
           {
             icon: ActiveLoansCard.icon,
-            value: loanStats.emprestimosAtivos ?? ActiveLoansCard.value,
+            value: loanStats.emprestimosAtivos ?? 0,
             title: "Empréstimos Ativos",
-            subtitle: `${loanStats.totalEmprestimos ?? ActiveLoansCard.subtitle}`,
+            subtitle: `${loanStats.totalEmprestimos ?? 0}`,
             color: ActiveLoansCard.color,
             backgroundColor: ActiveLoansCard.backgroundColor,
             borderColor: ActiveLoansCard.borderColor,
           },
           {
             icon: OverdueLoansCard.icon,
-            value: loanStats.emprestimosAtrasados ?? OverdueLoansCard.value,
+            value: loanStats.emprestimosAtrasados ?? 0,
             title: "Empréstimos Atrasados",
-            subtitle: `${loanStats.emprestimosAtrasados ?? OverdueLoansCard.subtitle}`,
+            subtitle: `${loanStats.emprestimosAtrasados ?? 0}`,
             color: OverdueLoansCard.color,
             backgroundColor: OverdueLoansCard.backgroundColor,
             borderColor: OverdueLoansCard.borderColor,
@@ -134,9 +107,9 @@ const HomeAdmin = () => {
 
         setMetrics(builtMetrics);
         setActivity({
-          loans: loanStats.totalEmprestimos ?? defaultActivity.loans,
-          returns: loanStats.emprestimosDevolvidos ?? defaultActivity.returns,
-          newUsers: studentsCount ?? defaultActivity.newUsers,
+          loans: loanStats.totalEmprestimos ?? 0,
+          returns: loanStats.emprestimosDevolvidos ?? 0,
+          newUsers: studentsCount ?? 0,
         });
         setTeam({ students: studentsCount, librarians: librariansCount });
 
@@ -176,7 +149,11 @@ const HomeAdmin = () => {
       >
         <Text style={styles.header}>Métricas Principais</Text>
 
-        <MetricGrid metrics={metrics} />
+        {metrics && metrics.length > 0 ? (
+          <MetricGrid metrics={metrics} />
+        ) : (
+          <PlaceholderCard title="Sem dados disponíveis" subtitle="Nenhuma métrica disponível no momento." />
+        )}
 
         <CirculationSummary
           circulationRate={circulation.circulationRate}
@@ -185,17 +162,29 @@ const HomeAdmin = () => {
           available={circulation.available}
         />
 
-        <TopBooksList books={topBooks} />
+        {topBooks && topBooks.length > 0 ? (
+          <TopBooksList books={topBooks} />
+        ) : (
+          <PlaceholderCard title="Sem livros populares" subtitle="Nenhum livro foi favoritado o suficiente para aparecer aqui." />
+        )}
 
         <Text style={styles.subHeader}>Atividade do Mês</Text>
-        <MonthlyActivity
-          loans={activity.loans}
-          returns={activity.returns}
-          newUsers={activity.newUsers}
-        />
+        {activity && (activity.loans || activity.returns || activity.newUsers) ? (
+          <MonthlyActivity
+            loans={activity.loans}
+            returns={activity.returns}
+            newUsers={activity.newUsers}
+          />
+        ) : (
+          <PlaceholderCard title="Sem atividade" subtitle="Nenhuma atividade registrada neste mês." />
+        )}
 
         <Text style={styles.subHeader}>Equipe da Biblioteca</Text>
-        <TeamCard students={team.students} librarians={team.librarians} />
+        {team && (team.students || team.librarians) ? (
+          <TeamCard students={team.students} librarians={team.librarians} />
+        ) : (
+          <PlaceholderCard title="Sem dados da equipe" subtitle="Informações da equipe não disponíveis." />
+        )}
 
         <ActionsPanel />
       </ScrollView>
@@ -254,6 +243,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
   },
+  
 });
 
 export default HomeAdmin;

@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useWindowDimensions } from "react-native";
 import DrawerMenu from "../../components/home/DrawerMenu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_HOST } from "@env";
+import { api } from "../../services/api";
 import {
   LibrarianActions,
   CardTotalBooks,
@@ -47,36 +47,27 @@ const HomeLibrarian = ({ navigation, setRole }) => {
 
   useEffect(() => {
     let mounted = true;
-    const API = API_HOST || "http://localhost:3001";
     const fetchStats = async () => {
       setLoadingStats(true);
       try {
         // total books: use livros with limit=1 and read pagination.total
-        const resBooks = await fetch(`${API}/api/livros?page=1&limit=1`);
-        const dataBooks = await resBooks.json();
+        const dataBooks = await api.get("livros?page=1&limit=1");
         const totalBooks = dataBooks?.pagination?.total ?? null;
 
         // active loans
-        const resActive = await fetch(
-          `${API}/api/emprestimos/ativos?page=1&limit=1`
-        );
-        const dataActive = await resActive.json();
+        const dataActive = await api.get("emprestimos/ativos?page=1&limit=1");
         const activeLoans = dataActive?.pagination?.total ?? null;
 
         // overdue
-        const resOver = await fetch(
-          `${API}/api/emprestimos/atrasados?page=1&limit=1`
-        );
-        const dataOver = await resOver.json();
+        const dataOver = await api.get("emprestimos/atrasados?page=1&limit=1");
         const overdue = dataOver?.pagination?.total ?? null;
 
         // requests: attempt to fetch emprestimos with status=pendente or use 0 as fallback
         let requests = null;
         try {
-          const resReq = await fetch(
-            `${API}/api/emprestimos?status=pendente&page=1&limit=1`
+          const dataReq = await api.get(
+            "emprestimos?status=pendente&page=1&limit=1"
           );
-          const dataReq = await resReq.json();
           requests = dataReq?.pagination?.total ?? 0;
         } catch (e) {
           requests = 0;

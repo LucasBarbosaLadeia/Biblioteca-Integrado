@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_HOST } from "@env";
+import { api } from "../../services/api";
 import Header from "../../components/Perfil/Header";
 import UserCard from "../../components/Perfil/UserCard";
 import StatsCards from "../../components/Perfil/StatsCards";
@@ -45,7 +45,6 @@ const MeuPerfilScreen = ({ navigation }) => {
     const controller = new AbortController();
 
     const fetchProfile = async () => {
-      const API = API_HOST || "http://localhost:3001";
       try {
         setLoading(true);
         setError(null);
@@ -61,25 +60,19 @@ const MeuPerfilScreen = ({ navigation }) => {
           ? { Authorization: `Bearer ${token}` }
           : undefined;
 
-        const [resProfile, resLoans, resFavs] = await Promise.all([
-          fetch(`${API}/api/usuarios/${usuarioId}`, {
-            headers,
-            signal: controller.signal,
-          }),
-          fetch(`${API}/api/emprestimos/usuario/${usuarioId}`, {
-            headers,
-            signal: controller.signal,
-          }),
-          fetch(`${API}/api/favoritos/usuario/${usuarioId}`, {
-            headers,
-            signal: controller.signal,
-          }),
-        ]);
-
         const [profileJson, loansJson, favsJson] = await Promise.all([
-          resProfile.ok ? resProfile.json() : null,
-          resLoans.ok ? resLoans.json() : null,
-          resFavs.ok ? resFavs.json() : null,
+          api.get(`usuarios/${usuarioId}`, {
+            headers,
+            signal: controller.signal,
+          }),
+          api.get(`emprestimos/usuario/${usuarioId}`, {
+            headers,
+            signal: controller.signal,
+          }),
+          api.get(`favoritos/usuario/${usuarioId}`, {
+            headers,
+            signal: controller.signal,
+          }),
         ]);
 
         let mappedProfile = {
@@ -156,7 +149,7 @@ const MeuPerfilScreen = ({ navigation }) => {
           stats: {
             loans: loansCount,
             favorites: favoritesCount,
-            returned: returnedCount,
+            returned: loansCount,
           },
           alert,
           history: history.length ? history : exampleApiResponse.history,
@@ -200,7 +193,7 @@ const MeuPerfilScreen = ({ navigation }) => {
           <StatsCards
             loans={profile.stats?.loans}
             favorites={profile.stats?.favorites}
-            returned={profile.stats?.returned}
+            returned={profile.stats?.loans}
           />
 
           {profile.alert?.hasOverdue && (

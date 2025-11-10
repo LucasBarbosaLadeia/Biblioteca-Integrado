@@ -17,7 +17,7 @@ import CleanCodeCover from "../../assets/Clean-Code.jpg";
 import DrawerMenu from "../../components/home/DrawerMenu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { toggleFavorito } from "../../utils/favoritos";
-import { API_HOST } from "@env";
+import { api } from "../../services/api";
 import {
   on as onEvent,
   off as offEvent,
@@ -63,11 +63,9 @@ const HomeScreen = ({ navigation, setRole }) => {
         const token = await AsyncStorage.getItem("token");
         const usuarioId = await AsyncStorage.getItem("userId");
         if (!usuarioId) return;
-        const API = API_HOST || "http://localhost:3001";
-        const res = await fetch(`${API}/api/usuarios/${usuarioId}`, {
+        const data = await api.get(`usuarios/${usuarioId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        const data = await res.json();
         if (data && data.success && data.data) {
           const profile = data.data;
           setUser({
@@ -115,7 +113,6 @@ const HomeScreen = ({ navigation, setRole }) => {
   };
 
   useEffect(() => {
-    const API = API_HOST || "http://localhost:3001";
     if (query.trim() === "") {
       setSearchResults([]);
       setLoadingSearch(false);
@@ -127,13 +124,12 @@ const HomeScreen = ({ navigation, setRole }) => {
     const handle = setTimeout(async () => {
       try {
         const token = await AsyncStorage.getItem("token");
-        const response = await fetch(
-          `${API}/api/livros?search=${encodeURIComponent(query)}`,
+        const data = await api.get(
+          `livros?search=${encodeURIComponent(query)}`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           }
         );
-        const data = await response.json();
         if (!mounted) return;
         // mark that we performed a search (kept verbally via loadingSearch)
         if (data && data.success && Array.isArray(data.data)) {
@@ -163,12 +159,9 @@ const HomeScreen = ({ navigation, setRole }) => {
   }, [query]);
 
   useEffect(() => {
-    const API = API_HOST || "http://localhost:3001";
-
     const fetchRecentes = async () => {
       try {
-        const res = await fetch(`${API}/api/livros/recentes?limit=10`);
-        const data = await res.json();
+        const data = await api.get(`livros/recentes?limit=10`);
         if (data && data.success && Array.isArray(data.data)) {
           const parsed = data.data.map((l) => ({
             id: String(l.id_livro),
@@ -186,8 +179,7 @@ const HomeScreen = ({ navigation, setRole }) => {
 
     const fetchRecomendados = async () => {
       try {
-        const res = await fetch(`${API}/api/livros/recomendados?limit=10`);
-        const data = await res.json();
+        const data = await api.get(`livros/recomendados?limit=10`);
         if (data && data.success && Array.isArray(data.data)) {
           const parsed = data.data.map((l) => ({
             id: String(l.id_livro),
@@ -208,10 +200,9 @@ const HomeScreen = ({ navigation, setRole }) => {
         const token = await AsyncStorage.getItem("token");
         const usuarioId = await AsyncStorage.getItem("userId");
         if (!usuarioId) return;
-        const res = await fetch(`${API}/api/favoritos/usuario/${usuarioId}`, {
+        const data = await api.get(`favoritos/usuario/${usuarioId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        const data = await res.json();
         if (data && data.success && Array.isArray(data.data)) {
           const favMap = {};
           data.data.forEach((f) => {
@@ -234,17 +225,14 @@ const HomeScreen = ({ navigation, setRole }) => {
   useEffect(() => {
     if (!isFocused) return;
 
-    const API = API_HOST || "http://localhost:3001";
-
     const fetchFavoritosOnFocus = async () => {
       try {
         const token = await AsyncStorage.getItem("token");
         const usuarioId = await AsyncStorage.getItem("userId");
         if (!usuarioId) return;
-        const res = await fetch(`${API}/api/favoritos/usuario/${usuarioId}`, {
+        const data = await api.get(`favoritos/usuario/${usuarioId}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        const data = await res.json();
         if (data && data.success && Array.isArray(data.data)) {
           const favMap = {};
           data.data.forEach((f) => {

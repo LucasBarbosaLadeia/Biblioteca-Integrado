@@ -1,8 +1,8 @@
 import React from "react";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Clock } from "phosphor-react-native";
 
 const OverdueLoansCard = {
-  icon: <MaterialCommunityIcons name="clock-alert" size={22} color="#fff" />,
+  icon: <Clock size={22} color="#fff" weight="bold" />,
   value: 1,
   title: "Empréstimos Atrasados",
   color: "#fff",

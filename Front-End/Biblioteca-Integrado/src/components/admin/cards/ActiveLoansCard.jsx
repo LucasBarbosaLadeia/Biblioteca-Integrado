@@ -1,8 +1,8 @@
 import React from "react";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { ChartLine } from "phosphor-react-native";
 
 const ActiveLoansCard = {
-  icon: <MaterialCommunityIcons name="chart-line" size={22} color="#fff" />,
+  icon: <ChartLine size={22} color="#fff" weight="bold" />,
   value: 1,
   title: "Empréstimos Ativos",
   color: "#fff",

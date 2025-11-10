@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { API_HOST } from "@env";
+import { api } from "../../services/api";
 import SearchBar from "../../components/admin/manageBooks/SearchBar";
 import CategoryFilter from "../../components/admin/manageBooks/CategoryFilter";
 import BookCard from "../../components/admin/manageBooks/BookCard";
@@ -21,15 +21,14 @@ const ManageBooks = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const API = API_HOST || "http://localhost:3001";
+  // use centralized API helper
 
   useEffect(() => {
     let mounted = true;
 
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API}/api/categorias`);
-        const json = await res.json();
+        const json = await api.get("categorias");
         if (!mounted) return;
         setCategories(json?.data || []);
       } catch (e) {
@@ -49,8 +48,7 @@ const ManageBooks = ({ navigation }) => {
       try {
         const q = search ? `&search=${encodeURIComponent(search)}` : "";
         const cat = category ? `&categoria=${category}` : "";
-        const res = await fetch(`${API}/api/livros?page=1&limit=20${q}${cat}`);
-        const json = await res.json();
+        const json = await api.get(`livros?page=1&limit=20${q}${cat}`);
         if (!mounted) return;
         const data = json?.data || [];
         setBooks(data);
@@ -78,10 +76,7 @@ const ManageBooks = ({ navigation }) => {
           setLoading(true);
           const q = search ? `&search=${encodeURIComponent(search)}` : "";
           const cat = category ? `&categoria=${category}` : "";
-          const res = await fetch(
-            `${API}/api/livros?page=1&limit=20${q}${cat}`
-          );
-          const json = await res.json();
+          const json = await api.get(`livros?page=1&limit=20${q}${cat}`);
           const data = json?.data || [];
           setBooks(data);
         } catch (e) {
@@ -121,13 +116,11 @@ const ManageBooks = ({ navigation }) => {
         setAlertVisible(false);
         try {
           setLoading(true);
-          const res = await fetch(`${API}/api/livros/${id}`, {
-            method: "DELETE",
-          });
-          if (res.ok) {
+          try {
+            await api.delete(`livros/${id}`);
             setBooks((prev) => prev.filter((b) => (b.id_livro ?? b.id) !== id));
-          } else {
-            const json = await res.json();
+          } catch (err) {
+            const json = err?.body || {};
             setAlertData({
               title: "Erro",
               message: json?.message || "Falha ao excluir livro",

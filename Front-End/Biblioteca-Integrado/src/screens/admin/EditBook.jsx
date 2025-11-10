@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { API_HOST } from "@env";
+import { api } from "../../services/api";
 
 import { Ionicons } from "@expo/vector-icons";
 
@@ -21,7 +21,7 @@ import StyledAlert from "../../components/common/StyledAlert";
 
 const EditBook = ({ route, navigation }) => {
   const { bookId } = route.params || {};
-  const API = API_HOST || "http://localhost:3001";
+  // centralized api helper
 
   const [book, setBook] = useState({});
   const [categories, setCategories] = useState([]);
@@ -33,13 +33,10 @@ const EditBook = ({ route, navigation }) => {
     const fetchData = async () => {
       try {
         if (!bookId) return;
-        const [resBook, resCats] = await Promise.all([
-          fetch(`${API}/api/livros/${bookId}`),
-          fetch(`${API}/api/categorias`),
+        const [jsonBook, jsonCats] = await Promise.all([
+          api.get(`livros/${bookId}`),
+          api.get("categorias"),
         ]);
-
-        const jsonBook = await resBook.json();
-        const jsonCats = await resCats.json();
 
         if (!mounted) return;
         const b = jsonBook?.data || {};
@@ -90,14 +87,8 @@ const EditBook = ({ route, navigation }) => {
         paginas: Number(book.paginas) || 0,
       };
 
-      const res = await fetch(`${API}/api/livros/${bookId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const json = await res.json();
-      if (res.ok) {
+      try {
+        const json = await api.put(`livros/${bookId}`, payload);
         setAlertData({
           title: "Sucesso",
           message: "Livro atualizado com sucesso",
@@ -109,7 +100,8 @@ const EditBook = ({ route, navigation }) => {
           confirmText: "OK",
         });
         setAlertVisible(true);
-      } else {
+      } catch (err) {
+        const json = err?.body || {};
         setAlertData({
           title: "Erro",
           message: json?.message || "Falha ao atualizar livro",

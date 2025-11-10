@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { maskRA, unmaskRA } from "../utils/mask";
-import { API_HOST } from "@env";
+import { api } from "../services/api";
 import CustomAlert from "../components/CustomAlert";
 
 const LoginScreen = ({ navigation, setRole }) => {
@@ -43,42 +43,15 @@ const LoginScreen = ({ navigation, setRole }) => {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      // Fallback: when running on emulador Android via Expo, `localhost` won't work.
-      // Use API_HOST from env when available, otherwise try Android emulator loopback.
-      const API = API_HOST || "http://10.0.2.2:3001";
-      if (!API_HOST)
-        console.warn("API_HOST not defined — falling back to", API);
-
-      const response = await fetch(`${API}/api/usuarios/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ra: unmaskRA(ra), senha }),
-        signal: controller.signal,
-      });
-
+      // Use centralized api helper. The helper will throw on non-2xx responses.
+      const data = await api.post(
+        "usuarios/login",
+        { ra: unmaskRA(ra), senha },
+        { signal: controller.signal }
+      );
       clearTimeout(timeoutId);
 
-      // handle non-2xx responses quickly
-      if (!response.ok) {
-        // try to parse a JSON error body if present
-        let errMsg = `Erro ${response.status}`;
-        try {
-          const errData = await response.json();
-          errMsg = errData.message || errMsg;
-        } catch (e) {
-          // ignore parse errors, use status text
-          errMsg = response.statusText || errMsg;
-        }
-        setErrorMessage(errMsg || "Credenciais inválidas");
-        setShowErrorAlert(true);
-        return;
-      }
-
-      const data = await response.json();
-
-      if (data.token) {
+      if (data && data.token) {
         await AsyncStorage.setItem("token", data.token);
         await AsyncStorage.setItem("userId", String(data.data.id_usuario));
         // save user name and role quickly so drawer/profile can show immediately without extra fetch
@@ -177,7 +150,7 @@ const LoginScreen = ({ navigation, setRole }) => {
           // ignore storage errors
         }
       } else {
-        setErrorMessage(data.message || "Credenciais inválidas");
+        setErrorMessage(data?.message || "Credenciais inválidas");
         setShowErrorAlert(true);
       }
     } catch (error) {
@@ -188,7 +161,12 @@ const LoginScreen = ({ navigation, setRole }) => {
           "A requisição expirou. Verifique sua conexão e tente novamente."
         );
       } else {
-        setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+        // api helper throws Error with stored body on non-2xx. Use body.message if present.
+        const msg =
+          error?.body?.message ||
+          error.message ||
+          "Erro ao fazer login. Tente novamente mais tarde.";
+        setErrorMessage(msg);
       }
       setShowErrorAlert(true);
     } finally {

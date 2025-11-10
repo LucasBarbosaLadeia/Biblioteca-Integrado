@@ -1,14 +1,8 @@
 import React from "react";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { BookOpen } from "phosphor-react-native";
 
 const UniqueTitlesCard = {
-  icon: (
-    <MaterialCommunityIcons
-      name="book-open-page-variant"
-      size={22}
-      color="#e6fffa"
-    />
-  ),
+  icon: <BookOpen size={22} color="#e6fffa" weight="bold" />,
   value: 8,
   title: "Títulos Únicos",
   color: "#e6fffa",

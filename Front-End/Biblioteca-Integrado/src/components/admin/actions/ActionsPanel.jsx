@@ -23,6 +23,21 @@ const ActionsPanel = () => {
         subtitle="Relatórios e gráficos"
         iconName="chart-box"
         iconColor="#8b5cf6"
+        onPress={() => {
+          try {
+            // tentamos navegar; se a rota não estiver registrada, o erro será capturado
+            navigation.navigate("DetailedAnalysis");
+          } catch (err) {
+            console.warn("Erro ao navegar para DetailedAnalysis:", err);
+            // fallback visual para facilitar debug em dispositivo
+            try {
+              // eslint-disable-next-line no-undef
+              alert("Erro ao abrir tela de Análise: " + (err?.message || err));
+            } catch (e) {
+              // ignore
+            }
+          }
+        }}
       />
 
       <ActionCard
