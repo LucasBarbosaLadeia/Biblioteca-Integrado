@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, SafeAreaView, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_HOST } from "@env";
 import TabBar from "../../components/home/TagBar";
 import { toggleFavorito as toggleFavoritoAPI } from "../../utils/favoritos";
 import { emit } from "../../utils/eventBus";
+import { api } from "../../services/api";
 
 import HeaderDetalhes from "../../components/DetalhesDoLivro/HeaderDetalhes";
 import CoverImage from "../../components/DetalhesDoLivro/CoverImage";
@@ -38,16 +38,9 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       setLoadingFavorite(true);
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
-      const API = API_HOST;
-
-      const response = await fetch(
-        `${API}/api/favoritos/usuario/${usuarioId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      const result = await response.json();
+      const result = await api.get(`favoritos/usuario/${usuarioId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (result.success && Array.isArray(result.data)) {
         const isFav = result.data.some(
