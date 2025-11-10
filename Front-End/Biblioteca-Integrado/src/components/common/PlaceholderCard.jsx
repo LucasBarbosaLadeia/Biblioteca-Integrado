@@ -1,7 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-const PlaceholderCard = ({ title = "Sem dados disponíveis", subtitle = "", style }) => {
+const PlaceholderCard = ({
+  title = "Sem dados disponíveis",
+  subtitle = "",
+  style,
+}) => {
   return (
     <View style={[styles.card, style]}>
       <Text style={styles.title}>{title}</Text>

@@ -23,7 +23,11 @@ import PlaceholderCard from "../../components/common/PlaceholderCard";
 const DetailedAnalysis = () => {
   // Start with empty collections so UI shows zeros/placeholders when backend
   // data is not available instead of rendering NaN or using mocked data.
-  const [data, setData] = useState({ monthly: [], categories: [], insights: [] });
+  const [data, setData] = useState({
+    monthly: [],
+    categories: [],
+    insights: [],
+  });
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
@@ -41,8 +45,7 @@ const DetailedAnalysis = () => {
         }
       } catch (err) {
         // fallback: sem dados (vazio). Não usar dados mocados.
-        if (mounted)
-          setData({ monthly: [], categories: [], insights: [] });
+        if (mounted) setData({ monthly: [], categories: [], insights: [] });
       } finally {
         if (mounted) setLoading(false);
       }
@@ -64,9 +67,10 @@ const DetailedAnalysis = () => {
     (s, m) => s + (m?.value || 0),
     0
   );
-  const avgMonthly = (data?.monthly && data.monthly.length)
-    ? Math.round(totalMonthly / data.monthly.length)
-    : 0;
+  const avgMonthly =
+    data?.monthly && data.monthly.length
+      ? Math.round(totalMonthly / data.monthly.length)
+      : 0;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -90,13 +94,19 @@ const DetailedAnalysis = () => {
             {data?.monthly && data.monthly.length > 0 ? (
               <TrendChart data={data.monthly} />
             ) : (
-              <PlaceholderCard title="Sem dados disponíveis" subtitle="Nenhuma informação de tendência mensal." />
+              <PlaceholderCard
+                title="Sem dados disponíveis"
+                subtitle="Nenhuma informação de tendência mensal."
+              />
             )}
 
             {data?.categories && data.categories.length > 0 ? (
               <CategoryPerformance categories={data.categories} />
             ) : (
-              <PlaceholderCard title="Sem dados disponíveis" subtitle="Nenhuma categoria para exibir desempenho." />
+              <PlaceholderCard
+                title="Sem dados disponíveis"
+                subtitle="Nenhuma categoria para exibir desempenho."
+              />
             )}
           </View>
 
@@ -119,7 +129,10 @@ const DetailedAnalysis = () => {
                 />
               ))
             ) : (
-              <PlaceholderCard title="Sem insights" subtitle="Nenhuma observação disponível no momento." />
+              <PlaceholderCard
+                title="Sem insights"
+                subtitle="Nenhuma observação disponível no momento."
+              />
             )}
           </View>
         </View>
@@ -166,7 +179,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#071023",
   },
-  
 });
 
 export default DetailedAnalysis;

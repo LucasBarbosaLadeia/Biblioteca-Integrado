@@ -22,7 +22,11 @@ const HomeAdmin = () => {
   const [metrics, setMetrics] = useState([]);
 
   // Start with empty/zero values; real values will be populated from the API.
-  const [activity, setActivity] = useState({ loans: 0, returns: 0, newUsers: 0 });
+  const [activity, setActivity] = useState({
+    loans: 0,
+    returns: 0,
+    newUsers: 0,
+  });
   const [team, setTeam] = useState({ students: 0, librarians: 0 });
   const [topBooks, setTopBooks] = useState([]);
   const [circulation, setCirculation] = useState({
@@ -80,7 +84,9 @@ const HomeAdmin = () => {
             icon: UniqueTitlesCard.icon,
             value: totalBooks ?? 0,
             title: "Títulos Únicos",
-            subtitle: availableBooks ? `${availableBooks} disponíveis` : `0 disponíveis`,
+            subtitle: availableBooks
+              ? `${availableBooks} disponíveis`
+              : `0 disponíveis`,
             color: UniqueTitlesCard.color,
             backgroundColor: UniqueTitlesCard.backgroundColor,
             borderColor: UniqueTitlesCard.borderColor,
@@ -152,7 +158,10 @@ const HomeAdmin = () => {
         {metrics && metrics.length > 0 ? (
           <MetricGrid metrics={metrics} />
         ) : (
-          <PlaceholderCard title="Sem dados disponíveis" subtitle="Nenhuma métrica disponível no momento." />
+          <PlaceholderCard
+            title="Sem dados disponíveis"
+            subtitle="Nenhuma métrica disponível no momento."
+          />
         )}
 
         <CirculationSummary
@@ -165,25 +174,35 @@ const HomeAdmin = () => {
         {topBooks && topBooks.length > 0 ? (
           <TopBooksList books={topBooks} />
         ) : (
-          <PlaceholderCard title="Sem livros populares" subtitle="Nenhum livro foi favoritado o suficiente para aparecer aqui." />
+          <PlaceholderCard
+            title="Sem livros populares"
+            subtitle="Nenhum livro foi favoritado o suficiente para aparecer aqui."
+          />
         )}
 
         <Text style={styles.subHeader}>Atividade do Mês</Text>
-        {activity && (activity.loans || activity.returns || activity.newUsers) ? (
+        {activity &&
+        (activity.loans || activity.returns || activity.newUsers) ? (
           <MonthlyActivity
             loans={activity.loans}
             returns={activity.returns}
             newUsers={activity.newUsers}
           />
         ) : (
-          <PlaceholderCard title="Sem atividade" subtitle="Nenhuma atividade registrada neste mês." />
+          <PlaceholderCard
+            title="Sem atividade"
+            subtitle="Nenhuma atividade registrada neste mês."
+          />
         )}
 
         <Text style={styles.subHeader}>Equipe da Biblioteca</Text>
         {team && (team.students || team.librarians) ? (
           <TeamCard students={team.students} librarians={team.librarians} />
         ) : (
-          <PlaceholderCard title="Sem dados da equipe" subtitle="Informações da equipe não disponíveis." />
+          <PlaceholderCard
+            title="Sem dados da equipe"
+            subtitle="Informações da equipe não disponíveis."
+          />
         )}
 
         <ActionsPanel />
@@ -243,7 +262,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
   },
-  
 });
 
 export default HomeAdmin;
