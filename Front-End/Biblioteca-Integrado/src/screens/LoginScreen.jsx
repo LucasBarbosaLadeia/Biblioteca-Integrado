@@ -21,10 +21,10 @@ import { Ionicons } from "@expo/vector-icons";
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { maskRA, unmaskRA } from "../utils/mask";
-import { API_HOST } from "@env";
+import { api } from "../services/api";
 import CustomAlert from "../components/CustomAlert";
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation, setRole }) => {
   const { width } = useWindowDimensions();
   const isSmall = width < 360;
   const [ra, setRa] = useState("");
@@ -43,57 +43,114 @@ const LoginScreen = ({ navigation }) => {
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      // Fallback: when running on emulador Android via Expo, `localhost` won't work.
-      // Use API_HOST from env when available, otherwise try Android emulator loopback.
-      const API = API_HOST || "http://10.0.2.2:3001";
-      if (!API_HOST)
-        console.warn("API_HOST not defined — falling back to", API);
-
-      const response = await fetch(`${API}/api/usuarios/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ra: unmaskRA(ra), senha }),
-        signal: controller.signal,
-      });
-
+      // Use centralized api helper. The helper will throw on non-2xx responses.
+      const data = await api.post(
+        "usuarios/login",
+        { ra: unmaskRA(ra), senha },
+        { signal: controller.signal }
+      );
       clearTimeout(timeoutId);
 
-      // handle non-2xx responses quickly
-      if (!response.ok) {
-        // try to parse a JSON error body if present
-        let errMsg = `Erro ${response.status}`;
-        try {
-          const errData = await response.json();
-          errMsg = errData.message || errMsg;
-        } catch (e) {
-          // ignore parse errors, use status text
-          errMsg = response.statusText || errMsg;
-        }
-        setErrorMessage(errMsg || "Credenciais inválidas");
-        setShowErrorAlert(true);
-        return;
-      }
-
-      const data = await response.json();
-
-      if (data.token) {
+      if (data && data.token) {
         await AsyncStorage.setItem("token", data.token);
         await AsyncStorage.setItem("userId", String(data.data.id_usuario));
         // save user name and role quickly so drawer/profile can show immediately without extra fetch
         try {
+          // debug: show returned payload (remove in production)
+          try {
+            console.log("[Login] response data:", data);
+          } catch (e) {}
+
           const nome = data.data?.nome || data.data?.name || "";
-          const tipo = data.data?.tipo || data.data?.role || "";
+          const rawTipo = data.data?.tipo ?? data.data?.role ?? "";
+
+          // normalize role to either 'student' or 'librarian'
+          // Heuristics cover common values returned by backends:
+          // - Portuguese strings: 'ALUNO', 'aluno', 'bibliotecario', 'BIB', etc.
+          // - English strings: 'student', 'librarian', 'admin'
+          // - Numeric ids: '1' -> student, '2' -> librarian (adjust if your backend uses different ids)
+          let roleToSet = "student";
+          if (rawTipo !== "") {
+            const rStr = String(rawTipo).trim();
+            const r = rStr.toLowerCase();
+
+            // numeric id mapping (common conventions; change if your backend differs)
+            if (/^\d+$/.test(rStr)) {
+              if (rStr === "1") roleToSet = "student";
+              else if (rStr === "2") roleToSet = "librarian";
+              else roleToSet = "student"; // safe default for unknown numeric ids
+            }
+            // explicit textual matches for students
+            else if (
+              ["aluno", "estudante", "student"].some(
+                (k) => r === k || r.includes(k)
+              )
+            ) {
+              roleToSet = "student";
+            }
+            // explicit textual matches for librarians/admins
+            else if (
+              [
+                "bibliotecario",
+                "bibliotecaria",
+                "bib",
+                "funcionario",
+                "funcionário",
+                "admin",
+                "librarian",
+                "librar",
+                "bibliotec",
+              ].some((k) => r === k || r.includes(k))
+            ) {
+              roleToSet = "librarian";
+            } else {
+              // fallback to simple substring check and default to student
+              if (
+                r.includes("bibliotec") ||
+                r.includes("librar") ||
+                r.includes("admin") ||
+                r.includes("librarian")
+              ) {
+                roleToSet = "librarian";
+              } else {
+                roleToSet = "student";
+              }
+            }
+          }
+
           if (nome) await AsyncStorage.setItem("userName", String(nome));
-          if (tipo) await AsyncStorage.setItem("userRole", String(tipo));
+          if (rawTipo) await AsyncStorage.setItem("userRole", String(rawTipo));
+
+          await AsyncStorage.setItem("userRoleNormalized", roleToSet);
+          try {
+            if (typeof setRole === "function") {
+              console.log("[Login] setting role to", roleToSet);
+              setRole(roleToSet);
+            } else if (
+              navigation &&
+              typeof navigation.navigate === "function"
+            ) {
+              console.log("[Login] navigating to Home via navigation.navigate");
+              navigation.navigate("Home");
+            } else {
+              console.warn(
+                "[Login] neither setRole nor navigation.navigate available after login"
+              );
+            }
+          } catch (e) {
+            console.error("[Login] error applying role/navigation:", e);
+            // try a safe fallback
+            try {
+              navigation && navigation.navigate && navigation.navigate("Home");
+            } catch (err) {
+              console.error("[Login] fallback navigation also failed:", err);
+            }
+          }
         } catch (e) {
           // ignore storage errors
         }
-
-        navigation.navigate("Home");
       } else {
-        setErrorMessage(data.message || "Credenciais inválidas");
+        setErrorMessage(data?.message || "Credenciais inválidas");
         setShowErrorAlert(true);
       }
     } catch (error) {
@@ -104,7 +161,12 @@ const LoginScreen = ({ navigation }) => {
           "A requisição expirou. Verifique sua conexão e tente novamente."
         );
       } else {
-        setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+        // api helper throws Error with stored body on non-2xx. Use body.message if present.
+        const msg =
+          error?.body?.message ||
+          error.message ||
+          "Erro ao fazer login. Tente novamente mais tarde.";
+        setErrorMessage(msg);
       }
       setShowErrorAlert(true);
     } finally {

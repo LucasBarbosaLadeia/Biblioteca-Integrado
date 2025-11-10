@@ -23,7 +23,7 @@ const StatsCards = ({ loans = 0, favorites = 0, returned = 0 }) => {
     },
     {
       label: "Devolvidos",
-      value: returned,
+      value: loans,
       icon: "checkmark-circle-outline",
       color: "#10B981",
       clickable: false,

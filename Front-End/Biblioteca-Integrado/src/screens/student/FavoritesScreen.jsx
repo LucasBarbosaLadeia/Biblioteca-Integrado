@@ -15,7 +15,8 @@ import {
   emit as emitEvent,
 } from "../../utils/eventBus";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_HOST } from "@env";
+import { toggleFavorito } from "../../utils/favoritos";
+import { api } from "../../services/api";
 
 const FavoritesScreen = ({ navigation }) => {
   const [favoritos, setFavoritos] = useState([]);
@@ -57,14 +58,7 @@ const FavoritesScreen = ({ navigation }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
-      await fetch(`${API_HOST}/api/favoritos/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id_usuario: usuarioId, id_livro: livroId }),
-      });
+      await toggleFavorito(usuarioId, livroId, token);
     } catch (err) {
       console.error("Erro ao remover favorito:", err);
       // On error, reload favorites
@@ -80,19 +74,10 @@ const FavoritesScreen = ({ navigation }) => {
     try {
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
-      const API = API_HOST;
-
-      const response = await fetch(
-        `${API}/api/favoritos/usuario/${usuarioId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (data.success) {
+      const data = await api.get(`favoritos/usuario/${usuarioId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data && data.success) {
         setFavoritos(data.data);
       }
     } catch (error) {

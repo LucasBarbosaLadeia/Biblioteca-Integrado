@@ -1,0 +1,12 @@
+export { default as DashboardCard } from "./cardHome/DashboardCard";
+export { default as QuickAction } from "./quickActions/QuickAction";
+export { default as LibrarianActions } from "./quickActions/LibrarianActions";
+export { default as SolicitacoesPendentes } from "./quickActions/SolicitacoesPendentes";
+export { default as EmprestimoManual } from "./quickActions/EmprestimoManual";
+export { default as AdicionarLivro } from "./quickActions/AdicionarLivro";
+export { default as GerenciarEmprestimos } from "./quickActions/GerenciarEmprestimos";
+export { default as CardTotalBooks } from "./cardHome/CardTotalBooks";
+export { default as CardActiveLoans } from "./cardHome/CardActiveLoans";
+export { default as CardOverdue } from "./cardHome/CardOverdue";
+export { default as CardRequests } from "./cardHome/CardRequests";
+export { default as RecentLoans } from "./loans/RecentLoans";
