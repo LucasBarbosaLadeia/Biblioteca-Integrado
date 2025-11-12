@@ -6,7 +6,7 @@ import EmprestimoManual from "./EmprestimoManual";
 import AdicionarLivro from "./AdicionarLivro";
 import GerenciarEmprestimos from "./GerenciarEmprestimos";
 
-const LibrarianActions = ({ actions = [] }) => {
+const LibrarianActions = ({ actions = [], navigation }) => {
   if (actions && actions.length > 0) {
     return (
       <View style={styles.container}>
@@ -27,10 +27,30 @@ const LibrarianActions = ({ actions = [] }) => {
   // default: render the 4 built-in quick action components
   return (
     <View style={styles.container}>
-      <SolicitacoesPendentes />
-      <EmprestimoManual />
-      <AdicionarLivro />
-      <GerenciarEmprestimos />
+      <SolicitacoesPendentes
+        onPress={() =>
+          navigation &&
+          navigation.navigate &&
+          navigation.navigate("PendingRequests")
+        }
+      />
+      <EmprestimoManual
+        onPress={() =>
+          navigation && navigation.navigate && navigation.navigate("ManualLoan")
+        }
+      />
+      <AdicionarLivro
+        onPress={() =>
+          navigation && navigation.navigate && navigation.navigate("AddBook")
+        }
+      />
+      <GerenciarEmprestimos
+        onPress={() =>
+          navigation &&
+          navigation.navigate &&
+          navigation.navigate("ManageLoans")
+        }
+      />
     </View>
   );
 };

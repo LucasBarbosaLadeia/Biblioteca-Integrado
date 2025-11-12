@@ -415,8 +415,8 @@ export class EmprestimoController {
       console.error("Erro ao criar empréstimo:", error);
       res.status(500).json({
         success: false,
-        message: "Erro interno do servidor",
         error: error instanceof Error ? error.message : "Erro desconhecido",
+        message: "Erro interno do servidor",
       });
     }
   }

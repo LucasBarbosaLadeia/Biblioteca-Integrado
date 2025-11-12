@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { View, ScrollView, SafeAreaView, StyleSheet, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWindowDimensions } from "react-native";
-import DrawerMenu from "../../components/home/DrawerMenu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "../../services/api";
 import {
@@ -151,12 +150,6 @@ const HomeLibrarian = ({ navigation, setRole }) => {
         <View style={styles.page}>
           <View style={styles.topRow}>
             <Text style={styles.topTitle}>Painel do Bibliotecário</Text>
-            {/* <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => setDrawerVisible(true)}
-            >
-              <Ionicons name="grid-outline" size={20} color="#fff" />
-            </TouchableOpacity> */}
           </View>
 
           <ScrollView
@@ -204,7 +197,7 @@ const HomeLibrarian = ({ navigation, setRole }) => {
 
             <View style={styles.sectionQuickActions}>
               <Text style={styles.sectionTitleActions}>Ações Rápidas</Text>
-              <LibrarianActions />
+              <LibrarianActions navigation={navigation} />
             </View>
 
             <View style={styles.sectionRecentLoans}>
@@ -215,29 +208,6 @@ const HomeLibrarian = ({ navigation, setRole }) => {
             </View>
           </ScrollView>
         </View>
-
-        <DrawerMenu
-          visible={drawerVisible}
-          onClose={() => setDrawerVisible(false)}
-          navigation={navigation}
-          user={user}
-          onLogout={async () => {
-            try {
-              await AsyncStorage.removeItem("token");
-              await AsyncStorage.removeItem("userId");
-              await AsyncStorage.removeItem("userName");
-              await AsyncStorage.removeItem("userRole");
-              await AsyncStorage.removeItem("userRoleNormalized");
-            } catch (e) {}
-            try {
-              if (typeof setRole === "function") setRole(null);
-              else navigation.navigate("Login");
-            } catch (e) {
-              navigation.navigate("Login");
-            }
-          }}
-          activeRoute={"Home"}
-        />
       </SafeAreaView>
     </View>
   );
