@@ -18,8 +18,8 @@ const HeaderDetalhes = ({
 }) => {
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onBack} style={styles.leftBtn}>
-        <Ionicons name="arrow-back-circle" size={38} color="white" />
+      <TouchableOpacity onPress={onBack} style={styles.iconBtn}>
+        <Ionicons name="arrow-back" size={20} color="white" />
       </TouchableOpacity>
       <Text style={styles.title}>{title}</Text>
       <TouchableOpacity
@@ -53,9 +53,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 18,
-    marginBottom: 12,
+    marginBottom: 1,
   },
-  leftBtn: { width: 40 },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#1b2546ff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   rightBtn: { width: 40, alignItems: "flex-end" },
   title: { color: "white", fontSize: 18, fontWeight: "700" },
 });

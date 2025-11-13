@@ -27,6 +27,12 @@ import CustomAlert from "../components/CustomAlert";
 const LoginScreen = ({ navigation, setRole }) => {
   const { width } = useWindowDimensions();
   const isSmall = width < 360;
+  // responsive sizing helpers
+  const horizontalPadding = Math.min(32, Math.max(12, Math.floor(width * 0.05)));
+  const titleFontSize = width < 360 ? 26 : width < 420 ? 32 : 36;
+  const inputHeight = Math.max(44, Math.min(56, Math.floor(width * 0.12)));
+  const buttonHeight = inputHeight;
+  const innerMaxWidth = Math.min(560, Math.max(340, Math.floor(width * 0.85)));
   const [ra, setRa] = useState("");
   const [senha, setSenha] = useState("");
   const [showEsqueceuSenha, setShowEsqueceuSenha] = useState(false);
@@ -205,18 +211,21 @@ const LoginScreen = ({ navigation, setRole }) => {
                   message={errorMessage}
                   buttonText={"OK"}
                 />
-                <Text style={isSmall ? styles.titleSmall : styles.title}>
+                <Text style={[styles.title, { fontSize: titleFontSize, marginBottom: titleFontSize > 32 ? 40 : 28 }]}>
                   Biblioteca Integrado
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    { height: inputHeight, fontSize: Math.max(14, Math.floor(titleFontSize * 0.5)) },
+                  ]}
                   placeholder="Registro (RA)"
                   placeholderTextColor="#BBBBBB"
                   keyboardType="numeric"
                   value={ra}
                   onChangeText={(text) => setRa(maskRA(text))}
                 />
-                <View style={styles.inputPasswordContainer}>
+                <View style={[styles.inputPasswordContainer, { height: inputHeight }]}> 
                   <TextInput
                     style={styles.inputPassword}
                     placeholder="Senha"
@@ -239,6 +248,7 @@ const LoginScreen = ({ navigation, setRole }) => {
                 <TouchableOpacity
                   style={[
                     styles.button,
+                    { height: buttonHeight },
                     loading ? styles.buttonDisabled : null,
                   ]}
                   onPress={handleLogin}
@@ -283,18 +293,20 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
   },
   inner: {
     width: "100%",
     maxWidth: 420,
     alignItems: "center",
+    paddingHorizontal: 12,
   },
   title: {
-    fontSize: 32, // Tamanho da fonte grande para o título
+    // fontSize set dynamically in-line for responsiveness
     fontWeight: "bold", // Deixa o texto em negrito
     color: "#E0E0E0", // Cor do texto (cinza claro)
-    marginBottom: 50, // Espaço abaixo do título
+    marginBottom: 40, // Espaço abaixo do título
   },
   titleSmall: {
     fontSize: 26,
@@ -304,7 +316,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: "100%", // Ocupar toda a largura do container interno
-    height: 50, // Altura de 50 pixels
+    height: 50, // altura base (sobrescrita dinamicamente)
     backgroundColor: "#FFFFFF", // Fundo branco
     borderRadius: 10, // Bordas arredondadas
     paddingHorizontal: 15, // Espaço interno nas laterais
@@ -335,7 +347,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: "100%", // Preencher largura do container interno
-    height: 50, // Altura de 50 pixels
+    height: 50, // Altura base (sobrescrita dinamicamente)
     backgroundColor: "#000000", // Fundo preto
     borderRadius: 10, // Bordas arredondadas
     justifyContent: "center", // Centraliza o texto verticalmente

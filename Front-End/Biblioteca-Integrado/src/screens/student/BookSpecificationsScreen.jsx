@@ -65,10 +65,8 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
     if (togglingFavorite) return;
     setTogglingFavorite(true);
 
-    // optimistic update: flip immediately for snappy UI
     const prev = isFavorited;
     setIsFavorited(!prev);
-    // emit optimistically so other screens update
     emit("favoriteChanged", { id, isFavorito: !prev, book: raw });
 
     try {
@@ -78,7 +76,6 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       const response = await toggleFavoritoAPI(usuarioId, id, token);
 
       if (!response || !response.success) {
-        // revert optimistic change
         setIsFavorited(prev);
         emit("favoriteChanged", { id, isFavorito: prev });
         console.warn(
@@ -140,7 +137,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
 
 const styles = StyleSheet.create({
   Backgroundcontainer: { flex: 1, backgroundColor: "#020618" },
-  safeArea: { flex: 1, paddingTop: 80 },
+  safeArea: { flex: 1, paddingTop: 50 },
   container: { padding: 20 },
   header: {
     flexDirection: "row",

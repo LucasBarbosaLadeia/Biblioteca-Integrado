@@ -31,7 +31,7 @@ const HomeHeader = ({
         <Ionicons
           name={showBack ? "book-back" : "grid-outline"}
           size={20}
-          color="#ff0000ff"
+          color="#ffffffff"
         />
       </TouchableOpacity>
 
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 10,
     marginBottom: 5,
-    marginTop: 50,
+    marginTop: 5,
   },
   iconBtn: {
     width: 36,

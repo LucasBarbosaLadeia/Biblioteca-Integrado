@@ -5,8 +5,8 @@ import { Ionicons } from "@expo/vector-icons";
 const HeaderFavorite = ({ title = "Meus Favoritos", count = 0, onBack }) => {
   return (
     <View style={styles.headerContainer}>
-      <TouchableOpacity onPress={onBack} style={styles.iconWrap}>
-        <Ionicons name="arrow-back-circle" size={36} color="#fff" />
+      <TouchableOpacity onPress={onBack} style={styles.iconBtn}>
+        <Ionicons name="arrow-back" size={20} color="#ffffffff" />
       </TouchableOpacity>
 
       <View style={styles.titleBlock}>
@@ -46,6 +46,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#b7b8c2",
     marginTop: 4,
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#1b2546ff",
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

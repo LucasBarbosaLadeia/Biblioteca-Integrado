@@ -95,7 +95,7 @@ const ManageBooks = ({ navigation }) => {
     if (navigation && navigation.navigate) {
       navigation.navigate("EditBook", { bookId: book.id_livro || book.id });
     } else {
-      console.log("Editar livro", book);
+      console.log("Editar livro");
     }
   };
 
