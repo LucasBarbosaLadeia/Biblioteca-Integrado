@@ -1,5 +1,13 @@
-import React from "react";
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const CustomAlert = ({
   visible,
@@ -7,7 +15,28 @@ const CustomAlert = ({
   message,
   onClose,
   buttonText = "OK",
+  type = "info", // 'success' | 'error' | 'info'
 }) => {
+  const scale = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.spring(scale, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 8,
+      }).start();
+    } else {
+      scale.setValue(0.8);
+    }
+  }, [visible]);
+
+  const colors = {
+    success: "#10B981",
+    error: "#EF4444",
+    info: "#0A1931",
+  };
+  const accent = colors[type] || colors.info;
   return (
     <Modal
       visible={visible}
@@ -16,13 +45,32 @@ const CustomAlert = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.content}>
-          {title ? <Text style={styles.title}>{title}</Text> : null}
+        <Animated.View
+          style={[
+            styles.content,
+            { borderColor: accent, transform: [{ scale }] },
+          ]}
+        >
+          {/* Icon */}
+          {type === "success" && (
+            <Ionicons
+              name="checkmark-circle"
+              size={48}
+              color={accent}
+              style={{ marginBottom: 8 }}
+            />
+          )}
+          {title ? (
+            <Text style={[styles.title, { color: accent }]}>{title}</Text>
+          ) : null}
           <Text style={styles.message}>{message}</Text>
-          <TouchableOpacity style={styles.button} onPress={onClose}>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: accent }]}
+            onPress={onClose}
+          >
             <Text style={styles.buttonText}>{buttonText}</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

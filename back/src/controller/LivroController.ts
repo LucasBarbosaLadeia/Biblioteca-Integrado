@@ -182,6 +182,84 @@ export class LivroController {
     }
   }
 
+  // Buscar livros mais recentes adicionados
+  static async getRecentes(req: Request, res: Response): Promise<void> {
+    try {
+      const { limit = 10 } = req.query;
+
+      const livros = await Livro.findAll({
+        include: [
+          {
+            model: Categoria,
+            as: "categoria",
+            attributes: ["id_categoria", "nome"],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+        limit: Number(limit),
+      });
+
+      res.status(200).json({
+        success: true,
+        data: livros,
+        message: "Livros mais recentes listados com sucesso",
+      });
+    } catch (error) {
+      console.error("Erro ao buscar livros mais recentes:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
+  }
+
+  // Buscar livros recomendados
+  // Heurística: livros disponíveis (qt_atual > 0), ordenados por qt_total desc (mais exemplares) e createdAt desc
+  // Query params: limit (padrão 10), categoria (opcional)
+  static async getRecomendados(req: Request, res: Response): Promise<void> {
+    try {
+      const { limit = 10, categoria } = req.query;
+
+      const whereClause: any = {
+        qt_atual: { [Op.gt]: 0 },
+      };
+
+      if (categoria) {
+        whereClause.id_categoria = categoria;
+      }
+
+      const livros = await Livro.findAll({
+        where: whereClause,
+        include: [
+          {
+            model: Categoria,
+            as: "categoria",
+            attributes: ["id_categoria", "nome"],
+          },
+        ],
+        order: [
+          ["qt_total", "DESC"],
+          ["createdAt", "DESC"],
+        ],
+        limit: Number(limit),
+      });
+
+      res.status(200).json({
+        success: true,
+        data: livros,
+        message: "Livros recomendados listados com sucesso",
+      });
+    } catch (error) {
+      console.error("Erro ao buscar livros recomendados:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
+  }
+
   // Criar novo livro
   static async create(req: Request, res: Response): Promise<void> {
     try {
@@ -195,6 +273,7 @@ export class LivroController {
         prateleira,
         isbn,
         qt_total,
+        paginas = 0,
       } = req.body;
 
       // Validações básicas
@@ -238,6 +317,15 @@ export class LivroController {
         return;
       }
 
+      // Validar páginas
+      if (paginas < 0) {
+        res.status(400).json({
+          success: false,
+          message: "Número de páginas deve ser maior ou igual a 0",
+        });
+        return;
+      }
+
       const novoLivro = await Livro.create({
         titulo,
         autor,
@@ -249,6 +337,7 @@ export class LivroController {
         isbn,
         qt_atual: qt_total, // Quantidade atual inicia igual à total
         qt_total,
+        paginas,
       });
 
       // Retornar livro com categoria

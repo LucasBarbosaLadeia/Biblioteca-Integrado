@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import {
+  ScrollView,
+  StatusBar,
+  useWindowDimensions,
+  Keyboard,
   StyleSheet,
   Text,
   TextInput,
@@ -9,109 +13,279 @@ import {
   SafeAreaView,
   ImageBackground,
   View,
+  TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { maskRA, unmaskRA } from "../utils/mask";
-import { API_HOST } from "@env";
+import { api } from "../services/api";
 import CustomAlert from "../components/CustomAlert";
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({ navigation, setRole }) => {
+  const { width } = useWindowDimensions();
+  const isSmall = width < 360;
+  // responsive sizing helpers
+  const horizontalPadding = Math.min(
+    32,
+    Math.max(12, Math.floor(width * 0.05))
+  );
+  const titleFontSize = width < 360 ? 26 : width < 420 ? 32 : 36;
+  const inputHeight = Math.max(44, Math.min(56, Math.floor(width * 0.12)));
+  const buttonHeight = inputHeight;
+  const innerMaxWidth = Math.min(560, Math.max(340, Math.floor(width * 0.85)));
   const [ra, setRa] = useState("");
   const [senha, setSenha] = useState("");
   const [showEsqueceuSenha, setShowEsqueceuSenha] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    setLoading(true);
+    // create an abort controller so we can timeout the request if it hangs
+    const controller = new AbortController();
+    const timeoutMs = 8000; // 8 seconds
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
-      const API = API_HOST;
-      const respose = await fetch(`${API}/api/usuarios/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ra: unmaskRA(ra), senha }),
-      });
+      // Use centralized api helper. The helper will throw on non-2xx responses.
+      const data = await api.post(
+        "usuarios/login",
+        { ra: unmaskRA(ra), senha },
+        { signal: controller.signal }
+      );
+      clearTimeout(timeoutId);
 
-      const data = await respose.json();
-
-      if (data.token) {
+      if (data && data.token) {
         await AsyncStorage.setItem("token", data.token);
         await AsyncStorage.setItem("userId", String(data.data.id_usuario));
+        // save user name and role quickly so drawer/profile can show immediately without extra fetch
+        try {
+          // debug: show returned payload (remove in production)
+          try {
+            console.log("[Login] response data:", data);
+          } catch (e) {}
 
-        navigation.navigate("Home");
+          const nome = data.data?.nome || data.data?.name || "";
+          const rawTipo = data.data?.tipo ?? data.data?.role ?? "";
+
+          // normalize role to either 'student' or 'librarian'
+          // Heuristics cover common values returned by backends:
+          // - Portuguese strings: 'ALUNO', 'aluno', 'bibliotecario', 'BIB', etc.
+          // - English strings: 'student', 'librarian', 'admin'
+          // - Numeric ids: '1' -> student, '2' -> librarian (adjust if your backend uses different ids)
+          let roleToSet = "student";
+          if (rawTipo !== "") {
+            const rStr = String(rawTipo).trim();
+            const r = rStr.toLowerCase();
+
+            // numeric id mapping (common conventions; change if your backend differs)
+            if (/^\d+$/.test(rStr)) {
+              if (rStr === "1") roleToSet = "student";
+              else if (rStr === "2") roleToSet = "librarian";
+              else roleToSet = "student"; // safe default for unknown numeric ids
+            }
+            // explicit textual matches for students
+            else if (
+              ["aluno", "estudante", "student"].some(
+                (k) => r === k || r.includes(k)
+              )
+            ) {
+              roleToSet = "student";
+            }
+            // explicit textual matches for librarians/admins
+            else if (
+              [
+                "bibliotecario",
+                "bibliotecaria",
+                "bib",
+                "funcionario",
+                "funcionário",
+                "admin",
+                "librarian",
+                "librar",
+                "bibliotec",
+              ].some((k) => r === k || r.includes(k))
+            ) {
+              roleToSet = "librarian";
+            } else {
+              // fallback to simple substring check and default to student
+              if (
+                r.includes("bibliotec") ||
+                r.includes("librar") ||
+                r.includes("admin") ||
+                r.includes("librarian")
+              ) {
+                roleToSet = "librarian";
+              } else {
+                roleToSet = "student";
+              }
+            }
+          }
+
+          if (nome) await AsyncStorage.setItem("userName", String(nome));
+          if (rawTipo) await AsyncStorage.setItem("userRole", String(rawTipo));
+
+          await AsyncStorage.setItem("userRoleNormalized", roleToSet);
+          try {
+            if (typeof setRole === "function") {
+              console.log("[Login] setting role to", roleToSet);
+              setRole(roleToSet);
+            } else if (
+              navigation &&
+              typeof navigation.navigate === "function"
+            ) {
+              console.log("[Login] navigating to Home via navigation.navigate");
+              navigation.navigate("Home");
+            } else {
+              console.warn(
+                "[Login] neither setRole nor navigation.navigate available after login"
+              );
+            }
+          } catch (e) {
+            console.error("[Login] error applying role/navigation:", e);
+            // try a safe fallback
+            try {
+              navigation && navigation.navigate && navigation.navigate("Home");
+            } catch (err) {
+              console.error("[Login] fallback navigation also failed:", err);
+            }
+          }
+        } catch (e) {
+          // ignore storage errors
+        }
       } else {
-        setErrorMessage(data.message || "Credenciais inválidas");
+        setErrorMessage(data?.message || "Credenciais inválidas");
         setShowErrorAlert(true);
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error("Erro ao fazer login:", error);
-      setErrorMessage("Erro ao fazer login. Tente novamente mais tarde.");
+      if (error.name === "AbortError") {
+        setErrorMessage(
+          "A requisição expirou. Verifique sua conexão e tente novamente."
+        );
+      } else {
+        // api helper throws Error with stored body on non-2xx. Use body.message if present.
+        const msg =
+          error?.body?.message ||
+          error.message ||
+          "Erro ao fazer login. Tente novamente mais tarde.";
+        setErrorMessage(msg);
+      }
       setShowErrorAlert(true);
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
   };
 
   return (
     <ImageBackground source={BackgroundImage} style={styles.backgroundImage}>
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          style={styles.container}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <CustomAlert
-            visible={showEsqueceuSenha}
-            onClose={() => setShowEsqueceuSenha(false)}
-            title={"Aviso"}
-            message={"Funcionalidade em desenvolvimento"}
-            buttonText={"OK"}
-          />
-          <CustomAlert
-            visible={showErrorAlert}
-            onClose={() => setShowErrorAlert(false)}
-            title={"Erro"}
-            message={errorMessage}
-            buttonText={"OK"}
-          />
-          <Text style={styles.title}>Biblioteca Integrado</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Registro (RA)"
-            placeholderTextColor="#BBBBBB"
-            keyboardType="numeric"
-            value={ra}
-            onChangeText={(text) => setRa(maskRA(text))}
-          />
-          <View style={styles.inputPasswordContainer}>
-            <TextInput
-              style={styles.inputPassword}
-              placeholder="Senha"
-              placeholderTextColor="#BBBBBB"
-              secureTextEntry={!showPassword}
-              value={senha}
-              onChangeText={setSenha}
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword((prev) => !prev)}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={
+              Platform.OS === "ios" ? 0 : StatusBar.currentHeight || 0
+            }
+          >
+            <ScrollView
+              contentContainerStyle={styles.scrollContent}
+              keyboardShouldPersistTaps="handled"
             >
-              <Ionicons
-                name={showPassword ? "eye" : "eye-off"}
-                size={24}
-                color="#888"
-              />
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Entrar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowEsqueceuSenha(true)}>
-            <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
+              <View style={styles.inner}>
+                <CustomAlert
+                  visible={showEsqueceuSenha}
+                  onClose={() => setShowEsqueceuSenha(false)}
+                  title={"Aviso"}
+                  message={"Funcionalidade em desenvolvimento"}
+                  buttonText={"OK"}
+                />
+                <CustomAlert
+                  visible={showErrorAlert}
+                  onClose={() => setShowErrorAlert(false)}
+                  title={"Erro"}
+                  message={errorMessage}
+                  buttonText={"OK"}
+                />
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      fontSize: titleFontSize,
+                      marginBottom: titleFontSize > 32 ? 40 : 28,
+                    },
+                  ]}
+                >
+                  Biblioteca Integrado
+                </Text>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      height: inputHeight,
+                      fontSize: Math.max(14, Math.floor(titleFontSize * 0.5)),
+                    },
+                  ]}
+                  placeholder="Registro (RA)"
+                  placeholderTextColor="#BBBBBB"
+                  keyboardType="numeric"
+                  value={ra}
+                  onChangeText={(text) => setRa(maskRA(text))}
+                />
+                <View
+                  style={[
+                    styles.inputPasswordContainer,
+                    { height: inputHeight },
+                  ]}
+                >
+                  <TextInput
+                    style={styles.inputPassword}
+                    placeholder="Senha"
+                    placeholderTextColor="#BBBBBB"
+                    secureTextEntry={!showPassword}
+                    value={senha}
+                    onChangeText={setSenha}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword((prev) => !prev)}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye" : "eye-off"}
+                      size={24}
+                      color="#888"
+                    />
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    { height: buttonHeight },
+                    loading ? styles.buttonDisabled : null,
+                  ]}
+                  onPress={handleLogin}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.buttonText}>Entrar</Text>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowEsqueceuSenha(true)}>
+                  <Text style={styles.forgotPassword}>Esqueceu a senha?</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -131,18 +305,37 @@ const styles = StyleSheet.create({
     flex: 1, // Ocupa todo o espaço disponível
     justifyContent: "center", // Centraliza verticalmente os itens
     alignItems: "center", // Centraliza horizontalmente os itens
-    padding: 20, // Espaçamento interno de 20 em todos os lados
+    padding: 0, // Padding movido para scrollContent para evitar duplicidade
     backgroundColor: "transparent", // Torna o fundo do container transparente
   },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+  },
+  inner: {
+    width: "100%",
+    maxWidth: 420,
+    alignItems: "center",
+    paddingHorizontal: 12,
+  },
   title: {
-    fontSize: 32, // Tamanho da fonte grande para o título
+    // fontSize set dynamically in-line for responsiveness
     fontWeight: "bold", // Deixa o texto em negrito
     color: "#E0E0E0", // Cor do texto (cinza claro)
-    marginBottom: 50, // Espaço abaixo do título
+    marginBottom: 40, // Espaço abaixo do título
+  },
+  titleSmall: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#E0E0E0",
+    marginBottom: 36,
   },
   input: {
-    width: "90%", // Largura de 90% do container
-    height: 50, // Altura de 50 pixels
+    width: "100%", // Ocupar toda a largura do container interno
+    height: 50, // altura base (sobrescrita dinamicamente)
     backgroundColor: "#FFFFFF", // Fundo branco
     borderRadius: 10, // Bordas arredondadas
     paddingHorizontal: 15, // Espaço interno nas laterais
@@ -151,7 +344,7 @@ const styles = StyleSheet.create({
     marginBottom: 20, // Espaço abaixo do campo
   },
   inputPasswordContainer: {
-    width: "90%",
+    width: "100%",
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
@@ -172,14 +365,17 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   button: {
-    width: "90%", // Largura de 90% do container
-    height: 50, // Altura de 50 pixels
+    width: "100%", // Preencher largura do container interno
+    height: 50, // Altura base (sobrescrita dinamicamente)
     backgroundColor: "#000000", // Fundo preto
     borderRadius: 10, // Bordas arredondadas
     justifyContent: "center", // Centraliza o texto verticalmente
     alignItems: "center", // Centraliza o texto horizontalmente
     marginTop: 10, // Espaço acima do botão
     marginBottom: 20, // Espaço abaixo do botão
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: "#FFFFFF", // Cor do texto (branco)

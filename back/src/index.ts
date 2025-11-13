@@ -10,7 +10,7 @@ import "./models";
 import routes from "./routes";
 
 const app = express();
-const port = 3001; // Mudando para porta 3001 para evitar conflito
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // pegar da env quando disponível
 
 // Middleware
 app.use(cors());
