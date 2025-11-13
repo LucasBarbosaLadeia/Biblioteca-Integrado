@@ -28,7 +28,10 @@ const LoginScreen = ({ navigation, setRole }) => {
   const { width } = useWindowDimensions();
   const isSmall = width < 360;
   // responsive sizing helpers
-  const horizontalPadding = Math.min(32, Math.max(12, Math.floor(width * 0.05)));
+  const horizontalPadding = Math.min(
+    32,
+    Math.max(12, Math.floor(width * 0.05))
+  );
   const titleFontSize = width < 360 ? 26 : width < 420 ? 32 : 36;
   const inputHeight = Math.max(44, Math.min(56, Math.floor(width * 0.12)));
   const buttonHeight = inputHeight;
@@ -211,13 +214,24 @@ const LoginScreen = ({ navigation, setRole }) => {
                   message={errorMessage}
                   buttonText={"OK"}
                 />
-                <Text style={[styles.title, { fontSize: titleFontSize, marginBottom: titleFontSize > 32 ? 40 : 28 }]}>
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      fontSize: titleFontSize,
+                      marginBottom: titleFontSize > 32 ? 40 : 28,
+                    },
+                  ]}
+                >
                   Biblioteca Integrado
                 </Text>
                 <TextInput
                   style={[
                     styles.input,
-                    { height: inputHeight, fontSize: Math.max(14, Math.floor(titleFontSize * 0.5)) },
+                    {
+                      height: inputHeight,
+                      fontSize: Math.max(14, Math.floor(titleFontSize * 0.5)),
+                    },
                   ]}
                   placeholder="Registro (RA)"
                   placeholderTextColor="#BBBBBB"
@@ -225,7 +239,12 @@ const LoginScreen = ({ navigation, setRole }) => {
                   value={ra}
                   onChangeText={(text) => setRa(maskRA(text))}
                 />
-                <View style={[styles.inputPasswordContainer, { height: inputHeight }]}> 
+                <View
+                  style={[
+                    styles.inputPasswordContainer,
+                    { height: inputHeight },
+                  ]}
+                >
                   <TextInput
                     style={styles.inputPassword}
                     placeholder="Senha"

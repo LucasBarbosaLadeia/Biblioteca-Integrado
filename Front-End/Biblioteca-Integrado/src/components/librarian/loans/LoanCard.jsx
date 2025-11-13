@@ -1,13 +1,24 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { useWindowDimensions } from "react-native";
 
-const Badge = ({ text, color }) => (
-  <View style={[styles.badge, { backgroundColor: color }]}>
-    <Text style={styles.badgeText}>{text}</Text>
+const Badge = ({ text, color, compact }) => (
+  <View
+    style={[
+      styles.badge,
+      compact ? styles.badgeCompact : null,
+      { backgroundColor: color },
+    ]}
+  >
+    <Text style={[styles.badgeText, compact ? styles.badgeTextCompact : null]}>
+      {text}
+    </Text>
   </View>
 );
 
 const LoanCard = ({ borrower, title, dueDate, status, returnDate }) => {
+  const { width } = useWindowDimensions();
+  const compact = width < 400;
   // dueDate and returnDate expected as ISO strings
   const today = new Date();
   const due = dueDate ? new Date(dueDate) : null;
@@ -30,11 +41,25 @@ const LoanCard = ({ borrower, title, dueDate, status, returnDate }) => {
   return (
     <View style={styles.card}>
       <View style={styles.rowTop}>
-        <Text style={styles.borrower}>{borrower}</Text>
-        {badge ? <Badge text={badge.text} color={badge.color} /> : null}
+        <Text
+          style={[styles.borrower, compact ? styles.borrowerCompact : null]}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {borrower}
+        </Text>
+        {badge ? (
+          <Badge text={badge.text} color={badge.color} compact={compact} />
+        ) : null}
       </View>
 
-      <Text style={styles.bookTitle}>{title}</Text>
+      <Text
+        style={[styles.bookTitle, compact ? styles.bookTitleCompact : null]}
+        numberOfLines={2}
+        ellipsizeMode="tail"
+      >
+        {title}
+      </Text>
 
       {status === "devolvido" ? (
         <Text style={styles.due}>
@@ -61,18 +86,29 @@ const styles = StyleSheet.create({
   rowTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 8,
   },
   borrower: {
     color: "#ffffff",
     fontWeight: "700",
     fontSize: 14,
+    flex: 1,
+    marginRight: 8,
+    flexWrap: "wrap",
+    flexShrink: 1,
+  },
+  borrowerCompact: {
+    fontSize: 13,
   },
   bookTitle: {
     color: "#9ca3af",
     fontSize: 13,
     marginBottom: 6,
+    flexShrink: 1,
+  },
+  bookTitleCompact: {
+    fontSize: 12,
   },
   due: {
     color: "#94a3b8",
@@ -82,10 +118,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
+    alignSelf: "flex-start",
+    marginLeft: 6,
   },
   badgeText: {
     color: "#fff",
     fontSize: 12,
+    fontWeight: "700",
+  },
+  badgeTextCompact: {
+    fontSize: 11,
     fontWeight: "700",
   },
 });

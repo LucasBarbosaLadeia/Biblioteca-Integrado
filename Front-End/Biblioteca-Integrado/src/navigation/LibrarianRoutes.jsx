@@ -4,6 +4,8 @@ import HomeLibrarian from "../screens/librarian/HomeLibrarian";
 import ManualLoanScreen from "../screens/librarian/ManualLoanScreen";
 import AddBookScreen from "../screens/librarian/AddBookScreen";
 import ManageLoansScreen from "../screens/librarian/ManageLoansScreen";
+import ManageBooks from "../screens/admin/ManageBooks";
+import EditBook from "../screens/librarian/EditBook";
 
 const Stack = createStackNavigator();
 
@@ -16,7 +18,9 @@ export default function LibrarianRoutes({ setRole }) {
       <Stack.Screen name="PendingRequests" component={PendingRequests} />
       <Stack.Screen name="ManualLoan" component={ManualLoanScreen} />
       <Stack.Screen name="AddBook" component={AddBookScreen} />
+      <Stack.Screen name="EditBook" component={EditBook} />
       <Stack.Screen name="ManageLoans" component={ManageLoansScreen} />
+      <Stack.Screen name="ManageBooks" component={ManageBooks} />
     </Stack.Navigator>
   );
 }

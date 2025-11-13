@@ -70,9 +70,6 @@ const PendingRequestList = ({ navigation }) => {
   }, [query, requests]);
 
   const handleConfirm = (req, dueDate) => {
-    // Remove o pedido da lista localmente após confirmação
-    // dueDate é um objeto Date (normalizado). Aqui você pode também
-    // enviar para o backend antes de remover (ex: api.post(...)).
     const fmt = (d) => {
       const dd = String(d.getDate()).padStart(2, "0");
       const mm = String(d.getMonth() + 1).padStart(2, "0");

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useWindowDimensions } from "react-native";
 
 const DashboardCard = ({
   title,
@@ -26,11 +27,20 @@ const DashboardCard = ({
     ? Math.max(11, Math.min(18, Math.round(size * 0.085)))
     : 13;
 
-  // icon circle size and inner icon size
+  // layout responsiveness based on available width
+  const { width: _width } = useWindowDimensions();
+  const smallScreen = _width < 360;
+  const mediumScreen = _width >= 360 && _width < 480;
+  // decide how many columns the grid should show (1 column on narrow screens)
+  const columns = _width < 420 ? 1 : _width < 900 ? 2 : 3;
   const iconCircle = size
     ? Math.max(28, Math.min(48, Math.round(size * 0.27)))
-    : 38;
-  const iconInnerSize = Math.max(14, Math.round(iconCircle * 0.55));
+    : smallScreen
+    ? 26
+    : mediumScreen
+    ? 30
+    : 34;
+  const iconInnerSize = Math.max(12, Math.round(iconCircle * 0.55));
 
   // prepare cloned icon with adjusted size if it's a valid React element
   let iconElement = icon;
@@ -52,13 +62,24 @@ const DashboardCard = ({
       style={[
         styles.container,
         { backgroundColor: color },
+        // responsive width / height behavior: prefer square cards on larger layouts,
+        // but on narrow screens use full-width stacked cards with comfortable height.
         size
           ? {
               width: size,
               height: size,
               padding: Math.max(10, Math.round(size * 0.08)),
             }
-          : null,
+          : columns === 1
+          ? {
+              flexBasis: "100%",
+              maxWidth: "100%",
+              aspectRatio: undefined,
+              padding: 14,
+            }
+          : columns === 2
+          ? { flexBasis: "48%", maxWidth: "48%", aspectRatio: 1 }
+          : { flexBasis: "31%", maxWidth: "31%", aspectRatio: 1 },
       ]}
     >
       {icon ? (
@@ -70,6 +91,8 @@ const DashboardCard = ({
               width: iconCircle,
               height: iconCircle,
               borderRadius: Math.round(iconCircle / 2),
+              top: smallScreen ? 6 : mediumScreen ? 8 : 10,
+              right: smallScreen ? 6 : mediumScreen ? 8 : 10,
             },
           ]}
         >
@@ -95,12 +118,13 @@ const DashboardCard = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: "48%",
+    flexBasis: "48%",
+    maxWidth: "48%",
     aspectRatio: 1,
     borderRadius: 10,
     padding: 14,
     marginVertical: 6,
-    marginHorizontal: 4,
+    marginHorizontal: 2,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
     justifyContent: "space-between",

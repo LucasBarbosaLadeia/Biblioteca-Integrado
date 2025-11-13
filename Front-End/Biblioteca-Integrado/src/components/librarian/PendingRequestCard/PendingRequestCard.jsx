@@ -104,7 +104,6 @@ const PendingRequestCard = ({ request, onConfirm, onReject }) => {
               end={[1, 1]}
               style={styles.btn}
             >
-              <Ionicons name="checkmark" size={18} color="#fff" />
               <Text style={styles.btnText}>Confirmar Retirada</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -120,7 +119,6 @@ const PendingRequestCard = ({ request, onConfirm, onReject }) => {
               end={[1, 1]}
               style={styles.btn}
             >
-              <Ionicons name="close" size={18} color="#fff" />
               <Text style={styles.btnText}>Recusar</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -233,14 +231,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    minHeight: 36,
+    position: "relative",
+    paddingHorizontal: 12,
   },
   statusRow: { flexDirection: "row", alignItems: "center" },
   statusRetirado: { color: "#3bd671", marginLeft: 8, fontWeight: "700" },
   confirm: { marginRight: 8 },
   reject: { marginLeft: 8 },
-  btnText: { color: "#fff", marginLeft: 8, fontWeight: "600" },
+  btnText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+    textAlign: "center",
+    width: "100%",
+  },
+
   // painel inline (aparece dentro do card)
   panelWrapper: {
     marginTop: 12,
@@ -285,7 +293,7 @@ const styles = StyleSheet.create({
   inlineCancel: { marginLeft: 8 },
   gradientWrap: {
     flex: 1,
-    borderRadius: 10,
+    borderRadius: 8,
     overflow: "hidden",
   },
   gradientWrapSmall: {

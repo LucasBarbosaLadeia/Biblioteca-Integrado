@@ -10,3 +10,4 @@ export { default as CardActiveLoans } from "./cardHome/CardActiveLoans";
 export { default as CardOverdue } from "./cardHome/CardOverdue";
 export { default as CardRequests } from "./cardHome/CardRequests";
 export { default as RecentLoans } from "./loans/RecentLoans";
+// LogoutButton removed
