@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { View, ScrollView, SafeAreaView, StyleSheet, Text } from "react-native";
+import {
+  View,
+  ScrollView,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWindowDimensions } from "react-native";
-import DrawerMenu from "../../components/home/DrawerMenu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "../../services/api";
 import {
@@ -25,14 +31,17 @@ const HomeLibrarian = ({ navigation, setRole }) => {
   });
   const [loadingStats, setLoadingStats] = useState(false);
 
-  const { width: windowWidth } = useWindowDimensions();
-  const PAGE_PADDING = 15;
-  const CONTENT_PADDING = 16;
-  const GAP = 8;
-  const itemSize = Math.floor(
-    (windowWidth - PAGE_PADDING * 2 - CONTENT_PADDING * 2 - GAP) / 2
+  // compute some responsive paddings based on window size
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  // header padding: proportional but clamped to reduce excessive top spacing
+  // use a smaller multiplier and lower max so header stays compact on tall screens
+  const responsivePaddingTop = Math.min(
+    16,
+    Math.max(4, Math.round(windowHeight * 0.02))
   );
-  const adjustedItemSize = itemSize + 5;
+  const responsiveContentPadding = Math.max(12, Math.round(windowWidth * 0.03));
+  const responsiveTitleFont =
+    windowWidth < 360 ? 18 : windowWidth < 420 ? 20 : 22;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -143,24 +152,27 @@ const HomeLibrarian = ({ navigation, setRole }) => {
     },
   ];
 
+  const handleNavigate = (route) => {
+    if (navigation && route) navigation.navigate(route);
+  };
+
   // actions are rendered by LibrarianActions by default (no API data needed)
 
   return (
     <View style={styles.containerRoot}>
       <SafeAreaView style={styles.safe}>
         <View style={styles.page}>
-          <View style={styles.topRow}>
-            <Text style={styles.topTitle}>Painel do Bibliotecário</Text>
-            {/* <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => setDrawerVisible(true)}
-            >
-              <Ionicons name="grid-outline" size={20} color="#fff" />
-            </TouchableOpacity> */}
+          <View style={[styles.topRow, { paddingTop: responsivePaddingTop }]}>
+            <Text style={[styles.topTitle, { fontSize: responsiveTitleFont }]}>
+              Painel do Bibliotecário
+            </Text>
           </View>
 
           <ScrollView
-            contentContainerStyle={styles.content}
+            contentContainerStyle={[
+              styles.content,
+              { padding: responsiveContentPadding },
+            ]}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.cardsGrid}>
@@ -171,7 +183,6 @@ const HomeLibrarian = ({ navigation, setRole }) => {
                     : "-"
                 }
                 onPress={() => {}}
-                size={adjustedItemSize}
               />
               <CardActiveLoans
                 value={
@@ -179,8 +190,7 @@ const HomeLibrarian = ({ navigation, setRole }) => {
                     ? String(statsCounts.activeLoans)
                     : "-"
                 }
-                onPress={() => {}}
-                size={adjustedItemSize}
+                onPress={() => handleNavigate && handleNavigate("ManageLoans")}
               />
               <CardOverdue
                 value={
@@ -188,8 +198,7 @@ const HomeLibrarian = ({ navigation, setRole }) => {
                     ? String(statsCounts.overdue)
                     : "-"
                 }
-                onPress={() => {}}
-                size={adjustedItemSize}
+                onPress={() => handleNavigate && handleNavigate("ManageLoans")}
               />
               <CardRequests
                 value={
@@ -197,14 +206,15 @@ const HomeLibrarian = ({ navigation, setRole }) => {
                     ? String(statsCounts.requests)
                     : "-"
                 }
-                onPress={() => {}}
-                size={adjustedItemSize}
+                onPress={() =>
+                  handleNavigate && handleNavigate("PendingRequests")
+                }
               />
             </View>
 
             <View style={styles.sectionQuickActions}>
               <Text style={styles.sectionTitleActions}>Ações Rápidas</Text>
-              <LibrarianActions />
+              <LibrarianActions navigation={navigation} />
             </View>
 
             <View style={styles.sectionRecentLoans}>
@@ -213,31 +223,46 @@ const HomeLibrarian = ({ navigation, setRole }) => {
               </Text>
               <RecentLoans />
             </View>
+            <View style={styles.signOutRow}>
+              <TouchableOpacity
+                style={styles.signOutButton}
+                onPress={async () => {
+                  try {
+                    await AsyncStorage.multiRemove([
+                      "userName",
+                      "userRole",
+                      "token",
+                    ]);
+                  } catch (e) {
+                    // ignore
+                  }
+
+                  if (setRole && typeof setRole === "function") {
+                    try {
+                      setRole(null);
+                    } catch (e) {}
+                    return;
+                  }
+
+                  if (handleNavigate) {
+                    handleNavigate("Login");
+                  } else if (navigation && navigation.replace) {
+                    navigation.replace("Login");
+                  }
+                }}
+                accessibilityRole="button"
+              >
+                <Ionicons
+                  name="exit-outline"
+                  size={18}
+                  color="#FF6B6B"
+                  style={styles.signOutIcon}
+                />
+                <Text style={styles.signOutText}>Sair</Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
-
-        <DrawerMenu
-          visible={drawerVisible}
-          onClose={() => setDrawerVisible(false)}
-          navigation={navigation}
-          user={user}
-          onLogout={async () => {
-            try {
-              await AsyncStorage.removeItem("token");
-              await AsyncStorage.removeItem("userId");
-              await AsyncStorage.removeItem("userName");
-              await AsyncStorage.removeItem("userRole");
-              await AsyncStorage.removeItem("userRoleNormalized");
-            } catch (e) {}
-            try {
-              if (typeof setRole === "function") setRole(null);
-              else navigation.navigate("Login");
-            } catch (e) {
-              navigation.navigate("Login");
-            }
-          }}
-          activeRoute={"Home"}
-        />
       </SafeAreaView>
     </View>
   );
@@ -254,7 +279,7 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     paddingHorizontal: 1,
-    paddingTop: 50,
+    paddingTop: 0,
   },
   content: {
     padding: 16,
@@ -269,7 +294,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 10,
     marginBottom: 10,
-    marginTop: 10,
+    marginTop: 25,
   },
   topTitle: {
     color: "#fff",
@@ -304,6 +329,33 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 8,
     marginInlineStart: 4,
+  },
+  signOutRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#0E1A22",
+    paddingTop: 12,
+    paddingBottom: 25,
+
+    alignItems: "center",
+    transform: [{ translateY: -20 }],
+  },
+  signOutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "transparent",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#FF6B6B",
+  },
+  signOutIcon: {
+    marginRight: 8,
+  },
+  signOutText: {
+    color: "#FF6B6B",
+    fontWeight: "700",
+    fontSize: 16,
   },
 });
 

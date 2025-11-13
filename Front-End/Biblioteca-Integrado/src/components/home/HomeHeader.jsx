@@ -8,6 +8,8 @@ const HomeHeader = ({
   onMenuPress,
   onBellPress,
   hasAlert = false,
+  showBack = false,
+  onBackPress,
 }) => {
   const [alert, setAlert] = useState(!!hasAlert);
 
@@ -22,8 +24,15 @@ const HomeHeader = ({
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.iconBtn} onPress={onMenuPress}>
-        <Ionicons name="grid-outline" size={20} color="#fff" />
+      <TouchableOpacity
+        style={styles.iconBtn}
+        onPress={showBack ? onBackPress : onMenuPress}
+      >
+        <Ionicons
+          name={showBack ? "book-back" : "grid-outline"}
+          size={20}
+          color="#ffffffff"
+        />
       </TouchableOpacity>
 
       <Text style={styles.title}>{title}</Text>
@@ -41,9 +50,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 2,
-    marginBottom: 1,
-    marginTop: 2,
+    paddingHorizontal: 10,
+    marginBottom: 5,
+    marginTop: 5,
   },
   iconBtn: {
     width: 36,
