@@ -7,7 +7,7 @@ export interface IUsuario {
   email: string;
   senha: string;
   RA: string;
-  tipo: "aluno" | "funcionario";
+  tipo: "aluno" | "funcionario" | "admin";
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -18,7 +18,7 @@ class Usuario extends Model<IUsuario> implements IUsuario {
   public email!: string;
   public senha!: string;
   public RA!: string;
-  public tipo!: "aluno" | "funcionario";
+  public tipo!: "aluno" | "funcionario" | "admin";
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -57,7 +57,7 @@ Usuario.init(
       field: "RA",
     },
     tipo: {
-      type: DataTypes.ENUM("aluno", "funcionario"),
+      type: DataTypes.ENUM("aluno", "funcionario", "admin"),
       allowNull: false,
       field: "tipo",
     },
