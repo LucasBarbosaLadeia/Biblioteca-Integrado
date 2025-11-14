@@ -8,6 +8,7 @@ import "./models";
 
 // Importar rotas
 import routes from "./routes";
+import { expireReservations } from "./jobs/expireReservations";
 
 const app = express();
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // pegar da env quando disponível
@@ -46,6 +47,36 @@ const startServer = async (): Promise<void> => {
       console.log(`🚀 Servidor rodando na porta ${port}`);
       console.log(`📚 Biblioteca Integrado - Backend`);
     });
+
+    // Agendador simples para expirar reservas (opcional via env)
+    const enableJob = process.env.ENABLE_RESERVAS_JOB === "true";
+    if (enableJob) {
+      const minutes = process.env.RESERVAS_JOB_INTERVAL_MINUTES
+        ? Number(process.env.RESERVAS_JOB_INTERVAL_MINUTES)
+        : 5;
+      console.log(
+        `🕒 Job de expiração de reservas ativado: rodando a cada ${minutes} minutos`
+      );
+      // executar imediatamente e depois em intervalos
+      (async () => {
+        try {
+          const r = await expireReservations();
+          console.log(`Job expiracao: ${r.expired} reservas expiradas`);
+        } catch (e) {
+          console.error("Erro no job expiracao:", e);
+        }
+      })();
+
+      setInterval(async () => {
+        try {
+          const r = await expireReservations();
+          if (r.expired > 0)
+            console.log(`Job expiracao: ${r.expired} reservas expiradas`);
+        } catch (e) {
+          console.error("Erro no job expiracao:", e);
+        }
+      }, minutes * 60 * 1000);
+    }
   } catch (error) {
     console.error("❌ Erro ao iniciar servidor:", error);
     process.exit(1);

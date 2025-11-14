@@ -10,6 +10,11 @@ const sequelize = new Sequelize({
   username: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "biblioteca",
+  timezone: "-03:00", // define o fuso horário para o Brasil (PT-BR)
+  dialectOptions: {
+    useUTC: false, // faz o Sequelize NÃO usar UTC
+    timezone: "-03:00", // força o MySQL a salvar no fuso PT-BR
+  },
 });
 
 export default sequelize;

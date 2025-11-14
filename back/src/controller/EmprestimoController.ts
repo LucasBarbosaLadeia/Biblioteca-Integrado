@@ -4,6 +4,9 @@ import Usuario from "../models/Usuario";
 import Livro from "../models/Livro";
 import Categoria from "../models/Categoria";
 import { Op } from "sequelize";
+import Reserva from "../models/Reserva";
+import sequelize from "../config/database";
+import { notifyLowStock } from "../utils/notify";
 
 export class EmprestimoController {
   // Listar todos os empréstimos
@@ -330,15 +333,6 @@ export class EmprestimoController {
         return;
       }
 
-      // Verificar se há exemplares disponíveis
-      if (livro.qt_atual <= 0) {
-        res.status(400).json({
-          success: false,
-          message: "Livro não disponível para empréstimo",
-        });
-        return;
-      }
-
       // Verificar se usuário já tem empréstimo ativo deste livro
       const emprestimoExistente = await Emprestimo.findOne({
         where: {
@@ -356,6 +350,20 @@ export class EmprestimoController {
         return;
       }
 
+      // Verificar reserva ativa do usuário para este livro (caso exista, permitir concretização mesmo que qt_atual seja 0)
+      const reservaAtiva = await Reserva.findOne({
+        where: { id_usuario, id_livro, status: "ativa" },
+      });
+
+      // Verificar disponibilidade: se não há reserva ativa, exigir qt_atual > 0
+      if (!reservaAtiva && livro.qt_atual <= 0) {
+        res.status(400).json({
+          success: false,
+          message: "Livro não disponível para empréstimo",
+        });
+        return;
+      }
+
       // Validar data de devolução
       const hoje = new Date();
       const dataDevolucao = new Date(data_devolucao_prevista);
@@ -368,19 +376,68 @@ export class EmprestimoController {
         return;
       }
 
-      // Criar empréstimo
-      const novoEmprestimo = await Emprestimo.create({
-        id_usuario,
-        id_livro,
-        data_emprestimo: hoje,
-        data_devolucao_prevista: dataDevolucao,
-        status: "ativo",
+      // Criar empréstimo e atualizar estoque / reserva dentro de uma transação
+      let novoEmprestimo: any = null;
+      await sequelize.transaction(async (t) => {
+        // Recarregar livro com lock
+        const livroTx = await Livro.findByPk(id_livro, {
+          transaction: t,
+          lock: t.LOCK.UPDATE as any,
+        });
+        if (!livroTx) throw new Error("Livro não encontrado durante transação");
+
+        // Recarregar possível reserva ativa dentro da transação
+        const reservaTx = await Reserva.findOne({
+          where: { id_usuario, id_livro, status: "ativa" },
+          transaction: t,
+          lock: t.LOCK.UPDATE as any,
+        });
+
+        // Se não houver reserva ativa e não há exemplares, abortar
+        if (!reservaTx && livroTx.qt_atual <= 0) {
+          res
+            .status(400)
+            .json({
+              success: false,
+              message: "Livro não disponível para empréstimo",
+            });
+          throw new Error("Livro não disponível");
+        }
+
+        novoEmprestimo = await Emprestimo.create(
+          {
+            id_usuario,
+            id_livro,
+            data_emprestimo: hoje,
+            data_devolucao_prevista: dataDevolucao,
+            status: "ativo",
+          },
+          { transaction: t }
+        );
+
+        if (reservaTx) {
+          // concretizar reserva ao criar o empréstimo, sem decrementar novamente
+          await reservaTx.update(
+            { status: "concretizada" },
+            { transaction: t }
+          );
+        } else {
+          // decrementar estoque
+          const newQt = livroTx.qt_atual - 1;
+          await livroTx.update({ qt_atual: newQt }, { transaction: t });
+
+          // notificar se estoque atingir 1
+          if (newQt === 1) {
+            try {
+              await notifyLowStock(livroTx.id_livro, newQt);
+            } catch (err) {
+              console.error("Erro ao notificar estoque baixo:", err);
+            }
+          }
+        }
       });
 
-      // Atualizar quantidade do livro
-      await livro.update({ qt_atual: livro.qt_atual - 1 });
-
-      // Retornar empréstimo com dados relacionados
+      // Retornar empréstimo com dados relacionados (fora da transação)
       const emprestimoCompleto = await Emprestimo.findByPk(
         novoEmprestimo.id_emprestimo,
         {
@@ -406,11 +463,13 @@ export class EmprestimoController {
         }
       );
 
-      res.status(201).json({
-        success: true,
-        data: emprestimoCompleto,
-        message: "Empréstimo criado com sucesso",
-      });
+      res
+        .status(201)
+        .json({
+          success: true,
+          data: emprestimoCompleto,
+          message: "Empréstimo criado com sucesso",
+        });
     } catch (error) {
       console.error("Erro ao criar empréstimo:", error);
       res.status(500).json({

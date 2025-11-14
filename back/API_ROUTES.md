@@ -244,3 +244,91 @@ GET /api/favoritos/usuario/1/livro/5
 ---
 
 **🎉 Sua API está pronta para uso!**
+
+---
+
+## 🛎️ Reservas (novo recurso)
+
+### Endpoints
+
+- `GET /api/reservas`
+
+  - Lista todas as reservas (suporta `?page=&limit=`).
+
+- `GET /api/reservas/usuario/:usuarioId`
+
+  - Lista reservas de um usuário (paginado).
+
+- `GET /api/reservas/:id`
+
+  - Recupera reserva por ID.
+
+- `POST /api/reservas`
+
+  - Cria uma nova reserva.
+
+  ### Endpoints (`/reservas`)
+
+  | Método | Endpoint                       | Descrição                                            |
+  | ------ | ------------------------------ | ---------------------------------------------------- |
+  | GET    | `/reservas`                    | Listar todas as reservas (paginado: `?page=&limit=`) |
+  | GET    | `/reservas/usuario/:usuarioId` | Listar reservas de um usuário (paginado)             |
+  | GET    | `/reservas/:id`                | Buscar reserva por ID                                |
+  | POST   | `/reservas`                    | Criar nova reserva (ver body abaixo)                 |
+  | PUT    | `/reservas/:id/cancelar`       | Cancelar reserva ativa e repor estoque               |
+  | PUT    | `/reservas/:id/concretizar`    | Marcar reserva como concretizada (retirada)          |
+
+  **Body para POST /api/reservas**
+
+  ```json
+  POST /api/reservas
+  {
+    "id_usuario": 1,
+    "id_livro": 2,
+    "data_expiracao": "2025-11-15T12:00:00Z" // opcional
+  }
+  ```
+
+  ### Filtros / parâmetros
+
+  - `?page=1&limit=10` - Paginação para listagens.
+
+  ### Regras de negócio (estoque)
+
+  - Ao criar reserva:
+    - Se `livro.qt_atual > 0` o backend decrementa `qt_atual` (bloqueia um exemplar) dentro de transação.
+    - Se `livro.qt_atual === 0`, a reserva é criada como fila (não decrementa) — o usuário fica na lista de espera.
+  - Ao cancelar reserva ativa: o backend marca `status = 'cancelada'` e incrementa `livro.qt_atual` (+1) dentro de transação.
+  - Ao concretizar reserva (usuário retira o livro): a reserva recebe `status = 'concretizada'`. Se um empréstimo for criado a partir da reserva, não há decremento adicional de `qt_atual`.
+  - Ao criar empréstimo sem reserva: comportamento anterior se mantém (decrementa `qt_atual`).
+
+  ### Job: expirar reservas (limpeza automática)
+
+  - Arquivo: `back/src/jobs/expireReservations.ts`.
+  - O job procura reservas com `status = 'ativa'` cuja `data_expiracao < now` e para cada uma:
+    - marca `status = 'expirada'` e
+    - repõe `livro.qt_atual` (+1) dentro de transação.
+  - Retorno: `{ expired: n }` com a quantidade de reservas processadas.
+
+  ### Agendamento / Execução manual
+
+  - Variáveis de ambiente para ativar agendamento em `src/index.ts`:
+    - `ENABLE_RESERVAS_JOB=true` (ativa o job no start)
+    - `RESERVAS_JOB_INTERVAL_MINUTES` (intervalo em minutos, padrão 5)
+  - Execução manual para testes:
+
+  ```powershell
+  npx ts-node-dev --respawn --transpile-only src/jobs/expireReservations.ts
+  ```
+
+  ### Notas técnicas
+
+  - As operações que alteram `qt_atual` usam transações Sequelize e locks (`UPDATE`) para reduzir race conditions.
+  - O job usa `new Date()` (hora do servidor) para comparar `data_expiracao` — confira fuso horário ao testar.
+  - Códigos de erro comuns relacionados a reservas:
+    - `400` - sem exemplares disponíveis (quando necessário);
+    - `409` - conflito (usuário já possui reserva/empréstimo ativo deste livro).
+
+  ***
+
+  Se quiser, posso adicionar exemplos curl para cada rota de reserva, proteger as rotas com JWT ou criar um endpoint administrativo para disparar o job manualmente.

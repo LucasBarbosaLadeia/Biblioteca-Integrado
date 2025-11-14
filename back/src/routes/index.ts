@@ -4,6 +4,7 @@ import livroRoutes from "./livroRoutes";
 import categoriaRoutes from "./categoriaRoutes";
 import emprestimoRoutes from "./emprestimoRoutes";
 import favoritoRoutes from "./favoritoRoutes";
+import reservaRoutes from "./reservaRoutes";
 
 const router = Router();
 
@@ -13,6 +14,7 @@ router.use("/livros", livroRoutes);
 router.use("/categorias", categoriaRoutes);
 router.use("/emprestimos", emprestimoRoutes);
 router.use("/favoritos", favoritoRoutes);
+router.use("/reservas", reservaRoutes);
 
 // Rota de health check
 router.get("/health", (req, res) => {
@@ -35,6 +37,7 @@ router.get("/", (req, res) => {
       categorias: "/api/categorias",
       emprestimos: "/api/emprestimos",
       favoritos: "/api/favoritos",
+      reservas: "/api/reservas",
       health: "/api/health",
     },
   });

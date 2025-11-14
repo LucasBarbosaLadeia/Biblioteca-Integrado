@@ -3,6 +3,7 @@ import Categoria from "./Categoria";
 import Livro from "./Livro";
 import Favorito from "./Favorito";
 import Emprestimo from "./Emprestimo";
+import Reserva from "./Reserva";
 
 // Relação: Usuario -> Livros (através de Favoritos)
 Usuario.belongsToMany(Livro, {
@@ -96,4 +97,28 @@ Emprestimo.belongsTo(Livro, {
   as: "livro",
 });
 
-export { Usuario, Categoria, Livro, Favorito, Emprestimo };
+// Relação: Usuario -> Reservas (1:N)
+Usuario.hasMany(Reserva, {
+  foreignKey: "id_usuario",
+  as: "reservas",
+});
+
+// Relação: Reserva -> Usuario (N:1)
+Reserva.belongsTo(Usuario, {
+  foreignKey: "id_usuario",
+  as: "usuario",
+});
+
+// Relação: Livro -> Reservas (1:N)
+Livro.hasMany(Reserva, {
+  foreignKey: "id_livro",
+  as: "reservas",
+});
+
+// Relação: Reserva -> Livro (N:1)
+Reserva.belongsTo(Livro, {
+  foreignKey: "id_livro",
+  as: "livro",
+});
+
+export { Usuario, Categoria, Livro, Favorito, Emprestimo, Reserva };
