@@ -5,7 +5,7 @@ COPY package.json /app
 COPY tsconfig.json /app
 WORKDIR /app
 
-EXPOSE 3000
+EXPOSE 3001
 
 RUN npm install
 
