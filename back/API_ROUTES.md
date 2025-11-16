@@ -38,13 +38,17 @@ POST /api/usuarios
 | Método | Endpoint                         | Descrição                            |
 | ------ | -------------------------------- | ------------------------------------ |
 | GET    | `/livros`                        | Listar todos os livros (com filtros) |
+| GET    | `/livros/recentes`               | Listar livros mais recentes          |
 | GET    | `/livros/disponiveis`            | Listar livros disponíveis            |
+| GET    | `/livros/recomendados`           | Listar livros recomendados           |
 | GET    | `/livros/categoria/:categoriaId` | Listar livros por categoria          |
 | GET    | `/livros/:id`                    | Buscar livro por ID                  |
 | POST   | `/livros`                        | Criar novo livro                     |
 | PUT    | `/livros/:id`                    | Atualizar livro                      |
 | DELETE | `/livros/:id`                    | Deletar livro                        |
 | PATCH  | `/livros/:id/quantidade`         | Atualizar quantidade                 |
+| PATCH  | `/livros/:id/decrementar`        | Decrementar quantidade (padrão 1)    |
+| PATCH  | `/livros/:id/incrementar`        | Incrementar quantidade (padrão 1)    |
 
 **Filtros para GET /livros:**
 
@@ -66,7 +70,8 @@ POST /api/livros
   "prateleira": "A-12",
   "isbn": "978-85-359-0277-3",
   "qt_atual": 3,
-  "qt_total": 5
+  "qt_total": 5,
+  "paginas": 100
 }
 ```
 

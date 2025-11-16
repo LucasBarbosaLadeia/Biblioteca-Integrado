@@ -273,11 +273,12 @@ export class LivroController {
         prateleira,
         isbn,
         qt_total,
+        qt_atual,
         paginas = 0,
       } = req.body;
 
       // Validações básicas
-      if (!titulo || !autor || !id_categoria || !qt_total) {
+      if (!titulo || !autor || !id_categoria || !qt_total || !qt_atual) {
         res.status(400).json({
           success: false,
           message:
@@ -335,7 +336,7 @@ export class LivroController {
         sinopse,
         prateleira,
         isbn,
-        qt_atual: qt_total, // Quantidade atual inicia igual à total
+        qt_atual, // Quantidade atual inicia igual à total
         qt_total,
         paginas,
       });
@@ -518,21 +519,18 @@ export class LivroController {
     }
   }
 
-  // Atualizar quantidade de livros (para empréstimos/devoluções)
-  static async updateQuantidade(req: Request, res: Response): Promise<void> {
+  // Decrementar quantidade de livros (rota específica)
+  static async decrementar(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const { operacao, quantidade } = req.body; // operacao: 'emprestar' ou 'devolver'
+      // aceita body { quantidade: number } ou padrão 1
+      const { quantidade = 1 } = req.body as { quantidade?: number };
 
-      if (
-        !operacao ||
-        !quantidade ||
-        !["emprestar", "devolver"].includes(operacao)
-      ) {
+      const q = Number(quantidade) || 1;
+      if (q <= 0) {
         res.status(400).json({
           success: false,
-          message:
-            "Operação deve ser 'emprestar' ou 'devolver' e quantidade deve ser fornecida",
+          message: "Quantidade para decrementar deve ser maior que 0",
         });
         return;
       }
@@ -546,37 +544,75 @@ export class LivroController {
         return;
       }
 
-      let novaQuantidade = livro.qt_atual;
-
-      if (operacao === "emprestar") {
-        if (livro.qt_atual < quantidade) {
-          res.status(400).json({
-            success: false,
-            message: "Quantidade insuficiente para empréstimo",
-          });
-          return;
-        }
-        novaQuantidade -= quantidade;
-      } else if (operacao === "devolver") {
-        if (livro.qt_atual + quantidade > livro.qt_total) {
-          res.status(400).json({
-            success: false,
-            message: "Quantidade de devolução excede o total de livros",
-          });
-          return;
-        }
-        novaQuantidade += quantidade;
+      if (livro.qt_atual < q) {
+        res.status(400).json({
+          success: false,
+          message: "Quantidade insuficiente para decrementar",
+        });
+        return;
       }
 
+      const novaQuantidade = livro.qt_atual - q;
       await livro.update({ qt_atual: novaQuantidade });
 
       res.status(200).json({
         success: true,
         data: { qt_atual: novaQuantidade, qt_total: livro.qt_total },
-        message: `Quantidade atualizada com sucesso. Operação: ${operacao}`,
+        message: `Quantidade decrementada com sucesso ( -${q} )`,
       });
     } catch (error) {
-      console.error("Erro ao atualizar quantidade:", error);
+      console.error("Erro ao decrementar quantidade:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
+  }
+
+  // Incrementar quantidade de livros (rota específica)
+  static async incrementar(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      // aceita body { quantidade: number } ou padrão 1
+      const { quantidade = 1 } = req.body as { quantidade?: number };
+
+      const q = Number(quantidade) || 1;
+      if (q <= 0) {
+        res.status(400).json({
+          success: false,
+          message: "Quantidade para incrementar deve ser maior que 0",
+        });
+        return;
+      }
+
+      const livro = await Livro.findByPk(id);
+      if (!livro) {
+        res.status(404).json({
+          success: false,
+          message: "Livro não encontrado",
+        });
+        return;
+      }
+
+      if (livro.qt_atual + q > livro.qt_total) {
+        res.status(400).json({
+          success: false,
+          message: "Quantidade de incremento excede o total de livros",
+        });
+        return;
+      }
+
+      const novaQuantidade = livro.qt_atual + q;
+      await livro.update({ qt_atual: novaQuantidade });
+
+      res.status(200).json({
+        success: true,
+        data: { qt_atual: novaQuantidade, qt_total: livro.qt_total },
+        message: `Quantidade incrementada com sucesso ( +${q} )`,
+      });
+    } catch (error) {
+      console.error("Erro ao incrementar quantidade:", error);
       res.status(500).json({
         success: false,
         message: "Erro interno do servidor",

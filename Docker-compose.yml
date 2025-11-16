@@ -39,10 +39,8 @@ services:
   postgres_emprestimos:
     image: postgres:16
     container_name: postgres-emprestimos
-    environment:
-      - POSTGRES_USER=app
-      - POSTGRES_PASSWORD=1234
-      - POSTGRES_DB=emprestimos_db
+    env_file:
+      - ./Microservicos/emprestimos/.env
     ports:
       - "5433:5432"
     volumes:

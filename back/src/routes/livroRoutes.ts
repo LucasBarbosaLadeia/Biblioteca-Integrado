@@ -13,6 +13,7 @@ router.get("/:id", LivroController.getById);
 router.post("/", LivroController.create);
 router.put("/:id", LivroController.update);
 router.delete("/:id", LivroController.delete);
-router.patch("/:id/quantidade", LivroController.updateQuantidade);
+router.patch("/:id/decrementar", LivroController.decrementar);
+router.patch("/:id/incrementar", LivroController.incrementar);
 
 export default router;

@@ -1,17 +1,23 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { EmprestimosService } from './emprestimos.service';
+import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 
 @Controller('emprestimos')
 export class EmprestimosController {
-  constructor(private readonly service: EmprestimosService) {}
+  constructor(private service: EmprestimosService) {}
 
-  @Get()
-  hello() {
-    return this.service.hello();
+  @Post()
+  create(@Body() dto: CreateEmprestimoDto) {
+    return this.service.create(dto);
   }
 
-  @Get('status')
-  getStatus(): string {
-    return this.service.getHello();
+  @Get()
+  getAll() {
+    return this.service.findAll();
+  }
+
+  @Get(':id')
+  get(@Param('id') id: number) {
+    return this.service.findOne(id);
   }
 }

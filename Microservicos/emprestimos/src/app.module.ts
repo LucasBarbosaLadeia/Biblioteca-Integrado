@@ -3,7 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmprestimosModule } from './emprestimos/emprestimos.module';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { ConfigService } from '@nestjs/config';
-import { Emprestimo } from './emprestimos/Emprestimo.model';
+import { Emprestimo } from './emprestimos/Emprestimo.entity';
+import { HttpModule } from './http/http.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { Emprestimo } from './emprestimos/Emprestimo.model';
       inject: [ConfigService],
     }),
     EmprestimosModule,
+    HttpModule,
   ],
 })
 export class AppModule {}
