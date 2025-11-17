@@ -395,12 +395,10 @@ export class EmprestimoController {
 
         // Se não houver reserva ativa e não há exemplares, abortar
         if (!reservaTx && livroTx.qt_atual <= 0) {
-          res
-            .status(400)
-            .json({
-              success: false,
-              message: "Livro não disponível para empréstimo",
-            });
+          res.status(400).json({
+            success: false,
+            message: "Livro não disponível para empréstimo",
+          });
           throw new Error("Livro não disponível");
         }
 
@@ -463,13 +461,11 @@ export class EmprestimoController {
         }
       );
 
-      res
-        .status(201)
-        .json({
-          success: true,
-          data: emprestimoCompleto,
-          message: "Empréstimo criado com sucesso",
-        });
+      res.status(201).json({
+        success: true,
+        data: emprestimoCompleto,
+        message: "Empréstimo criado com sucesso",
+      });
     } catch (error) {
       console.error("Erro ao criar empréstimo:", error);
       res.status(500).json({
@@ -676,48 +672,6 @@ export class EmprestimoController {
       });
     } catch (error) {
       console.error("Erro ao deletar empréstimo:", error);
-      res.status(500).json({
-        success: false,
-        message: "Erro interno do servidor",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      });
-    }
-  }
-
-  // Obter estatísticas de empréstimos
-  static async getEstatisticas(req: Request, res: Response): Promise<void> {
-    try {
-      const hoje = new Date().toISOString().split("T")[0];
-
-      const [
-        totalEmprestimos,
-        emprestimosAtivos,
-        emprestimosDevolvidos,
-        emprestimosAtrasados,
-      ] = await Promise.all([
-        Emprestimo.count(),
-        Emprestimo.count({ where: { status: "ativo" } }),
-        Emprestimo.count({ where: { status: "devolvido" } }),
-        Emprestimo.count({
-          where: {
-            status: "ativo",
-            data_devolucao_prevista: { [Op.lt]: hoje },
-          },
-        }),
-      ]);
-
-      res.status(200).json({
-        success: true,
-        data: {
-          totalEmprestimos,
-          emprestimosAtivos,
-          emprestimosDevolvidos,
-          emprestimosAtrasados,
-        },
-        message: "Estatísticas de empréstimos obtidas com sucesso",
-      });
-    } catch (error) {
-      console.error("Erro ao obter estatísticas:", error);
       res.status(500).json({
         success: false,
         message: "Erro interno do servidor",

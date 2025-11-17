@@ -27,7 +27,7 @@ export interface Reserva {
 
 @Injectable()
 export class HttpServiceMicro {
-  private BaseURL = process.env.BACKEND || 'http://backend:3001/api';
+  private BaseURL = process.env.BACKEND || 'http://localhost:3001/api';
 
   async getUsuario(id: number): Promise<AxiosResponse<Usuario>> {
     return axios.get<Usuario>(`${this.BaseURL}/usuarios/${id}`);

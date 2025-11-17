@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { EmprestimosService } from './emprestimos.service';
 import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 
@@ -6,18 +14,28 @@ import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 export class EmprestimosController {
   constructor(private service: EmprestimosService) {}
 
-  @Post()
-  create(@Body() dto: CreateEmprestimoDto) {
-    return this.service.create(dto);
-  }
-
   @Get()
   getAll() {
     return this.service.findAll();
   }
 
+  @Get('estatisticas')
+  estatisticas() {
+    return this.service.estatisticas();
+  }
+
   @Get(':id')
-  get(@Param('id') id: number) {
+  get(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
+  }
+
+  @Put(':id/devolver')
+  devolver(@Param('id', ParseIntPipe) id: number) {
+    return this.service.devolver(id);
+  }
+
+  @Post()
+  create(@Body() dto: CreateEmprestimoDto) {
+    return this.service.create(dto);
   }
 }

@@ -43,7 +43,7 @@ const startServer = async (): Promise<void> => {
     await testDatabase();
 
     // Iniciar servidor
-    app.listen(port, () => {
+    app.listen(port, "0.0.0.0", () => {
       console.log(`🚀 Servidor rodando na porta ${port}`);
       console.log(`📚 Biblioteca Integrado - Backend`);
     });
