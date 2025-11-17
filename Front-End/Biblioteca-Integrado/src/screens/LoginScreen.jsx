@@ -97,7 +97,20 @@ const LoginScreen = ({ navigation, setRole }) => {
             ) {
               roleToSet = "student";
             }
-            // explicit textual matches for librarians/admins
+            // explicit textual matches for admins (map to 'admin' first)
+            else if (
+              [
+                "admin",
+                "administrador",
+                "administradora",
+                "administrator",
+                "administration",
+              ].some((k) => r === k || r.includes(k))
+            ) {
+              roleToSet = "admin";
+            }
+
+            // explicit textual matches for librarians
             else if (
               [
                 "bibliotecario",
@@ -105,7 +118,6 @@ const LoginScreen = ({ navigation, setRole }) => {
                 "bib",
                 "funcionario",
                 "funcionário",
-                "admin",
                 "librarian",
                 "librar",
                 "bibliotec",
