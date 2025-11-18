@@ -10,7 +10,7 @@ import {
 import { EmprestimosService } from './emprestimos.service';
 import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 
-@Controller('emprestimos')
+@Controller()
 export class EmprestimosController {
   constructor(private service: EmprestimosService) {}
 

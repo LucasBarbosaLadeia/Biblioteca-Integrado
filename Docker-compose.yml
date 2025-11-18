@@ -1,9 +1,6 @@
 version: "3.9"
 
 services:
-  # =========================
-  # Banco de Dados MySQL
-  # =========================
   database:
     image: mysql:8.0
     container_name: mysql-container
@@ -16,9 +13,6 @@ services:
     networks:
       - app-net
 
-  # =========================
-  # Backend Node.js
-  # =========================
   backend:
     build:
       context: ./back
@@ -32,15 +26,7 @@ services:
       - "3001:3001"
     networks:
       - app-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/ || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
-  # =========================
-  # Banco de Dados PostgreSQL (microserviço)
-  # =========================
   postgres_emprestimos:
     image: postgres:16
     container_name: postgres-emprestimos
@@ -49,13 +35,22 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data_emprestimos:/var/lib/postgresql/data
     networks:
       - app-net
 
-  # =========================
-  # Microserviço Empréstimos
-  # =========================
+  postgres_notificacoes:
+    image: postgres:16
+    container_name: postgres-notificacoes
+    env_file:
+      - ./Microservicos/notification/.env
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg_data_notificacoes:/var/lib/postgresql/data
+    networks:
+      - app-net
+
   emprestimos:
     build:
       context: ./Microservicos/emprestimos
@@ -70,9 +65,20 @@ services:
     networks:
       - app-net
 
-  # =========================
-  # Nginx
-  # =========================
+  notification:
+    build:
+      context: ./Microservicos/notification
+      dockerfile: Dockerfile
+    container_name: notification-service
+    env_file:
+      - ./Microservicos/notification/.env
+    depends_on:
+      - postgres_notificacoes
+    ports:
+      - "3005:3005"
+    networks:
+      - app-net
+
   nginx:
     build:
       context: ./nginx
@@ -83,15 +89,14 @@ services:
     depends_on:
       - backend
       - emprestimos
+      - notification
     networks:
       - app-net
 
-# =========================
-# Volumes e redes
-# =========================
 volumes:
   db_data:
-  pg_data:
+  pg_data_emprestimos:
+  pg_data_notificacoes:
 
 networks:
   app-net:

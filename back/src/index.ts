@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Usar rotas da API
-app.use("/api", routes);
+app.use(routes);
 
 // Testar conexão com banco de dados
 const testDatabase = async (): Promise<void> => {
