@@ -32,13 +32,13 @@ router.get("/", (req, res) => {
     message: "Bem-vindo à API da Biblioteca Integrado!",
     version: "1.0.0",
     endpoints: {
-      usuarios: "/api/usuarios",
-      livros: "/api/livros",
-      categorias: "/api/categorias",
-      emprestimos: "/api/emprestimos",
-      favoritos: "/api/favoritos",
-      reservas: "/api/reservas",
-      health: "/api/health",
+      usuarios: "/usuarios",
+      livros: "/livros",
+      categorias: "/categorias",
+      emprestimos: "/emprestimos",
+      favoritos: "/favoritos",
+      reservas: "/reservas",
+      health: "/health",
     },
   });
 });

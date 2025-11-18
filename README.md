@@ -70,6 +70,82 @@ Sistema de gerenciamento de biblioteca universitária, desenvolvido para facilit
   npm start
   ```
 
+### Acesso via dispositivo móvel (passo a passo)
+
+Se você quer testar o app em um celular na mesma rede Wi‑Fi do seu computador, siga estes passos:
+
+1. Descubra o IP local da sua máquina (ex.: `192.168.0.104`). No Windows PowerShell rode:
+
+   ```powershell
+   ipconfig
+   ```
+
+   Procure o `Endereço IPv4` na interface que está conectada ao Wi‑Fi.
+
+2. Configure o frontend para apontar para esse IP (sem porta). No arquivo `Front-End/Biblioteca-Integrado/.env` defina:
+
+   ```text
+   API_HOST=http://<SEU_IP>
+   ```
+
+   Exemplo: `API_HOST=http://192.168.0.104`.
+
+3. No terminal (diretório do frontend) inicie o Expo / Metro:
+
+   ```powershell
+   cd "Front-End\Biblioteca-Integrado"
+   npm start
+   ```
+
+   - No painel do Expo escolha `LAN` (mais rápido na mesma rede) ou `Tunnel` se tiver problemas de rede.
+
+4. No celular (mesma rede Wi‑Fi) abra o navegador e teste o health check:
+
+   ```text
+   http://<SEU_IP>/health
+   ```
+
+   Deve retornar um JSON com `success: true`.
+
+5. No app (Expo), as requisições para a API usarão `http://<SEU_IP>/usuarios`, `http://<SEU_IP>/login`, etc.
+
+6. Se o dispositivo não acessar o host:
+   - Verifique se o firewall do Windows permite entrada na porta 80. Para abrir temporariamente (PowerShell como Administrador):
+     ```powershell
+     New-NetFirewallRule -DisplayName "Allow HTTP" -Direction Inbound -LocalPort 80 -Protocol TCP -Action Allow
+     ```
+   - Confirme que o celular está na mesma sub-rede (por exemplo 192.168.0.x).
+
+### Teste rápido de login (com curl / PowerShell)
+
+1. Criar usuário de teste:
+
+   ```powershell
+   # Cria um arquivo tmp/test_user.json com o payload
+   echo '{"nome":"Teste Mobile","email":"teste_mobile@example.com","senha":"senha123","RA":"12345","tipo":"aluno"}' > tmp/test_user.json
+   Invoke-RestMethod -Uri 'http://<SEU_IP>/usuarios' -Method Post -Body (Get-Content -Raw tmp/test_user.json) -ContentType 'application/json'
+   ```
+
+2. Fazer login e obter token:
+
+   ```powershell
+   echo '{"ra":"12345","senha":"senha123"}' > tmp/login.json
+   Invoke-RestMethod -Uri 'http://<SEU_IP>/usuarios/login' -Method Post -Body (Get-Content -Raw tmp/login.json) -ContentType 'application/json'
+   ```
+
+   - A resposta inclui um campo `token`. Use esse token em chamadas autenticadas no header `Authorization: Bearer <token>`.
+
+3. Testar rota autenticada (exemplo):
+   ```powershell
+   # Substitua <TOKEN> pelo token recebido
+   Invoke-RestMethod -Uri 'http://<SEU_IP>/reservas' -Headers @{ Authorization = "Bearer <TOKEN>" } -Method Get
+   ```
+
+### Observações de segurança
+
+- Não comite arquivos `.env` com senhas reais no repositório.
+- Em produção, prefira usar HTTPS, Docker secrets ou um serviço de variáveis de ambiente.
+
 ## Tecnologias utilizadas
 
 - React Native (Expo)

@@ -1,7 +1,7 @@
 import { API_HOST } from "@env";
 
 const HOST = (API_HOST || "http://localhost:3001").replace(/\/+$/g, "");
-const API_BASE = `${HOST}/api`;
+const API_BASE = `${HOST}`;
 
 async function request(method, path, options = {}) {
   const pathname = path.startsWith("/") ? path : `/${path}`;

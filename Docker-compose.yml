@@ -4,8 +4,12 @@ services:
   database:
     image: mysql:8.0
     container_name: mysql-container
-    env_file:
-      - ./back/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: biblioteca
+      MYSQL_USER: app
+      MYSQL_PASSWORD: 123456
+      TZ: "America/Sao_Paulo"
     ports:
       - "3306:3306"
     volumes:
@@ -18,8 +22,14 @@ services:
       context: ./back
       dockerfile: Dockerfile
     container_name: backend
-    env_file:
-      - ./back/.env
+    environment:
+      PORT: 3001
+      DB_HOST: database
+      DB_USER: app
+      DB_PASSWORD: 123456
+      DB_NAME: biblioteca
+      TIMEZONE: America/Sao_Paulo
+    restart: unless-stopped
     depends_on:
       - database
     ports:
@@ -30,8 +40,11 @@ services:
   postgres_emprestimos:
     image: postgres:16
     container_name: postgres-emprestimos
-    env_file:
-      - ./Microservicos/emprestimos/.env
+    environment:
+      POSTGRES_USER: emprestimos
+      POSTGRES_PASSWORD: emprestimos_pass
+      POSTGRES_DB: emprestimos_db
+      TZ: "America/Sao_Paulo"
     ports:
       - "5433:5432"
     volumes:
@@ -42,8 +55,11 @@ services:
   postgres_notificacoes:
     image: postgres:16
     container_name: postgres-notificacoes
-    env_file:
-      - ./Microservicos/notification/.env
+    environment:
+      POSTGRES_USER: notificacoes
+      POSTGRES_PASSWORD: notificacoes_pass
+      POSTGRES_DB: notificacoes_db
+      TZ: "America/Sao_Paulo"
     ports:
       - "5434:5432"
     volumes:
@@ -56,10 +72,16 @@ services:
       context: ./Microservicos/emprestimos
       dockerfile: Dockerfile
     container_name: emprestimos-service
-    env_file:
-      - ./Microservicos/emprestimos/.env
+    environment:
+      PORT: 3002
+      BACKEND: http://backend:3001/api
+      DB_HOST: postgres_emprestimos
+      DB_USER: emprestimos
+      DB_PASSWORD: emprestimos_pass
+      DB_NAME: emprestimos_db
     depends_on:
       - postgres_emprestimos
+    restart: unless-stopped
     ports:
       - "3002:3002"
     networks:
@@ -70,10 +92,15 @@ services:
       context: ./Microservicos/notification
       dockerfile: Dockerfile
     container_name: notification-service
-    env_file:
-      - ./Microservicos/notification/.env
+    environment:
+      PORT: 3005
+      DB_HOST: postgres_notificacoes
+      DB_USER: notificacoes
+      DB_PASSWORD: notificacoes_pass
+      DB_NAME: notificacoes_db
     depends_on:
       - postgres_notificacoes
+    restart: unless-stopped
     ports:
       - "3005:3005"
     networks:
