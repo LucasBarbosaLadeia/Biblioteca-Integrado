@@ -32,6 +32,7 @@ services:
     restart: unless-stopped
     depends_on:
       - database
+      - redis
     command: ["sh", "./wait-for-db.sh", "database", "npm run dev"]
     ports:
       - "3001:3001"
@@ -80,8 +81,11 @@ services:
       DB_USER: emprestimos
       DB_PASSWORD: emprestimos_pass
       DB_NAME: emprestimos_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - postgres_emprestimos
+      - redis
     restart: unless-stopped
     ports:
       - "3002:3002"
@@ -99,11 +103,26 @@ services:
       DB_USER: notificacoes
       DB_PASSWORD: notificacoes_pass
       DB_NAME: notificacoes_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - postgres_notificacoes
+      - redis
     restart: unless-stopped
     ports:
       - "3005:3005"
+    networks:
+      - app-net
+
+  redis:
+    image: redis:7.2
+    container_name: redis-container
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
     networks:
       - app-net
 
@@ -125,6 +144,7 @@ volumes:
   db_data:
   pg_data_emprestimos:
   pg_data_notificacoes:
+  redis_data:
 
 networks:
   app-net:

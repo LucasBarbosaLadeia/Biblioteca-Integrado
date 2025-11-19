@@ -8,6 +8,9 @@ import { Reserva, ReservaStatus } from './reserva.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Emprestimo } from '../emprestimos/Emprestimo.entity';
+import { ReservaFila } from './reserva_fila.entity';
+import { Inject } from '@nestjs/common';
+import type Redis from 'ioredis';
 
 @Injectable()
 export class ReservasService {
@@ -17,6 +20,9 @@ export class ReservasService {
     private readonly reservaRepo: Repository<Reserva>,
     @InjectRepository(Emprestimo)
     private readonly emprestimoRepo: Repository<Emprestimo>,
+    @InjectRepository(ReservaFila)
+    private readonly reservaFilaRepo: Repository<ReservaFila>,
+    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
   ) {}
 
   async criarReserva(livroId: number, usuarioId: number) {
@@ -105,80 +111,90 @@ export class ReservasService {
     });
 
     await this.reservaRepo.save(reserva);
+
+    // persistir na tabela de fila e atualizar cache Redis
+    const filaEntry = this.reservaFilaRepo.create({
+      livroId: String(livroId),
+      alunoId: String(usuarioId),
+      posicao: posicao,
+    });
+    await this.reservaFilaRepo.save(filaEntry);
+
+    // Atualiza cache Redis de forma atômica (lista por livro)
+    try {
+      const key = `reserva:fila:${livroId}`;
+      const entry = JSON.stringify({
+        reservaId: reserva.id,
+        alunoId: String(usuarioId),
+        posicao,
+      });
+      await this.redisClient.rpush(key, entry);
+      // opcional: expirar a chave em 30 dias se for a primeira entrada
+      const len = await this.redisClient.llen(key);
+      if (len === 1) {
+        await this.redisClient.expire(key, 60 * 60 * 24 * 30);
+      }
+    } catch (err) {
+      console.warn('Não foi possível atualizar a fila no Redis (rpush):', err);
+    }
+
     return reserva;
   }
 
   private getQtAtualFromLivroResponse(resp: unknown): number {
     if (!resp) return 0;
+
     const asObj = resp as Record<string, unknown>;
 
-    // Common shapes: { data: { qt_atual: 1 } } or { qt_atual: 1 }
-    const dataProp = asObj['data'];
-    if (dataProp && typeof dataProp === 'object') {
-      const direct = dataProp as Record<string, unknown>;
-      if (Object.prototype.hasOwnProperty.call(direct, 'qt_atual')) {
-        const raw = direct['qt_atual'];
-        if (typeof raw === 'number') return raw;
-        if (typeof raw === 'string') {
-          const parsed = Number(raw);
-          return Number.isNaN(parsed) ? 0 : parsed;
-        }
-        return 0;
-      }
-      const inner = direct['data'];
-      if (
-        inner &&
-        typeof inner === 'object' &&
-        Object.prototype.hasOwnProperty.call(inner, 'qt_atual')
-      ) {
-        const raw = (inner as Record<string, unknown>)['qt_atual'];
-        if (typeof raw === 'number') return raw;
-        if (typeof raw === 'string') {
-          const parsed = Number(raw);
-          return Number.isNaN(parsed) ? 0 : parsed;
-        }
-        return 0;
-      }
-    }
-
-    if (
-      typeof asObj === 'object' &&
-      Object.prototype.hasOwnProperty.call(asObj, 'qt_atual')
-    ) {
-      const raw = (asObj as Record<string, unknown>)['qt_atual'];
-      if (typeof raw === 'number') return raw;
-      if (typeof raw === 'string') {
-        const parsed = Number(raw);
+    // Helper para converter qualquer valor em número
+    const toNumber = (value: unknown): number => {
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = Number(value);
         return Number.isNaN(parsed) ? 0 : parsed;
       }
       return 0;
+    };
+
+    const dataProp = asObj['data'];
+    if (dataProp && typeof dataProp === 'object') {
+      const direct = dataProp as Record<string, unknown>;
+
+      if ('qt_atual' in direct) return toNumber(direct['qt_atual']);
+
+      const inner = direct['data'];
+      if (inner && typeof inner === 'object' && 'qt_atual' in (inner as any)) {
+        return toNumber((inner as Record<string, unknown>)['qt_atual']);
+      }
     }
 
-    // Fallback: shallow recursive search (depth-limited)
+    if ('qt_atual' in asObj) {
+      return toNumber(asObj['qt_atual']);
+    }
+
     const seen = new Set<object>();
-    function find(obj: unknown, depth = 0): number | null {
+
+    function search(obj: unknown, depth = 0): number | null {
       if (!obj || typeof obj !== 'object' || depth > 4) return null;
-      const o = obj as Record<string, unknown>;
-      if (seen.has(o)) return null;
-      seen.add(o);
-      if (Object.prototype.hasOwnProperty.call(o, 'qt_atual')) {
-        const raw = o['qt_atual'];
-        if (typeof raw === 'number') return raw;
-        if (typeof raw === 'string') {
-          const parsed = Number(raw);
-          return Number.isNaN(parsed) ? null : parsed;
-        }
-        return null;
+
+      const current = obj as Record<string, unknown>;
+      if (seen.has(current)) return null;
+      seen.add(current);
+
+      if ('qt_atual' in current) {
+        return toNumber(current['qt_atual']);
       }
-      for (const k of Object.keys(o)) {
-        const res = find(o[k], depth + 1);
-        if (res !== null) return res;
+
+      for (const key of Object.keys(current)) {
+        const value = current[key];
+        const result = search(value, depth + 1);
+        if (result !== null) return result;
       }
+
       return null;
     }
 
-    const found = find(asObj, 0);
-    return found ?? 0;
+    return search(asObj, 0) ?? 0;
   }
 
   async retirarReserva(reservaId: string) {
@@ -229,6 +245,36 @@ export class ReservasService {
     proximo.dataLimiteRetirada = limite;
     await this.reservaRepo.save(proximo);
     console.log(` Notificando usuário ${proximo.alunoId}  livro disponível!`);
+
+    // Atualiza fila no Redis: remover o primeiro item (FIFO)
+    try {
+      const key = `reserva:fila:${livroId}`;
+      const head = await this.redisClient.lindex(key, 0);
+      if (head) {
+        try {
+          const parsed = JSON.parse(head);
+          if (parsed && parsed.reservaId === proximo.id) {
+            await this.redisClient.lpop(key);
+          } else {
+            // remova pelo valor específico caso esteja em outra posição
+            const toRemove = JSON.stringify({
+              reservaId: proximo.id,
+              alunoId: proximo.alunoId,
+              posicao: proximo.posicaoFila,
+            });
+            await this.redisClient.lrem(key, 0, toRemove);
+          }
+        } catch (e) {
+          // se parse falhar, tente apenas lpop para avançar a fila
+          await this.redisClient.lpop(key);
+        }
+      }
+    } catch (err) {
+      console.warn(
+        'Não foi possível atualizar fila no Redis ao promover próximo:',
+        err,
+      );
+    }
     return proximo;
   }
 
