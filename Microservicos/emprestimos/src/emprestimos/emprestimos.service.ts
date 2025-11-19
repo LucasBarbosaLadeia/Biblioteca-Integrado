@@ -25,7 +25,6 @@ export class EmprestimosService {
     const { id_usuario, id_livro, data_devolucao_prevista } = dto;
 
     await this.httpService.getUsuario(id_usuario).catch(() => {
-      console.log(dataDev);
       throw new NotFoundException('Usuário não encontrado');
     });
 
@@ -75,7 +74,6 @@ export class EmprestimosService {
     const savedEmprestimo = await this.repo.save(novoEmprestimo);
 
     if (reserva) {
-      // mark local reserva as RETIRADA
       reserva.status = ReservaStatus.RETIRADA;
       // Note: não decrementar estoque aqui pois já foi reservado quando criada
     } else {
@@ -94,6 +92,32 @@ export class EmprestimosService {
     const livro = await this.httpService.getLivro(livroId).catch(() => {
       throw new NotFoundException('Livro não encontrado');
     });
+
+    // Prevent the same user from reserving the same book more than once
+    const jaTemReserva = this.reservas.find(
+      (r) =>
+        r.livroId === String(livroId) &&
+        r.alunoId === String(alunoId) &&
+        (r.status === ReservaStatus.NA_FILA ||
+          r.status === ReservaStatus.PENDENTE_RETIRADA ||
+          r.status === ReservaStatus.DISPONIVEL_PARA_COLETA),
+    );
+
+    if (jaTemReserva) {
+      throw new BadRequestException(
+        'Usuário já possui uma reserva para este livro',
+      );
+    }
+
+    // Prevent reserving if user already has an active loan for this book
+    const emprestimoAtivo = await this.repo.findOne({
+      where: { id_usuario: alunoId, id_livro: livroId, status: 'ativo' },
+    });
+    if (emprestimoAtivo) {
+      throw new BadRequestException(
+        'Usuário já possui um empréstimo ativo para este livro',
+      );
+    }
 
     // backend may return either { qt_atual } directly or a wrapper { success, data: { qt_atual } }
     const maybeWrapper: unknown = livro.data;
@@ -121,7 +145,7 @@ export class EmprestimosService {
       await this.httpService.decrementarEstoque(livroId);
 
       const dataLimite = new Date();
-      dataLimite.setHours(dataLimite.getHours() + 48);
+      dataLimite.setHours(dataLimite.getHours() + 24);
 
       const nova = new Reserva(
         String(livroId),
@@ -172,7 +196,6 @@ export class EmprestimosService {
     }
   }
 
-  // Retirar livro reservado (aluno vai retirar)
   async retirarReserva(reservaId: string) {
     const reserva = this.reservas.find((r) => r.id === reservaId);
     if (!reserva) throw new NotFoundException('Reserva não encontrada');
@@ -274,7 +297,7 @@ export class EmprestimosService {
 
     const saved = await this.repo.save(emprestimo);
 
-    // Use local queue: chamar o próximo da fila (essa função faz incrementar estoque se não houver fila)
+    // chamar próximo da fila
     try {
       await this.chamarProximoDaFila(String(emprestimo.id_livro));
     } catch (err) {
