@@ -74,7 +74,7 @@ services:
     container_name: emprestimos-service
     environment:
       PORT: 3002
-      BACKEND: http://backend:3001/api
+      BACKEND: http://backend:3001
       DB_HOST: postgres_emprestimos
       DB_USER: emprestimos
       DB_PASSWORD: emprestimos_pass
