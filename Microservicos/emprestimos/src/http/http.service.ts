@@ -16,15 +16,6 @@ export interface Livro {
   // outras propriedades
 }
 
-export interface Reserva {
-  id_reserva: number;
-  id_usuario: number;
-  id_livro: number;
-  status: string;
-  data_reserva: string;
-  data_expiracao: string;
-}
-
 @Injectable()
 export class HttpServiceMicro {
   private BaseURL = process.env.BACKEND || 'http://localhost:3001/api';
@@ -44,17 +35,7 @@ export class HttpServiceMicro {
   async incrementarEstoque(id: number): Promise<AxiosResponse<void>> {
     return axios.patch(`${this.BaseURL}/livros/${id}/incrementar`);
   }
-
-  async verificarReserva(
-    id_usuario: number,
-    id_livro: number,
-  ): Promise<AxiosResponse<Reserva>> {
-    return axios.get<Reserva>(
-      `${this.BaseURL}/reservas/ativa/${id_usuario}/${id_livro}`,
-    );
-  }
-
-  async concretizarReserva(id_reserva: number): Promise<AxiosResponse<void>> {
-    return axios.patch(`${this.BaseURL}/reservas/${id_reserva}/concretizar`);
-  }
+  // NOTE: reservation endpoints from the monolith are intentionally not used
+  // by this microservice. The emprestimos microservice implements its own
+  // reservation/queue logic internally.
 }

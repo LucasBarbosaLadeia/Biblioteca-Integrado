@@ -12,30 +12,51 @@ import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 
 @Controller()
 export class EmprestimosController {
-  constructor(private service: EmprestimosService) {}
+  constructor(private emprestimosService: EmprestimosService) {}
 
   @Get()
   getAll() {
-    return this.service.findAll();
+    return this.emprestimosService.findAll();
   }
 
   @Get('estatisticas')
   estatisticas() {
-    return this.service.estatisticas();
+    return this.emprestimosService.estatisticas();
+  }
+
+  @Get('debug/reservas')
+  debugReservas() {
+    return this.emprestimosService.listarReservasDebug();
+  }
+
+  @Get('debug/livro/:id')
+  async debugLivro(@Param('id', ParseIntPipe) id: number) {
+    return this.emprestimosService.buscarLivroBackend(id);
   }
 
   @Get(':id')
   get(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+    return this.emprestimosService.findOne(id);
   }
 
   @Put(':id/devolver')
   devolver(@Param('id', ParseIntPipe) id: number) {
-    return this.service.devolver(id);
+    return this.emprestimosService.devolver(id);
   }
 
   @Post()
   create(@Body() dto: CreateEmprestimoDto) {
-    return this.service.create(dto);
+    return this.emprestimosService.create(dto);
+  }
+  @Post('reservar/:livroId/:usuarioId')
+  async criarReserva(
+    @Param('livroId', ParseIntPipe) livroId: number,
+    @Param('usuarioId', ParseIntPipe) usuarioId: number,
+  ) {
+    return this.emprestimosService.criarReserva(livroId, usuarioId);
+  }
+  @Post('retirar/:reservaId')
+  async retirarLivroReservado(@Param('reservaId') reservaId: string) {
+    return this.emprestimosService.retirarReserva(reservaId);
   }
 }

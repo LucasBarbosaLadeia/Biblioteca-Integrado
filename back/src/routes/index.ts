@@ -37,7 +37,6 @@ router.get("/", (req, res) => {
       categorias: "/categorias",
       emprestimos: "/emprestimos",
       favoritos: "/favoritos",
-      reservas: "/reservas",
       health: "/health",
     },
   });

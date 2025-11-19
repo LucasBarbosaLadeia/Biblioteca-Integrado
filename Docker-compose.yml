@@ -32,6 +32,7 @@ services:
     restart: unless-stopped
     depends_on:
       - database
+    command: ["sh", "./wait-for-db.sh", "database", "npm run dev"]
     ports:
       - "3001:3001"
     networks:
