@@ -10,7 +10,7 @@ import {
 import { EmprestimosService } from './emprestimos.service';
 import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 
-@Controller()
+@Controller('emprestimos')
 export class EmprestimosController {
   constructor(private emprestimosService: EmprestimosService) {}
 
@@ -48,15 +48,5 @@ export class EmprestimosController {
   create(@Body() dto: CreateEmprestimoDto) {
     return this.emprestimosService.create(dto);
   }
-  @Post('reservar/:livroId/:usuarioId')
-  async criarReserva(
-    @Param('livroId', ParseIntPipe) livroId: number,
-    @Param('usuarioId', ParseIntPipe) usuarioId: number,
-  ) {
-    return this.emprestimosService.criarReserva(livroId, usuarioId);
-  }
-  @Post('retirar/:reservaId')
-  async retirarLivroReservado(@Param('reservaId') reservaId: string) {
-    return this.emprestimosService.retirarReserva(reservaId);
-  }
+  // Reservation operations are exposed under the `reservas` controller
 }

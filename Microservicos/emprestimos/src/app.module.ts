@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config/dist/config.module';
 import { ConfigService } from '@nestjs/config';
 import { Emprestimo } from './emprestimos/Emprestimo.entity';
 import { HttpModule } from './http/http.module';
+import { ReservasModule } from './reservas/reservas.module';
 
 @Module({
   imports: [
@@ -19,11 +20,13 @@ import { HttpModule } from './http/http.module';
         database: cfg.get('DB_NAME', 'usersdb'),
         entities: [Emprestimo],
         synchronize: true, // DEV only
+        autoLoadEntities: true,
       }),
       inject: [ConfigService],
     }),
     EmprestimosModule,
     HttpModule,
+    ReservasModule,
   ],
 })
 export class AppModule {}
