@@ -8,17 +8,17 @@ import {
 @Entity('reserva_fila')
 export class ReservaFila {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column()
-  livroId: string;
+  livroId!: string;
 
   @Column()
-  alunoId: string;
+  alunoId!: string;
 
   @Column({ type: 'int' })
-  posicao: number;
+  posicao!: number;
 
   @CreateDateColumn()
-  criadoEm: Date;
+  criadoEm!: Date;
 }

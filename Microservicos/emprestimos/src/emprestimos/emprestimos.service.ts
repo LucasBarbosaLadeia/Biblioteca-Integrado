@@ -2,6 +2,8 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Inject,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -10,29 +12,37 @@ import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 import { HttpServiceMicro } from '../http/http.service';
 import { ReservaStatus } from '../reservas/reserva.entity';
 import { ReservasService } from '../reservas/reservas.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class EmprestimosService {
+  private readonly logger = new Logger(EmprestimosService.name);
+
   constructor(
     @InjectRepository(Emprestimo)
     private readonly repo: Repository<Emprestimo>,
     private readonly httpService: HttpServiceMicro,
     private readonly reservasService: ReservasService,
-  ) {}
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
+  ) {
+    this.logger.log('[CACHE] EmprestimosService inicializado com cache ativo');
+  }
 
   async create(dto: CreateEmprestimoDto) {
-    const { id_usuario, id_livro, data_devolucao_prevista } = dto;
+    const { idUsuario, idLivro, dataPrevistaDevolucao } = dto;
 
-    await this.httpService.getUsuario(id_usuario).catch(() => {
+    await this.httpService.getUsuario(idUsuario).catch(() => {
       throw new NotFoundException('Usuário não encontrado');
     });
 
-    const livro = await this.httpService.getLivro(id_livro).catch(() => {
+    const livro = await this.httpService.getLivro(idLivro).catch(() => {
       throw new NotFoundException('Livro não encontrado');
     });
 
     const emprestimoAtivo = await this.repo.findOne({
-      where: { id_usuario, id_livro, status: 'ativo' },
+      where: { idUsuario, idLivro, status: 'ATIVO' },
     });
 
     if (emprestimoAtivo) {
@@ -46,8 +56,8 @@ export class EmprestimosService {
     const reserva =
       todas.find(
         (r) =>
-          r.livroId === String(id_livro) &&
-          r.alunoId === String(id_usuario) &&
+          r.livroId === String(idLivro) &&
+          r.alunoId === String(idUsuario) &&
           r.status === ReservaStatus.PENDENTE_RETIRADA,
       ) || null;
 
@@ -56,7 +66,7 @@ export class EmprestimosService {
     }
 
     const hoje = new Date();
-    const dataDev = new Date(data_devolucao_prevista);
+    const dataDev = new Date(dataPrevistaDevolucao);
     if (dataDev <= hoje) {
       throw new BadRequestException(
         'Data de devolução prevista deve ser futura',
@@ -64,11 +74,11 @@ export class EmprestimosService {
     }
 
     const novoEmprestimo = this.repo.create({
-      id_usuario,
-      id_livro,
-      data_emprestimo: new Date(),
-      data_devolucao_prevista,
-      status: 'ativo',
+      idUsuario,
+      idLivro,
+      dataEmprestimo: new Date(),
+      dataPrevistaDevolucao,
+      status: 'ATIVO',
     });
 
     const savedEmprestimo = await this.repo.save(novoEmprestimo);
@@ -77,8 +87,11 @@ export class EmprestimosService {
       reserva.status = ReservaStatus.RETIRADA;
       // Note: não decrementar estoque aqui pois já foi reservado quando criada
     } else {
-      await this.httpService.decrementarEstoque(id_livro);
+      await this.httpService.decrementarEstoque(idLivro);
     }
+
+    // Invalidar cache após criar empréstimo
+    await this.invalidarCacheEmprestimos('criar empréstimo');
 
     return savedEmprestimo;
   }
@@ -107,11 +120,11 @@ export class EmprestimosService {
     dataPrev.setDate(dataPrev.getDate() + 7);
 
     const novoEmp = this.repo.create({
-      id_usuario: Number(reserva.alunoId),
-      id_livro: Number(reserva.livroId),
-      data_emprestimo: new Date(),
-      data_devolucao_prevista: dataPrev,
-      status: 'ativo',
+      idUsuario: Number(reserva.alunoId),
+      idLivro: Number(reserva.livroId),
+      dataEmprestimo: new Date(),
+      dataPrevistaDevolucao: dataPrev,
+      status: 'ATIVO',
     });
 
     const saved = await this.repo.save(novoEmp);
@@ -128,8 +141,27 @@ export class EmprestimosService {
   }
 
   async findOne(id: number) {
+    const cacheKey = `emprestimos:${id}`;
+
+    // Tentar buscar do cache
+    const cached = await this.cacheManager.get<Emprestimo>(cacheKey);
+    if (cached) {
+      this.logger.log(`[CACHE HIT] Emprestimo ID ${id} encontrado no cache`);
+      return cached;
+    }
+
+    this.logger.log(
+      `[CACHE MISS] Emprestimo ID ${id} nao encontrado no cache, buscando no banco`,
+    );
     const emprestimo = await this.repo.findOne({ where: { id } });
     if (!emprestimo) throw new NotFoundException('Emprestimo not found');
+
+    // Salvar no cache com TTL de 30 minutos (1800 segundos)
+    await this.cacheManager.set(cacheKey, emprestimo, 1800000);
+    this.logger.log(
+      `[CACHE SET] Emprestimo ID ${id} armazenado no cache | TTL: 30min`,
+    );
+
     return emprestimo;
   }
 
@@ -137,18 +169,25 @@ export class EmprestimosService {
     const emprestimo = await this.repo.findOne({ where: { id } });
     if (!emprestimo) throw new NotFoundException('Emprestimo não encontrado');
 
-    if (emprestimo.status !== 'ativo') {
+    if (emprestimo.status !== 'ATIVO') {
       throw new BadRequestException('Empréstimo não está ativo');
     }
 
-    emprestimo.data_devolucao_real = new Date();
-    emprestimo.status = 'devolvido';
+    emprestimo.dataDevolucao = new Date();
+    emprestimo.status = 'DEVOLVIDO';
 
     const saved = await this.repo.save(emprestimo);
 
+    // Invalidar cache após devolver
+    await this.invalidarCacheEmprestimos('devolver empréstimo');
+    await this.cacheManager.del(`emprestimos:${id}`);
+    this.logger.log(
+      `[CACHE INVALIDATE] Emprestimo ID ${id} removido do cache | Motivo: devolução`,
+    );
+
     // chamar próximo da fila via ReservasService
     try {
-      await this.reservasService.chamarProximo(Number(emprestimo.id_livro));
+      await this.reservasService.chamarProximo(Number(emprestimo.idLivro));
     } catch (err) {
       console.error('Erro ao processar fila de reservas após devolução:', err);
     }
@@ -157,27 +196,78 @@ export class EmprestimosService {
   }
 
   async findAll() {
-    return this.repo.find();
+    const cacheKey = 'emprestimos:all';
+
+    // Tentar buscar do cache
+    const cached = await this.cacheManager.get<Emprestimo[]>(cacheKey);
+    if (cached) {
+      this.logger.log('[CACHE HIT] Lista de emprestimos encontrada no cache');
+      return cached;
+    }
+
+    this.logger.log(
+      '[CACHE MISS] Lista de emprestimos nao encontrada no cache, buscando no banco',
+    );
+    const emprestimos = await this.repo.find();
+
+    // Salvar no cache com TTL de 5 minutos (300 segundos)
+    await this.cacheManager.set(cacheKey, emprestimos, 300000);
+    this.logger.log(
+      `[CACHE SET] Lista de emprestimos armazenada no cache | TTL: 5min`,
+    );
+
+    return emprestimos;
   }
 
   async estatisticas() {
+    const cacheKey = 'emprestimos:estatisticas';
+
+    // Tentar buscar do cache
+    const cached = await this.cacheManager.get(cacheKey);
+    if (cached) {
+      this.logger.log(
+        '[CACHE HIT] Estatisticas de emprestimos encontradas no cache',
+      );
+      return cached;
+    }
+
+    this.logger.log(
+      '[CACHE MISS] Estatisticas nao encontradas no cache, calculando',
+    );
     const total = await this.repo.count();
-    const ativos = await this.repo.count({ where: { status: 'ativo' } });
+    const ativos = await this.repo.count({ where: { status: 'ATIVO' } });
     const devolvidos = await this.repo.count({
-      where: { status: 'devolvido' },
+      where: { status: 'DEVOLVIDO' },
     });
     const atrasados = await this.repo.count({
       where: {
-        status: 'ativo',
-        data_devolucao_prevista: LessThan(new Date()),
+        status: 'ATIVO',
+        dataPrevistaDevolucao: LessThan(new Date()),
       },
     });
 
-    return {
+    const stats = {
       total,
       ativos,
       devolvidos,
       atrasados,
     };
+
+    // Salvar no cache com TTL de 1 minuto (60 segundos)
+    await this.cacheManager.set(cacheKey, stats, 60000);
+    this.logger.log(
+      '[CACHE SET] Estatisticas armazenadas no cache | TTL: 1min',
+    );
+
+    return stats;
+  }
+
+  // Método auxiliar para invalidar cache relacionado a empréstimos
+  private async invalidarCacheEmprestimos(motivo: string): Promise<void> {
+    await this.cacheManager.del('emprestimos:all');
+    await this.cacheManager.del('emprestimos:estatisticas');
+    this.logger.log(
+      `[CACHE INVALIDATE] Cache de listagem e estatisticas invalidado | Motivo: ${motivo}`,
+    );
   }
 }

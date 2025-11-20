@@ -1,8 +1,7 @@
-import { Module, Provider } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmprestimosModule } from './emprestimos/emprestimos.module';
-import { ConfigModule } from '@nestjs/config/dist/config.module';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Emprestimo } from './emprestimos/Emprestimo.entity';
 import { HttpModule } from './http/http.module';
 import { ReservasModule } from './reservas/reservas.module';
@@ -13,17 +12,28 @@ import { redisStore } from 'cache-manager-ioredis-yet';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     CacheModule.registerAsync({
+      isGlobal: true,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (cfg: ConfigService) => ({
-        store: await redisStore({
-          host: cfg.get('REDIS_HOST', 'localhost'),
-          port: Number(cfg.get('REDIS_PORT', 6379)),
-          password: cfg.get('REDIS_PASSWORD') || undefined,
-        }),
-        isGlobal: true,
-        ttl: 60 * 60,
-      }),
+      useFactory: async (cfg: ConfigService) => {
+        const host = cfg.get('REDIS_HOST') || 'redis';
+        const port = Number(cfg.get('REDIS_PORT') || 6379);
+
+        console.log(`🔧 [REDIS CONFIG] Conectando: ${host}:${port}`);
+
+        try {
+          const store = await redisStore({
+            host,
+            port,
+          });
+
+          console.log('✅ [REDIS CONFIG] Store criado com sucesso');
+          return { store, ttl: 300000 }; // 5 minutos default
+        } catch (error) {
+          console.error('❌ [REDIS CONFIG] Erro ao criar store:', error);
+          throw error;
+        }
+      },
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (cfg: ConfigService) => ({
@@ -34,7 +44,7 @@ import { redisStore } from 'cache-manager-ioredis-yet';
         password: cfg.get('DB_PASSWORD', 'root'),
         database: cfg.get('DB_NAME', 'usersdb'),
         entities: [Emprestimo],
-        synchronize: true, // DEV only
+        synchronize: false,
         autoLoadEntities: true,
       }),
       inject: [ConfigService],
@@ -42,22 +52,6 @@ import { redisStore } from 'cache-manager-ioredis-yet';
     EmprestimosModule,
     HttpModule,
     ReservasModule,
-  ],
-  providers: [
-    {
-      provide: 'REDIS_CLIENT',
-      useFactory: (cfg: ConfigService) => {
-        // require here to avoid types/emission issues
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Redis = require('ioredis');
-        return new Redis({
-          host: cfg.get('REDIS_HOST', 'localhost'),
-          port: Number(cfg.get('REDIS_PORT', 6379)),
-          password: cfg.get('REDIS_PASSWORD') || undefined,
-        });
-      },
-      inject: [ConfigService],
-    } as Provider,
   ],
 })
 export class AppModule {}

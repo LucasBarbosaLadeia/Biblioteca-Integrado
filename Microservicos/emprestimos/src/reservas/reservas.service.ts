@@ -1,4 +1,6 @@
-﻿import {
+﻿/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -9,8 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Emprestimo } from '../emprestimos/Emprestimo.entity';
 import { ReservaFila } from './reserva_fila.entity';
-import { Inject } from '@nestjs/common';
-import type Redis from 'ioredis';
 
 @Injectable()
 export class ReservasService {
@@ -22,7 +22,6 @@ export class ReservasService {
     private readonly emprestimoRepo: Repository<Emprestimo>,
     @InjectRepository(ReservaFila)
     private readonly reservaFilaRepo: Repository<ReservaFila>,
-    @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
   ) {}
 
   async criarReserva(livroId: number, usuarioId: number) {
@@ -40,9 +39,9 @@ export class ReservasService {
     try {
       const emprestimoAtivo = await this.emprestimoRepo.findOne({
         where: {
-          id_usuario: Number(usuarioId),
-          id_livro: Number(livroId),
-          status: 'ativo',
+          idUsuario: Number(usuarioId),
+          idLivro: Number(livroId),
+          status: 'ATIVO',
         },
       });
       if (emprestimoAtivo) {
@@ -112,31 +111,13 @@ export class ReservasService {
 
     await this.reservaRepo.save(reserva);
 
-    // persistir na tabela de fila e atualizar cache Redis
+    // persistir na tabela de fila
     const filaEntry = this.reservaFilaRepo.create({
       livroId: String(livroId),
       alunoId: String(usuarioId),
       posicao: posicao,
     });
     await this.reservaFilaRepo.save(filaEntry);
-
-    // Atualiza cache Redis de forma atômica (lista por livro)
-    try {
-      const key = `reserva:fila:${livroId}`;
-      const entry = JSON.stringify({
-        reservaId: reserva.id,
-        alunoId: String(usuarioId),
-        posicao,
-      });
-      await this.redisClient.rpush(key, entry);
-      // opcional: expirar a chave em 30 dias se for a primeira entrada
-      const len = await this.redisClient.llen(key);
-      if (len === 1) {
-        await this.redisClient.expire(key, 60 * 60 * 24 * 30);
-      }
-    } catch (err) {
-      console.warn('Não foi possível atualizar a fila no Redis (rpush):', err);
-    }
 
     return reserva;
   }
@@ -244,37 +225,7 @@ export class ReservasService {
     limite.setHours(limite.getHours() + 24);
     proximo.dataLimiteRetirada = limite;
     await this.reservaRepo.save(proximo);
-    console.log(` Notificando usuário ${proximo.alunoId}  livro disponível!`);
 
-    // Atualiza fila no Redis: remover o primeiro item (FIFO)
-    try {
-      const key = `reserva:fila:${livroId}`;
-      const head = await this.redisClient.lindex(key, 0);
-      if (head) {
-        try {
-          const parsed = JSON.parse(head);
-          if (parsed && parsed.reservaId === proximo.id) {
-            await this.redisClient.lpop(key);
-          } else {
-            // remova pelo valor específico caso esteja em outra posição
-            const toRemove = JSON.stringify({
-              reservaId: proximo.id,
-              alunoId: proximo.alunoId,
-              posicao: proximo.posicaoFila,
-            });
-            await this.redisClient.lrem(key, 0, toRemove);
-          }
-        } catch (e) {
-          // se parse falhar, tente apenas lpop para avançar a fila
-          await this.redisClient.lpop(key);
-        }
-      }
-    } catch (err) {
-      console.warn(
-        'Não foi possível atualizar fila no Redis ao promover próximo:',
-        err,
-      );
-    }
     return proximo;
   }
 

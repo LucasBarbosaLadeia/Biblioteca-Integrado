@@ -1,1 +1,3 @@
 /Front-End/Biblioteca-Integrado/node_modules
+*.md
+.env

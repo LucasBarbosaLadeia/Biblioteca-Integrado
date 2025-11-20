@@ -20,24 +20,34 @@ export class Reserva {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ name: 'id_livro', nullable: false })
   livroId!: string;
 
-  @Column()
+  @Column({ name: 'id_usuario', nullable: false })
   alunoId!: string;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ name: 'data_reserva', type: 'timestamptz' })
   dataReserva!: Date;
 
   @Column({ type: 'enum', enum: ReservaStatus, default: ReservaStatus.NA_FILA })
   status!: ReservaStatus;
 
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ name: 'data_limite_retirada', type: 'timestamptz', nullable: true })
   dataLimiteRetirada!: Date | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'posicao_fila', type: 'int', nullable: true })
   posicaoFila!: number | null;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ name: 'id_emprestimo', type: 'int', nullable: true })
   emprestimoId!: string | null;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt!: Date;
+
+  @Column({
+    name: 'updated_at',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  updatedAt!: Date;
 }

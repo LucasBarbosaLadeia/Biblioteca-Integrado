@@ -5,31 +5,39 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-export type EmprestimoStatus = 'ativo' | 'devolvido' | 'atrasado';
+export type EmprestimoStatus = 'ATIVO' | 'DEVOLVIDO' | 'ATRASADO';
 
 @Entity({ name: 'emprestimos' })
 export class Emprestimo {
   @PrimaryGeneratedColumn('increment')
   id!: number;
 
-  @Column()
-  id_usuario!: number;
+  @Column({ name: 'id_usuario' })
+  idUsuario!: number;
 
-  @Column()
-  id_livro!: number;
+  @Column({ name: 'id_livro' })
+  idLivro!: number;
 
-  @Column({ type: 'timestamp' })
-  data_emprestimo!: Date;
+  @Column({ type: 'timestamp', nullable: true, name: 'data_emprestimo' })
+  dataEmprestimo?: Date;
 
-  @Column({ type: 'timestamp' })
-  data_devolucao_prevista!: Date;
+  @Column({
+    type: 'timestamp',
+    nullable: true,
+    name: 'data_prevista_devolucao',
+  })
+  dataPrevistaDevolucao?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
-  data_devolucao_real?: Date;
+  @Column({ type: 'timestamp', nullable: true, name: 'data_devolucao' })
+  dataDevolucao?: Date;
 
-  @Column({ type: 'varchar', length: 20, default: 'ativo' })
+  @Column({
+    type: 'enum',
+    enum: ['ATIVO', 'DEVOLVIDO', 'ATRASADO'],
+    default: 'ATIVO',
+  })
   status!: EmprestimoStatus;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }
