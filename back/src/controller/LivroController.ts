@@ -3,6 +3,12 @@ import Livro, { ILivro } from "../models/Livro";
 import Categoria from "../models/Categoria";
 import { Op } from "sequelize";
 
+// Tipo mínimo para um arquivo recebido do multer
+interface UploadedFile {
+  filename?: string;
+  [key: string]: any;
+}
+
 export class LivroController {
   // Listar todos os livros
   static async getAll(req: Request, res: Response): Promise<void> {
@@ -268,7 +274,7 @@ export class LivroController {
         autor,
         id_categoria,
         ano_publicacao,
-        capa_url,
+    
         sinopse,
         prateleira,
         isbn,
@@ -277,6 +283,8 @@ export class LivroController {
         paginas = 0,
       } = req.body;
 
+  const uploadedFile = (req as Request & { file?: UploadedFile }).file;
+  const capa_url = uploadedFile?.filename ? `/uploads/${uploadedFile.filename}` : undefined;
       // Validações básicas
       if (!titulo || !autor || !id_categoria || !qt_total || !qt_atual) {
         res.status(400).json({

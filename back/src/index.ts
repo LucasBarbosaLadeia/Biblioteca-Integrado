@@ -21,6 +21,10 @@ app.use(express.urlencoded({ extended: true }));
 // Usar rotas da API
 app.use(routes);
 
+// Servir arquivos de upload (capa dos livros)
+app.use('/uploads',express.static(path.join(__dirname, '..', 'uploads'))
+);
+
 // Testar conexão com banco de dados
 const testDatabase = async (): Promise<void> => {
   try {

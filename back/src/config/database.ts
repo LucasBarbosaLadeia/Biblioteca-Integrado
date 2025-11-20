@@ -5,16 +5,17 @@ dotenv.config();
 
 const sequelize = new Sequelize({
   dialect: "mysql",
-  host: process.env.DB_HOST || "localhost",
+  host: process.env.DB_HOST || "database",
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
-  username: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
+  username: process.env.DB_USER || "app",
+  password: process.env.DB_PASSWORD || "123456",
   database: process.env.DB_NAME || "biblioteca",
-  timezone: "-03:00", // define o fuso horário para o Brasil (PT-BR)
+  timezone: "-03:00",
   dialectOptions: {
-    useUTC: false, // faz o Sequelize NÃO usar UTC
-    timezone: "-03:00", // força o MySQL a salvar no fuso PT-BR
+    useUTC: false,
+    timezone: "-03:00",
   },
+  logging: false
 });
 
 export default sequelize;
