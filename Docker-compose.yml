@@ -100,6 +100,7 @@ services:
     environment:
       PORT: 3005
       DB_HOST: postgres_notificacoes
+      DB_PORT: 5432
       DB_USER: notificacoes
       DB_PASSWORD: notificacoes_pass
       DB_NAME: notificacoes_db

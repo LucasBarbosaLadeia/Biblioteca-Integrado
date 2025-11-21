@@ -6,11 +6,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Reserva } from './reserva.entity';
 import { Emprestimo } from '../emprestimos/Emprestimo.entity';
 import { ReservaFila } from './reserva_fila.entity';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [
     HttpModule,
     TypeOrmModule.forFeature([Reserva, Emprestimo, ReservaFila]),
+    RedisModule,
   ],
   controllers: [ReservasController],
   providers: [ReservasService],

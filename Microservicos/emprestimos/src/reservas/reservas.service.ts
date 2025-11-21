@@ -1,6 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import {
+﻿import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -11,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Emprestimo } from '../emprestimos/Emprestimo.entity';
 import { ReservaFila } from './reserva_fila.entity';
+import { RedisPublisher } from '../redis/redis.publisher';
 
 @Injectable()
 export class ReservasService {
@@ -22,6 +21,7 @@ export class ReservasService {
     private readonly emprestimoRepo: Repository<Emprestimo>,
     @InjectRepository(ReservaFila)
     private readonly reservaFilaRepo: Repository<ReservaFila>,
+    private readonly redisPublisher: RedisPublisher,
   ) {}
 
   async criarReserva(livroId: number, usuarioId: number) {
@@ -55,15 +55,13 @@ export class ReservasService {
     }
 
     const jaReservou = await this.reservaRepo.findOne({
-      where: {
-        livroId: String(livroId),
-        alunoId: String(usuarioId),
-        status: In([
-          ReservaStatus.NA_FILA,
-          ReservaStatus.DISPONIVEL_PARA_COLETA,
-          ReservaStatus.PENDENTE_RETIRADA,
-        ]),
-      },
+      where: [
+        {
+          livroId: String(livroId),
+          alunoId: String(usuarioId),
+          status: ReservaStatus.PENDENTE,
+        },
+      ],
     });
 
     if (jaReservou) {
@@ -75,35 +73,50 @@ export class ReservasService {
     if (qt > 0) {
       await this.http.decrementarEstoque(livroId);
 
+      const agora = new Date();
       const dataLimite = new Date();
       dataLimite.setHours(dataLimite.getHours() + 24);
 
       const reserva = this.reservaRepo.create({
         livroId: String(livroId),
         alunoId: String(usuarioId),
-        status: ReservaStatus.PENDENTE_RETIRADA,
+        status: ReservaStatus.PENDENTE,
+        dataReserva: agora,
         dataLimiteRetirada: dataLimite,
         posicaoFila: null,
         emprestimoId: null,
       });
 
       await this.reservaRepo.save(reserva);
+
+      // Publicar evento de reserva criada no Redis
+      const livroData = (livro.data as any)?.data || livro.data;
+      await this.redisPublisher.publicarReservaDisponivel({
+        reservaId: reserva.id,
+        userId: String(usuarioId),
+        livroId: String(livroId),
+        livroTitulo: livroData?.titulo || 'Livro',
+        data: new Date().toISOString(),
+      });
+
       return reserva;
     }
 
     const last = await this.reservaRepo
       .createQueryBuilder('r')
       .where('r.livroId = :livroId', { livroId: String(livroId) })
-      .andWhere('r.status = :status', { status: ReservaStatus.NA_FILA })
+      .andWhere('r.status = :status', { status: ReservaStatus.PENDENTE })
       .orderBy('r.posicaoFila', 'DESC')
       .getOne();
 
     const posicao = (last?.posicaoFila ?? 0) + 1;
 
+    const agora = new Date();
     const reserva = this.reservaRepo.create({
       livroId: String(livroId),
       alunoId: String(usuarioId),
-      status: ReservaStatus.NA_FILA,
+      status: ReservaStatus.PENDENTE,
+      dataReserva: agora,
       posicaoFila: posicao,
       dataLimiteRetirada: null,
       emprestimoId: null,
@@ -118,6 +131,16 @@ export class ReservasService {
       posicao: posicao,
     });
     await this.reservaFilaRepo.save(filaEntry);
+
+    // Publicar evento de reserva na fila no Redis
+    const livroData = (livro.data as any)?.data || livro.data;
+    await this.redisPublisher.publicarReservaDisponivel({
+      reservaId: reserva.id,
+      userId: String(usuarioId),
+      livroId: String(livroId),
+      livroTitulo: livroData?.titulo || 'Livro',
+      data: new Date().toISOString(),
+    });
 
     return reserva;
   }
@@ -184,12 +207,7 @@ export class ReservasService {
     });
     if (!reserva) throw new NotFoundException('Reserva não encontrada');
 
-    if (
-      ![
-        ReservaStatus.PENDENTE_RETIRADA,
-        ReservaStatus.DISPONIVEL_PARA_COLETA,
-      ].includes(reserva.status)
-    ) {
+    if (reserva.status !== ReservaStatus.PENDENTE) {
       throw new BadRequestException(
         'Reserva não está disponível para retirada.',
       );
@@ -202,7 +220,7 @@ export class ReservasService {
       throw new BadRequestException('Reserva expirada. Faça uma nova reserva.');
     }
 
-    reserva.status = ReservaStatus.RETIRADA;
+    reserva.status = ReservaStatus.ATENDIDA;
     await this.reservaRepo.save(reserva);
     return reserva;
   }
@@ -211,7 +229,7 @@ export class ReservasService {
     const proximo = await this.reservaRepo
       .createQueryBuilder('r')
       .where('r.livroId = :livroId', { livroId: String(livroId) })
-      .andWhere('r.status = :status', { status: ReservaStatus.NA_FILA })
+      .andWhere('r.status = :status', { status: ReservaStatus.PENDENTE })
       .orderBy('r.posicaoFila', 'ASC')
       .getOne();
 
@@ -220,11 +238,14 @@ export class ReservasService {
       return;
     }
 
-    proximo.status = ReservaStatus.DISPONIVEL_PARA_COLETA;
+    proximo.status = ReservaStatus.PENDENTE;
     const limite = new Date();
     limite.setHours(limite.getHours() + 24);
     proximo.dataLimiteRetirada = limite;
     await this.reservaRepo.save(proximo);
+
+    // Publicar evento de reserva disponível
+    await this.publicarEventoReservaDisponivel(proximo, livroId);
 
     return proximo;
   }
@@ -241,6 +262,30 @@ export class ReservasService {
       const msg = String(err instanceof Error ? err.message : err);
       console.error('Erro ao buscar livro no backend:', msg);
       return null;
+    }
+  }
+
+  private async publicarEventoReservaDisponivel(
+    reserva: Reserva,
+    livroId: number,
+  ): Promise<void> {
+    try {
+      const livroResponse = await this.http.getLivro(livroId).catch(() => null);
+      const livroData = livroResponse?.data as { titulo?: string } | undefined;
+      const livroTitulo = (livroData?.titulo as string) || `Livro #${livroId}`;
+
+      await this.redisPublisher.publicarReservaDisponivel({
+        userId: String(reserva.alunoId),
+        livroId: String(livroId),
+        livroTitulo: livroTitulo,
+        reservaId: String(reserva.id),
+        data: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error(
+        '❌ [RESERVA] Erro ao publicar evento reserva.disponivel:',
+        error,
+      );
     }
   }
 }

@@ -14,6 +14,7 @@ import { ReservaStatus } from '../reservas/reserva.entity';
 import { ReservasService } from '../reservas/reservas.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
+import { RedisPublisher } from '../redis/redis.publisher';
 
 @Injectable()
 export class EmprestimosService {
@@ -26,6 +27,7 @@ export class EmprestimosService {
     private readonly reservasService: ReservasService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
+    private readonly redisPublisher: RedisPublisher,
   ) {
     this.logger.log('[CACHE] EmprestimosService inicializado com cache ativo');
   }
@@ -58,7 +60,7 @@ export class EmprestimosService {
         (r) =>
           r.livroId === String(idLivro) &&
           r.alunoId === String(idUsuario) &&
-          r.status === ReservaStatus.PENDENTE_RETIRADA,
+          r.status === ReservaStatus.PENDENTE,
       ) || null;
 
     if (!reserva && livro.data.qt_atual <= 0) {
@@ -84,7 +86,7 @@ export class EmprestimosService {
     const savedEmprestimo = await this.repo.save(novoEmprestimo);
 
     if (reserva) {
-      reserva.status = ReservaStatus.RETIRADA;
+      reserva.status = ReservaStatus.ATENDIDA;
       // Note: não decrementar estoque aqui pois já foi reservado quando criada
     } else {
       await this.httpService.decrementarEstoque(idLivro);
@@ -92,6 +94,9 @@ export class EmprestimosService {
 
     // Invalidar cache após criar empréstimo
     await this.invalidarCacheEmprestimos('criar empréstimo');
+
+    // Publicar evento de empréstimo criado
+    await this.publicarEventoEmprestimoCriado(savedEmprestimo, livro);
 
     return savedEmprestimo;
   }
@@ -142,24 +147,32 @@ export class EmprestimosService {
 
   async findOne(id: number) {
     const cacheKey = `emprestimos:${id}`;
+    const startTime = Date.now();
 
     // Tentar buscar do cache
     const cached = await this.cacheManager.get<Emprestimo>(cacheKey);
     if (cached) {
-      this.logger.log(`[CACHE HIT] Emprestimo ID ${id} encontrado no cache`);
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `✅ [CACHE HIT] Emprestimo ID ${id} | Tempo: ${duration}ms | Origem: Redis`,
+      );
       return cached;
     }
 
     this.logger.log(
-      `[CACHE MISS] Emprestimo ID ${id} nao encontrado no cache, buscando no banco`,
+      `❌ [CACHE MISS] Emprestimo ID ${id} | Buscando no banco de dados...`,
     );
+    const dbStartTime = Date.now();
     const emprestimo = await this.repo.findOne({ where: { id } });
+    const dbDuration = Date.now() - dbStartTime;
+
     if (!emprestimo) throw new NotFoundException('Emprestimo not found');
 
     // Salvar no cache com TTL de 30 minutos (1800 segundos)
     await this.cacheManager.set(cacheKey, emprestimo, 1800000);
+    const totalDuration = Date.now() - startTime;
     this.logger.log(
-      `[CACHE SET] Emprestimo ID ${id} armazenado no cache | TTL: 30min`,
+      `💾 [CACHE SET] Emprestimo ID ${id} | TTL: 30min | Tempo DB: ${dbDuration}ms | Tempo Total: ${totalDuration}ms`,
     );
 
     return emprestimo;
@@ -181,9 +194,12 @@ export class EmprestimosService {
     // Invalidar cache após devolver
     await this.invalidarCacheEmprestimos('devolver empréstimo');
     await this.cacheManager.del(`emprestimos:${id}`);
-    this.logger.log(
-      `[CACHE INVALIDATE] Emprestimo ID ${id} removido do cache | Motivo: devolução`,
+    this.logger.warn(
+      `🗑️ [CACHE INVALIDATE] Emprestimo ID ${id} removido do cache | Motivo: devolução`,
     );
+
+    // Publicar evento de livro devolvido
+    await this.publicarEventoLivroDevolvido(saved);
 
     // chamar próximo da fila via ReservasService
     try {
@@ -197,23 +213,30 @@ export class EmprestimosService {
 
   async findAll() {
     const cacheKey = 'emprestimos:all';
+    const startTime = Date.now();
 
     // Tentar buscar do cache
     const cached = await this.cacheManager.get<Emprestimo[]>(cacheKey);
     if (cached) {
-      this.logger.log('[CACHE HIT] Lista de emprestimos encontrada no cache');
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `✅ [CACHE HIT] Lista completa (${cached.length} emprestimos) | Tempo: ${duration}ms | Origem: Redis`,
+      );
       return cached;
     }
 
     this.logger.log(
-      '[CACHE MISS] Lista de emprestimos nao encontrada no cache, buscando no banco',
+      `❌ [CACHE MISS] Lista de emprestimos | Buscando no banco de dados...`,
     );
+    const dbStartTime = Date.now();
     const emprestimos = await this.repo.find();
+    const dbDuration = Date.now() - dbStartTime;
 
     // Salvar no cache com TTL de 5 minutos (300 segundos)
     await this.cacheManager.set(cacheKey, emprestimos, 300000);
+    const totalDuration = Date.now() - startTime;
     this.logger.log(
-      `[CACHE SET] Lista de emprestimos armazenada no cache | TTL: 5min`,
+      `💾 [CACHE SET] Lista (${emprestimos.length} emprestimos) | TTL: 5min | Tempo DB: ${dbDuration}ms | Tempo Total: ${totalDuration}ms`,
     );
 
     return emprestimos;
@@ -221,19 +244,22 @@ export class EmprestimosService {
 
   async estatisticas() {
     const cacheKey = 'emprestimos:estatisticas';
+    const startTime = Date.now();
 
     // Tentar buscar do cache
     const cached = await this.cacheManager.get(cacheKey);
     if (cached) {
+      const duration = Date.now() - startTime;
       this.logger.log(
-        '[CACHE HIT] Estatisticas de emprestimos encontradas no cache',
+        `✅ [CACHE HIT] Estatisticas | Tempo: ${duration}ms | Origem: Redis`,
       );
       return cached;
     }
 
     this.logger.log(
-      '[CACHE MISS] Estatisticas nao encontradas no cache, calculando',
+      `❌ [CACHE MISS] Estatisticas | Calculando 4 queries no banco...`,
     );
+    const dbStartTime = Date.now();
     const total = await this.repo.count();
     const ativos = await this.repo.count({ where: { status: 'ATIVO' } });
     const devolvidos = await this.repo.count({
@@ -245,6 +271,7 @@ export class EmprestimosService {
         dataPrevistaDevolucao: LessThan(new Date()),
       },
     });
+    const dbDuration = Date.now() - dbStartTime;
 
     const stats = {
       total,
@@ -255,8 +282,9 @@ export class EmprestimosService {
 
     // Salvar no cache com TTL de 1 minuto (60 segundos)
     await this.cacheManager.set(cacheKey, stats, 60000);
+    const totalDuration = Date.now() - startTime;
     this.logger.log(
-      '[CACHE SET] Estatisticas armazenadas no cache | TTL: 1min',
+      `💾 [CACHE SET] Estatisticas | TTL: 1min | Tempo DB: ${dbDuration}ms | Tempo Total: ${totalDuration}ms`,
     );
 
     return stats;
@@ -264,10 +292,57 @@ export class EmprestimosService {
 
   // Método auxiliar para invalidar cache relacionado a empréstimos
   private async invalidarCacheEmprestimos(motivo: string): Promise<void> {
+    const startTime = Date.now();
     await this.cacheManager.del('emprestimos:all');
     await this.cacheManager.del('emprestimos:estatisticas');
-    this.logger.log(
-      `[CACHE INVALIDATE] Cache de listagem e estatisticas invalidado | Motivo: ${motivo}`,
+    const duration = Date.now() - startTime;
+    this.logger.warn(
+      `🗑️ [CACHE INVALIDATE] Listagem + Estatisticas removidos | Motivo: ${motivo} | Tempo: ${duration}ms`,
     );
+  }
+
+  private async publicarEventoEmprestimoCriado(
+    emprestimo: Emprestimo,
+    livroResponse: any,
+  ): Promise<void> {
+    try {
+      // O httpService retorna { data: { success, data: { id_livro, titulo, ... }, message } }
+      const livroData = livroResponse?.data?.data || livroResponse?.data;
+      const livroTitulo = livroData?.titulo || `Livro #${emprestimo.idLivro}`;
+
+      await this.redisPublisher.publicarEmprestimoCriado({
+        userId: String(emprestimo.idUsuario),
+        livroId: String(emprestimo.idLivro),
+        livroTitulo,
+        emprestimoId: String(emprestimo.id),
+        data:
+          emprestimo.dataEmprestimo?.toISOString() || new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.error('❌ Erro ao publicar evento emprestimo.criado:', error);
+    }
+  }
+
+  private async publicarEventoLivroDevolvido(
+    emprestimo: Emprestimo,
+  ): Promise<void> {
+    try {
+      const livroResponse: any = await this.httpService
+        .getLivro(emprestimo.idLivro)
+        .catch(() => null);
+      const livroData = livroResponse?.data?.data || livroResponse?.data;
+      const livroTitulo = livroData?.titulo || `Livro #${emprestimo.idLivro}`;
+
+      await this.redisPublisher.publicarLivroDevolvido({
+        userId: String(emprestimo.idUsuario),
+        livroId: String(emprestimo.idLivro),
+        livroTitulo,
+        emprestimoId: String(emprestimo.id),
+        data:
+          emprestimo.dataDevolucao?.toISOString() || new Date().toISOString(),
+      });
+    } catch (error) {
+      this.logger.error('❌ Erro ao publicar evento livro.devolvido:', error);
+    }
   }
 }

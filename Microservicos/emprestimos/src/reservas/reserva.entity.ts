@@ -7,12 +7,10 @@ import {
 
 // Enums para o Status
 export enum ReservaStatus {
-  PENDENTE_RETIRADA = 'PENDENTE_RETIRADA', // Livro disponível, aluno tem prazo para retirar
-  NA_FILA = 'NA_FILA', // Livro indisponível, aluno está na fila
-  DISPONIVEL_PARA_COLETA = 'DISPONIVEL_PARA_COLETA', // Livro voltou, aluno foi notificado e tem prazo
-  RETIRADA = 'RETIRADA',
-  EXPIRADA = 'EXPIRADA',
-  CANCELADA = 'CANCELADA',
+  PENDENTE = 'PENDENTE', // Reserva aguardando retirada
+  ATENDIDA = 'ATENDIDA', // Reserva retirada (empréstimo criado)
+  EXPIRADA = 'EXPIRADA', // Prazo de retirada expirado
+  CANCELADA = 'CANCELADA', // Reserva cancelada
 }
 
 @Entity('reservas')
@@ -26,10 +24,18 @@ export class Reserva {
   @Column({ name: 'id_usuario', nullable: false })
   alunoId!: string;
 
-  @CreateDateColumn({ name: 'data_reserva', type: 'timestamptz' })
+  @Column({
+    name: 'data_reserva',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   dataReserva!: Date;
 
-  @Column({ type: 'enum', enum: ReservaStatus, default: ReservaStatus.NA_FILA })
+  @Column({
+    type: 'enum',
+    enum: ReservaStatus,
+    default: ReservaStatus.PENDENTE,
+  })
   status!: ReservaStatus;
 
   @Column({ name: 'data_limite_retirada', type: 'timestamptz', nullable: true })

@@ -17,12 +17,15 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 
 import BackgroundImage from "../assets/background.png";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { maskRA, unmaskRA } from "../utils/mask";
 import { api } from "../services/api";
 import CustomAlert from "../components/CustomAlert";
+import notificationService from "../services/NotificationService";
 
 const LoginScreen = ({ navigation, setRole }) => {
   const { width } = useWindowDimensions();
@@ -43,6 +46,41 @@ const LoginScreen = ({ navigation, setRole }) => {
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Função para registrar o Expo Push Token
+  const registerExpoToken = async (userId) => {
+    try {
+      // Solicitar permissões
+      const hasPermission = await notificationService.requestPermissions();
+      if (!hasPermission) {
+        console.warn("Permissões de notificação negadas");
+        return;
+      }
+
+      // Obter o Expo Push Token
+      // Para Expo Go, usamos o experienceId como fallback
+      const experienceId = "@anonymous/biblioteca-integrado";
+
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        experienceId: experienceId,
+      });
+
+      const expoToken = tokenData.data;
+      console.log("📱 Expo Push Token:", expoToken);
+
+      // Salvar no AsyncStorage
+      await AsyncStorage.setItem("expoToken", expoToken);
+
+      // Enviar para o backend
+      await api.put(`usuarios/${userId}`, { expoToken });
+      console.log("✅ ExpoToken registrado no backend");
+
+      // Conectar ao serviço de notificações
+      await notificationService.connect();
+    } catch (error) {
+      console.error("❌ Erro ao registrar ExpoToken:", error);
+    }
+  };
 
   const handleLogin = async () => {
     setLoading(true);
@@ -143,6 +181,10 @@ const LoginScreen = ({ navigation, setRole }) => {
           if (rawTipo) await AsyncStorage.setItem("userRole", String(rawTipo));
 
           await AsyncStorage.setItem("userRoleNormalized", roleToSet);
+
+          // Registrar ExpoToken para notificações push
+          await registerExpoToken(data.data.id_usuario);
+
           try {
             if (typeof setRole === "function") {
               console.log("[Login] setting role to", roleToSet);

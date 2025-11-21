@@ -3,7 +3,7 @@ import Categoria from "./Categoria";
 import Livro from "./Livro";
 import Favorito from "./Favorito";
 import Emprestimo from "./Emprestimo";
-import Reserva from "./Reserva";
+// import Reserva from "./Reserva"; // REMOVIDO - Reservas agora estão no microserviço de empréstimos
 
 // Relação: Usuario -> Livros (através de Favoritos)
 Usuario.belongsToMany(Livro, {
@@ -97,28 +97,29 @@ Emprestimo.belongsTo(Livro, {
   as: "livro",
 });
 
-// Relação: Usuario -> Reservas (1:N)
-Usuario.hasMany(Reserva, {
-  foreignKey: "id_usuario",
-  as: "reservas",
-});
+// REMOVIDO - Reservas agora estão no microserviço de empréstimos
+// // Relação: Usuario -> Reservas (1:N)
+// Usuario.hasMany(Reserva, {
+//   foreignKey: "id_usuario",
+//   as: "reservas",
+// });
 
-// Relação: Reserva -> Usuario (N:1)
-Reserva.belongsTo(Usuario, {
-  foreignKey: "id_usuario",
-  as: "usuario",
-});
+// // Relação: Reserva -> Usuario (N:1)
+// Reserva.belongsTo(Usuario, {
+//   foreignKey: "id_usuario",
+//   as: "usuario",
+// });
 
-// Relação: Livro -> Reservas (1:N)
-Livro.hasMany(Reserva, {
-  foreignKey: "id_livro",
-  as: "reservas",
-});
+// // Relação: Livro -> Reservas (1:N)
+// Livro.hasMany(Reserva, {
+//   foreignKey: "id_livro",
+//   as: "reservas",
+// });
 
-// Relação: Reserva -> Livro (N:1)
-Reserva.belongsTo(Livro, {
-  foreignKey: "id_livro",
-  as: "livro",
-});
+// // Relação: Reserva -> Livro (N:1)
+// Reserva.belongsTo(Livro, {
+//   foreignKey: "id_livro",
+//   as: "livro",
+// });
 
-export { Usuario, Categoria, Livro, Favorito, Emprestimo, Reserva };
+export { Usuario, Categoria, Livro, Favorito, Emprestimo };

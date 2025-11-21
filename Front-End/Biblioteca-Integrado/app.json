@@ -20,13 +20,27 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.BibliotecaIntegrado"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
-    ]
+      "expo-asset",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#ffffff"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "49d81281-2b4f-4ec0-80e3-86cf7d0176a8"
+      }
+    },
+    "owner": "gabrielhenquesanches"
   }
 }

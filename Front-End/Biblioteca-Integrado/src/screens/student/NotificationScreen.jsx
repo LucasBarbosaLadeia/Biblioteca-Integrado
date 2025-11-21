@@ -16,23 +16,11 @@ import NotificationList from "../../components/Notification/NotificationList";
 import CustomAlert from "../../components/CustomAlert";
 
 const NotificationScreen = ({ navigation }) => {
-  const [showTelaDesenvolvimento, setShowTelaDesenvolvimento] =
-    React.useState(true);
   const [showModelLixeira, setShowModelLixeira] = React.useState(false);
-  const book = "O Senhor dos Aneis";
 
   return (
     <View source={BackgroundImage} style={styles.background}>
       <SafeAreaView style={styles.safeArea}>
-        <CustomAlert
-          visible={showTelaDesenvolvimento}
-          title="Aviso"
-          message={
-            "🚧 Tela em Desenvolvimento\nEsta página está em fase de construção. Ela foi adicionada para que você possa visualizar onde a funcionalidade ficará no futuro."
-          }
-          onClose={() => setShowTelaDesenvolvimento(false)}
-          buttonText="OK"
-        />
         <CustomAlert
           visible={showModelLixeira}
           title="Aviso"
