@@ -149,13 +149,11 @@ export class ReservaController {
           .json({ success: false, message: "Reserva não encontrada" });
         return;
       }
-      res
-        .status(200)
-        .json({
-          success: true,
-          data: formatReservaObject(reserva.toJSON()),
-          message: "Reserva encontrada",
-        });
+      res.status(200).json({
+        success: true,
+        data: formatReservaObject(reserva.toJSON()),
+        message: "Reserva encontrada",
+      });
     } catch (error) {
       console.error("Erro ao buscar reserva:", error);
       res

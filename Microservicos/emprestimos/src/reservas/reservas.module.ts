@@ -7,6 +7,7 @@ import { Reserva } from './reserva.entity';
 import { Emprestimo } from '../emprestimos/Emprestimo.entity';
 import { ReservaFila } from './reserva_fila.entity';
 import { RedisModule } from '../redis/redis.module';
+import { ExpireReservasJob } from './jobs/expire-reservas.job';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { RedisModule } from '../redis/redis.module';
     RedisModule,
   ],
   controllers: [ReservasController],
-  providers: [ReservasService],
+  providers: [ReservasService, ExpireReservasJob],
   exports: [ReservasService],
 })
 export class ReservasModule {}

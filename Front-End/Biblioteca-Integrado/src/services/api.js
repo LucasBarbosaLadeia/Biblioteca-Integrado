@@ -1,21 +1,54 @@
 import { API_HOST } from "@env";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const HOST = (API_HOST || "http://localhost:3001").replace(/\/+$/g, "");
+const HOST = (API_HOST || "http://localhost").replace(/\/+$/g, "");
 const API_BASE = `${HOST}`;
 
 async function request(method, path, options = {}) {
   const pathname = path.startsWith("/") ? path : `/${path}`;
   const url = path.startsWith("http") ? path : `${API_BASE}${pathname}`;
 
-  const opts = { method, ...options };
+  console.log(`[API] ${method} ${url}`);
+
+  // Get token from AsyncStorage
+  let token = null;
+  try {
+    token = await AsyncStorage.getItem("userToken");
+  } catch (error) {
+    console.warn("[API] Failed to get token from AsyncStorage:", error);
+  }
+
+  // Build headers with Authorization
+  const headers = {
+    ...(options.headers || {}),
+  };
+
+  // Add Authorization header if token exists
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const opts = {
+    method,
+    ...options,
+    headers,
+  };
 
   const res = await fetch(url, opts);
+
+  console.log(`[API] Response status: ${res.status}`);
+
   // try to parse json when possible
   let json = null;
   try {
     json = await res.json();
+    console.log(
+      `[API] Response data:`,
+      JSON.stringify(json, null, 2).substring(0, 500)
+    );
   } catch (e) {
     // no json body
+    console.log(`[API] No JSON body in response`);
   }
 
   if (!res.ok) {
@@ -25,7 +58,13 @@ async function request(method, path, options = {}) {
     throw err;
   }
 
-  return json;
+  // If response already has success/data structure, return as is
+  // Otherwise, wrap it for compatibility
+  if (json && typeof json === "object" && "success" in json) {
+    return json;
+  }
+
+  return { success: true, data: json, status: res.status };
 }
 
 export const api = {
@@ -38,7 +77,8 @@ export const api = {
     return request("POST", path, {
       ...opts,
       headers,
-      body: JSON.stringify(body),
+      body:
+        body !== null && body !== undefined ? JSON.stringify(body) : undefined,
     });
   },
   put: (path, body, opts = {}) => {

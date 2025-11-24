@@ -205,44 +205,96 @@ export class ReservasService {
     const reserva = await this.reservaRepo.findOne({
       where: { id: reservaId },
     });
-    if (!reserva) throw new NotFoundException('Reserva não encontrada');
 
+    if (!reserva) {
+      throw new NotFoundException('Reserva não encontrada');
+    }
+
+    // Verificar se reserva está em status válido para retirada
     if (reserva.status !== ReservaStatus.PENDENTE) {
       throw new BadRequestException(
-        'Reserva não está disponível para retirada.',
+        `Reserva não está disponível para retirada. Status atual: ${reserva.status}`,
       );
     }
 
-    if (reserva.dataLimiteRetirada && new Date() > reserva.dataLimiteRetirada) {
-      reserva.status = ReservaStatus.EXPIRADA;
-      await this.reservaRepo.save(reserva);
-      await this.http.incrementarEstoque(Number(reserva.livroId));
-      throw new BadRequestException('Reserva expirada. Faça uma nova reserva.');
+    // Verificar se a reserva tem prazo de retirada (livro estava disponível)
+    if (reserva.dataLimiteRetirada) {
+      const agora = new Date();
+
+      // Se expirou, marcar como expirada e liberar estoque
+      if (agora > reserva.dataLimiteRetirada) {
+        console.log(
+          `[RESERVA] Tentativa de retirada de reserva expirada: ${reservaId}`,
+        );
+
+        reserva.status = ReservaStatus.EXPIRADA;
+        reserva.updatedAt = new Date();
+        await this.reservaRepo.save(reserva);
+
+        // Incrementar estoque e chamar próximo
+        await this.http.incrementarEstoque(Number(reserva.livroId));
+        await this.chamarProximo(Number(reserva.livroId));
+
+        throw new BadRequestException(
+          'Reserva expirada. O livro foi liberado e você pode fazer uma nova reserva.',
+        );
+      }
+    } else if (reserva.posicaoFila) {
+      // Reserva ainda está na fila (livro estava indisponível)
+      throw new BadRequestException(
+        `Você está na posição ${reserva.posicaoFila} da fila. Aguarde ser notificado quando o livro estiver disponível.`,
+      );
     }
 
+    // Tudo OK, marcar como atendida
+    console.log(
+      `[RESERVA] Reserva ${reservaId} sendo retirada pelo usuário ${reserva.alunoId}`,
+    );
+
     reserva.status = ReservaStatus.ATENDIDA;
+    reserva.updatedAt = new Date();
     await this.reservaRepo.save(reserva);
+
     return reserva;
   }
 
   async chamarProximo(livroId: number) {
+    // Buscar próximo da fila (apenas reservas com posicaoFila definida)
     const proximo = await this.reservaRepo
       .createQueryBuilder('r')
       .where('r.livroId = :livroId', { livroId: String(livroId) })
       .andWhere('r.status = :status', { status: ReservaStatus.PENDENTE })
+      .andWhere('r.posicaoFila IS NOT NULL') // Apenas reservas em fila
       .orderBy('r.posicaoFila', 'ASC')
       .getOne();
 
+    // Se não houver ninguém na fila, incrementa estoque e retorna
     if (!proximo) {
       await this.http.incrementarEstoque(livroId);
+      console.log(
+        `[RESERVA] Nenhum usuário na fila para o livro ${livroId}. Estoque incrementado.`,
+      );
       return;
     }
 
-    proximo.status = ReservaStatus.PENDENTE;
+    console.log(
+      `[RESERVA] Chamando próximo da fila: Reserva ${proximo.id} | Usuário ${proximo.alunoId} | Posição ${proximo.posicaoFila}`,
+    );
+
+    // Decrementar estoque (livro agora está reservado para o próximo da fila)
+    await this.http.decrementarEstoque(livroId);
+
+    // Atualizar reserva: adicionar prazo de 24h e remover da fila
     const limite = new Date();
     limite.setHours(limite.getHours() + 24);
     proximo.dataLimiteRetirada = limite;
+    proximo.posicaoFila = null; // Remove da fila, agora tem reserva com prazo
+    proximo.updatedAt = new Date();
     await this.reservaRepo.save(proximo);
+
+    console.log(
+      `[RESERVA] Próximo da fila notificado. Prazo até: ${limite.toISOString()}`,
+    );
 
     // Publicar evento de reserva disponível
     await this.publicarEventoReservaDisponivel(proximo, livroId);
@@ -252,6 +304,13 @@ export class ReservasService {
 
   async listarTodas() {
     return this.reservaRepo.find({ order: { dataReserva: 'DESC' } });
+  }
+
+  async listarPorUsuario(usuarioId: number) {
+    return this.reservaRepo.find({
+      where: { alunoId: String(usuarioId) },
+      order: { dataReserva: 'DESC' },
+    });
   }
 
   async buscarLivroBackend(livroId: number) {
@@ -287,5 +346,78 @@ export class ReservasService {
         error,
       );
     }
+  }
+
+  async cancelarReserva(livroId: number, usuarioId: number) {
+    // Buscar reserva PENDENTE do usuário para este livro
+    const reserva = await this.reservaRepo.findOne({
+      where: {
+        livroId: String(livroId),
+        alunoId: String(usuarioId),
+        status: ReservaStatus.PENDENTE,
+      },
+    });
+
+    if (!reserva) {
+      throw new NotFoundException(
+        'Reserva não encontrada ou já foi cancelada/atendida',
+      );
+    }
+
+    console.log(
+      `[RESERVA] Cancelando reserva ${reserva.id} | Usuário: ${usuarioId} | Livro: ${livroId}`,
+    );
+
+    // Marcar como CANCELADA
+    reserva.status = ReservaStatus.CANCELADA;
+    reserva.updatedAt = new Date();
+    await this.reservaRepo.save(reserva);
+
+    // Se a reserva tinha prazo de retirada (estava disponível), incrementar estoque e chamar próximo
+    if (reserva.dataLimiteRetirada) {
+      await this.http.incrementarEstoque(livroId);
+      console.log(
+        `[RESERVA] Estoque do livro ${livroId} incrementado após cancelamento`,
+      );
+
+      // Chamar próximo da fila
+      await this.chamarProximo(livroId);
+    } else if (reserva.posicaoFila) {
+      // Se estava na fila, remover da tabela de fila
+      await this.reservaFilaRepo.delete({
+        livroId: String(livroId),
+        alunoId: String(usuarioId),
+      });
+
+      // Atualizar posições dos que estão atrás na fila
+      const filaRestante = await this.reservaRepo
+        .createQueryBuilder('r')
+        .where('r.livroId = :livroId', { livroId: String(livroId) })
+        .andWhere('r.status = :status', { status: ReservaStatus.PENDENTE })
+        .andWhere('r.posicaoFila > :posicao', { posicao: reserva.posicaoFila })
+        .andWhere('r.posicaoFila IS NOT NULL')
+        .getMany();
+
+      for (const r of filaRestante) {
+        if (r.posicaoFila) {
+          r.posicaoFila -= 1;
+          await this.reservaRepo.save(r);
+        }
+      }
+
+      console.log(
+        `[RESERVA] Posições da fila atualizadas para o livro ${livroId}`,
+      );
+    }
+
+    return {
+      message: 'Reserva cancelada com sucesso',
+      reserva: {
+        id: reserva.id,
+        status: reserva.status,
+        livroId: reserva.livroId,
+        usuarioId: reserva.alunoId,
+      },
+    };
   }
 }

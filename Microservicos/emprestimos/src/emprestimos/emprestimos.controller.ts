@@ -10,7 +10,7 @@ import {
 import { EmprestimosService } from './emprestimos.service';
 import { CreateEmprestimoDto } from './dto/create-emprestimos.dto';
 
-@Controller('emprestimos')
+@Controller()
 export class EmprestimosController {
   constructor(private emprestimosService: EmprestimosService) {}
 
@@ -22,6 +22,11 @@ export class EmprestimosController {
   @Get('estatisticas')
   estatisticas() {
     return this.emprestimosService.estatisticas();
+  }
+
+  @Get('usuario/:usuarioId')
+  getByUsuario(@Param('usuarioId', ParseIntPipe) usuarioId: number) {
+    return this.emprestimosService.findByUsuario(usuarioId);
   }
 
   @Get('debug/reservas')

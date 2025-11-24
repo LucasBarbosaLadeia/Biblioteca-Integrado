@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { EmprestimosModule } from './emprestimos/emprestimos.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Emprestimo } from './emprestimos/Emprestimo.entity';
@@ -11,6 +12,7 @@ import { redisStore } from 'cache-manager-ioredis-yet';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(), // Habilita cron jobs
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],

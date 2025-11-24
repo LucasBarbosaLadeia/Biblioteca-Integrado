@@ -25,6 +25,15 @@ interface ReservaDisponivelPayload {
   data: string;
 }
 
+interface ReservaExpiradaPayload {
+  userId: string;
+  livroId: string;
+  livroTitulo: string;
+  reservaId: string;
+  data: string;
+  tempoExpirado: number; // em minutos
+}
+
 @Injectable()
 export class RedisPublisher {
   constructor(
@@ -73,6 +82,22 @@ export class RedisPublisher {
     } catch (error) {
       console.error(
         '❌ [PUBLISHER] Erro ao publicar reserva.disponivel:',
+        error instanceof Error ? error.message : error,
+      );
+    }
+  }
+
+  async publicarReservaExpirada(
+    payload: ReservaExpiradaPayload,
+  ): Promise<void> {
+    try {
+      await this.redis.publish('reserva.expirada', JSON.stringify(payload));
+      console.log(
+        `📨 [PUBLISHER] Evento 'reserva.expirada' publicado para usuário ${payload.userId} | Livro: ${payload.livroTitulo}`,
+      );
+    } catch (error) {
+      console.error(
+        '❌ [PUBLISHER] Erro ao publicar reserva.expirada:',
         error instanceof Error ? error.message : error,
       );
     }

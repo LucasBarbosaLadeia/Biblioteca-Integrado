@@ -99,7 +99,8 @@ const LoginScreen = ({ navigation, setRole }) => {
       clearTimeout(timeoutId);
 
       if (data && data.token) {
-        await AsyncStorage.setItem("token", data.token);
+        await AsyncStorage.setItem("userToken", data.token);
+        await AsyncStorage.setItem("token", data.token); // mantém retrocompatibilidade
         await AsyncStorage.setItem("userId", String(data.data.id_usuario));
         // save user name and role quickly so drawer/profile can show immediately without extra fetch
         try {

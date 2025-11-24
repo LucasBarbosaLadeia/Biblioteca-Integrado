@@ -54,6 +54,7 @@ export class Reserva {
     name: 'updated_at',
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt!: Date;
 }

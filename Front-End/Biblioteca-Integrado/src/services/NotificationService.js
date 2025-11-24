@@ -15,8 +15,8 @@ Notifications.setNotificationHandler({
 });
 
 const NOTIFICATION_SERVER_URL = API_HOST
-  ? `${API_HOST.replace(/\/+$/g, "")}:3005`
-  : "http://localhost:3005";
+  ? `${API_HOST.replace(/\/+$/g, "")}`
+  : "http://localhost";
 
 class NotificationService {
   constructor() {
@@ -54,15 +54,23 @@ class NotificationService {
         return;
       }
 
+      // Get token from AsyncStorage
+      const token = await AsyncStorage.getItem("userToken");
+
       const url = serverUrl || NOTIFICATION_SERVER_URL;
       console.log("🔌 Conectando ao servidor de notificações:", url);
 
-      // Conectar ao Socket.io
+      // Conectar ao Socket.io através do nginx
       this.socket = io(url, {
+        path: "/notification/socket.io",
         transports: ["websocket"],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionAttempts: 5,
+        auth: {
+          token: token || "",
+          userId: this.userId,
+        },
       });
 
       // Eventos de conexão
@@ -123,12 +131,27 @@ class NotificationService {
   async fetchNotifications() {
     try {
       const userId = await AsyncStorage.getItem("userId");
-      if (!userId) return [];
+      console.log("📱 Buscando notificações para userId:", userId);
 
-      const data = await api.get(`notification/notification/${userId}`);
-      return data || [];
+      if (!userId) {
+        console.warn("❌ UserId não encontrado");
+        return [];
+      }
+
+      const response = await api.get(`notification/notification/${userId}`);
+      console.log("📦 Resposta da API:", JSON.stringify(response, null, 2));
+
+      // Verificar estrutura da resposta
+      const data = response.data || response;
+      console.log(
+        "✅ Notificações encontradas:",
+        Array.isArray(data) ? data.length : 0
+      );
+
+      return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error("Erro ao buscar notificações:", error);
+      console.error("❌ Erro ao buscar notificações:", error.message);
+      console.error("Detalhes do erro:", error);
       return [];
     }
   }
@@ -136,12 +159,28 @@ class NotificationService {
   // Marcar notificação como lida
   async markAsRead(notificationId) {
     try {
-      await api.raw(`notification/notification/${notificationId}/lida`, {
-        method: "PATCH",
-      });
+      console.log("📝 Marcando notificação como lida:", notificationId);
+
+      const token = await AsyncStorage.getItem("userToken");
+      const response = await fetch(
+        `${NOTIFICATION_SERVER_URL}/notification/notification/${notificationId}/lida`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
+      console.log("✅ Notificação marcada como lida");
       return true;
     } catch (error) {
-      console.error("Erro ao marcar como lida:", error);
+      console.error("❌ Erro ao marcar como lida:", error);
       return false;
     }
   }

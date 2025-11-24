@@ -242,6 +242,39 @@ export class EmprestimosService {
     return emprestimos;
   }
 
+  async findByUsuario(usuarioId: number) {
+    const cacheKey = `emprestimos:usuario:${usuarioId}`;
+    const startTime = Date.now();
+
+    // Tentar buscar do cache
+    const cached = await this.cacheManager.get<Emprestimo[]>(cacheKey);
+    if (cached) {
+      const duration = Date.now() - startTime;
+      this.logger.log(
+        `✅ [CACHE HIT] Emprestimos usuario ${usuarioId} (${cached.length} registros) | Tempo: ${duration}ms | Origem: Redis`,
+      );
+      return cached;
+    }
+
+    this.logger.log(
+      `❌ [CACHE MISS] Emprestimos usuario ${usuarioId} | Buscando no banco de dados...`,
+    );
+    const dbStartTime = Date.now();
+    const emprestimos = await this.repo.find({
+      where: { idUsuario: usuarioId },
+    });
+    const dbDuration = Date.now() - dbStartTime;
+
+    // Salvar no cache com TTL de 5 minutos (300 segundos)
+    await this.cacheManager.set(cacheKey, emprestimos, 300000);
+    const totalDuration = Date.now() - startTime;
+    this.logger.log(
+      `💾 [CACHE SET] Emprestimos usuario ${usuarioId} (${emprestimos.length} registros) | TTL: 5min | Tempo DB: ${dbDuration}ms | Tempo Total: ${totalDuration}ms`,
+    );
+
+    return emprestimos;
+  }
+
   async estatisticas() {
     const cacheKey = 'emprestimos:estatisticas';
     const startTime = Date.now();
@@ -295,6 +328,9 @@ export class EmprestimosService {
     const startTime = Date.now();
     await this.cacheManager.del('emprestimos:all');
     await this.cacheManager.del('emprestimos:estatisticas');
+    // Nota: Não é possível iterar sobre todas as keys no cache-manager v5+
+    // Para invalidar caches de usuários específicos, seria necessário manter uma lista separada
+    // ou usar um padrão diferente. Por enquanto, apenas invalidamos os caches principais.
     const duration = Date.now() - startTime;
     this.logger.warn(
       `🗑️ [CACHE INVALIDATE] Listagem + Estatisticas removidos | Motivo: ${motivo} | Tempo: ${duration}ms`,

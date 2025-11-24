@@ -22,21 +22,27 @@ const NotificationList = ({ style }) => {
   }, []);
 
   const loadNotifications = async () => {
-    setLoading(true);
-    const data = await notificationService.fetchNotifications();
+    try {
+      setLoading(true);
+      const data = await notificationService.fetchNotifications();
 
-    // Converter formato do backend para o formato esperado pelo componente
-    const formattedData = data.map((notif) => ({
-      id: notif.id,
-      type: getNotificationType(notif.titulo),
-      title: notif.titulo,
-      message: notif.mensagem,
-      date: formatDate(notif.createdAt),
-      initialSeen: notif.lida,
-    }));
+      // Converter formato do backend para o formato esperado pelo componente
+      const formattedData = data.map((notif) => ({
+        id: notif.id,
+        type: getNotificationType(notif.titulo),
+        title: notif.titulo,
+        message: notif.mensagem,
+        date: formatDate(notif.createdAt),
+        initialSeen: notif.lida,
+      }));
 
-    setNotificacoes(formattedData);
-    setLoading(false);
+      console.log("✅ Notificações formatadas:", formattedData.length);
+      setNotificacoes(formattedData);
+    } catch (error) {
+      console.error("❌ Erro ao carregar notificações:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onRefresh = async () => {
