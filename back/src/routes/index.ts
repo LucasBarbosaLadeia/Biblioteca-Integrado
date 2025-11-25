@@ -2,7 +2,6 @@ import { Router } from "express";
 import usuarioRoutes from "./usuarioRoutes";
 import livroRoutes from "./livroRoutes";
 import categoriaRoutes from "./categoriaRoutes";
-import emprestimoRoutes from "./emprestimoRoutes";
 import favoritoRoutes from "./favoritoRoutes";
 
 const router = Router();
@@ -11,9 +10,8 @@ const router = Router();
 router.use("/usuarios", usuarioRoutes);
 router.use("/livros", livroRoutes);
 router.use("/categorias", categoriaRoutes);
-router.use("/emprestimos", emprestimoRoutes);
 router.use("/favoritos", favoritoRoutes);
-// router.use("/reservas", reservaRoutes); // REMOVIDO - Reservas agora estão no microserviço de empréstimos
+// REMOVIDO - Empréstimos e Reservas agora estão no microserviço (porta 3002)
 
 // Rota de health check
 router.get("/health", (req, res) => {
@@ -34,9 +32,10 @@ router.get("/", (req, res) => {
       usuarios: "/usuarios",
       livros: "/livros",
       categorias: "/categorias",
-      emprestimos: "/emprestimos",
       favoritos: "/favoritos",
+      emprestimos: "Microserviço de Empréstimos (porta 3002)",
       reservas: "Microserviço de Empréstimos (porta 3002)",
+      notificacoes: "Microserviço de Notificações (porta 3005)",
       health: "/health",
     },
   });
