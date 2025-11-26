@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import Livro, { ILivro } from "../models/Livro";
 import Categoria from "../models/Categoria";
 import { Op } from "sequelize";
+import fs from "fs";
+import path from "path";
 
 export class LivroController {
   // Listar todos os livros
@@ -263,12 +265,16 @@ export class LivroController {
   // Criar novo livro
   static async create(req: Request, res: Response): Promise<void> {
     try {
+      // Log para debug
+      console.log("📝 req.body:", JSON.stringify(req.body, null, 2));
+      console.log("📎 req.file:", req.file);
+      console.log("🔍 Content-Type:", req.headers["content-type"]);
+
       const {
         titulo,
         autor,
         id_categoria,
         ano_publicacao,
-        capa_url,
         sinopse,
         prateleira,
         isbn,
@@ -277,12 +283,41 @@ export class LivroController {
         paginas = 0,
       } = req.body;
 
+      console.log("✅ Campos extraídos:", {
+        titulo,
+        autor,
+        id_categoria,
+        qt_total,
+        qt_atual,
+      });
+
+      // Validar presença da imagem
+      if (!req.file) {
+        res.status(400).json({
+          success: false,
+          message: "A imagem da capa é obrigatória",
+        });
+        return;
+      }
+
       // Validações básicas
       if (!titulo || !autor || !id_categoria || !qt_total || !qt_atual) {
+        // Deletar arquivo enviado se validação falhar
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
         res.status(400).json({
           success: false,
           message:
             "Título, autor, categoria e quantidade total são obrigatórios",
+          debug: {
+            titulo,
+            autor,
+            id_categoria,
+            qt_total,
+            qt_atual,
+            body: req.body,
+          },
         });
         return;
       }
@@ -290,6 +325,10 @@ export class LivroController {
       // Verificar se a categoria existe
       const categoria = await Categoria.findByPk(id_categoria);
       if (!categoria) {
+        // Deletar arquivo enviado se validação falhar
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
         res.status(404).json({
           success: false,
           message: "Categoria não encontrada",
@@ -301,6 +340,10 @@ export class LivroController {
       if (isbn) {
         const isbnExists = await Livro.findOne({ where: { isbn } });
         if (isbnExists) {
+          // Deletar arquivo enviado se validação falhar
+          if (req.file) {
+            fs.unlinkSync(req.file.path);
+          }
           res.status(409).json({
             success: false,
             message: "ISBN já cadastrado",
@@ -311,6 +354,10 @@ export class LivroController {
 
       // Validar quantidade
       if (qt_total < 0) {
+        // Deletar arquivo enviado se validação falhar
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
         res.status(400).json({
           success: false,
           message: "Quantidade total deve ser maior ou igual a 0",
@@ -320,6 +367,10 @@ export class LivroController {
 
       // Validar páginas
       if (paginas < 0) {
+        // Deletar arquivo enviado se validação falhar
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
         res.status(400).json({
           success: false,
           message: "Número de páginas deve ser maior ou igual a 0",
@@ -332,7 +383,7 @@ export class LivroController {
         autor,
         id_categoria,
         ano_publicacao,
-        capa_url,
+        capa_url: req.file.filename, // Salvar nome do arquivo
         sinopse,
         prateleira,
         isbn,
@@ -358,6 +409,14 @@ export class LivroController {
         message: "Livro criado com sucesso",
       });
     } catch (error) {
+      // Deletar arquivo enviado se ocorrer erro
+      if (req.file) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Erro ao deletar arquivo:", unlinkError);
+        }
+      }
       console.error("Erro ao criar livro:", error);
       res.status(500).json({
         success: false,
@@ -376,7 +435,6 @@ export class LivroController {
         autor,
         id_categoria,
         ano_publicacao,
-        capa_url,
         sinopse,
         prateleira,
         isbn,
@@ -386,6 +444,10 @@ export class LivroController {
 
       const livro = await Livro.findByPk(id);
       if (!livro) {
+        // Deletar arquivo enviado se livro não existir
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
         res.status(404).json({
           success: false,
           message: "Livro não encontrado",
@@ -397,6 +459,10 @@ export class LivroController {
       if (id_categoria) {
         const categoria = await Categoria.findByPk(id_categoria);
         if (!categoria) {
+          // Deletar arquivo enviado se validação falhar
+          if (req.file) {
+            fs.unlinkSync(req.file.path);
+          }
           res.status(404).json({
             success: false,
             message: "Categoria não encontrada",
@@ -413,6 +479,10 @@ export class LivroController {
           id_livro: { [Op.ne]: id },
         });
         if (isbnExists) {
+          // Deletar arquivo enviado se validação falhar
+          if (req.file) {
+            fs.unlinkSync(req.file.path);
+          }
           res.status(409).json({
             success: false,
             message: "ISBN já cadastrado",
@@ -423,6 +493,10 @@ export class LivroController {
 
       // Validações de quantidade
       if (qt_total !== undefined && qt_total < 0) {
+        // Deletar arquivo enviado se validação falhar
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
         res.status(400).json({
           success: false,
           message: "Quantidade total deve ser maior ou igual a 0",
@@ -431,6 +505,10 @@ export class LivroController {
       }
 
       if (qt_atual !== undefined && qt_atual < 0) {
+        // Deletar arquivo enviado se validação falhar
+        if (req.file) {
+          fs.unlinkSync(req.file.path);
+        }
         res.status(400).json({
           success: false,
           message: "Quantidade atual deve ser maior ou igual a 0",
@@ -445,12 +523,35 @@ export class LivroController {
       if (id_categoria) updateData.id_categoria = id_categoria;
       if (ano_publicacao !== undefined)
         updateData.ano_publicacao = ano_publicacao;
-      if (capa_url !== undefined) updateData.capa_url = capa_url;
       if (sinopse !== undefined) updateData.sinopse = sinopse;
       if (prateleira !== undefined) updateData.prateleira = prateleira;
       if (isbn !== undefined) updateData.isbn = isbn;
       if (qt_atual !== undefined) updateData.qt_atual = qt_atual;
       if (qt_total !== undefined) updateData.qt_total = qt_total;
+
+      // Se há novo arquivo, atualizar capa_url e deletar arquivo antigo
+      if (req.file) {
+        // Deletar arquivo antigo se existir
+        if (livro.capa_url) {
+          const oldImagePath = path.join(
+            __dirname,
+            "..",
+            "..",
+            "uploads",
+            "capas",
+            livro.capa_url
+          );
+          if (fs.existsSync(oldImagePath)) {
+            try {
+              fs.unlinkSync(oldImagePath);
+              console.log(`🗑️ Imagem antiga deletada: ${livro.capa_url}`);
+            } catch (unlinkError) {
+              console.error("Erro ao deletar imagem antiga:", unlinkError);
+            }
+          }
+        }
+        updateData.capa_url = req.file.filename;
+      }
 
       await livro.update(updateData);
 
@@ -471,6 +572,14 @@ export class LivroController {
         message: "Livro atualizado com sucesso",
       });
     } catch (error) {
+      // Deletar arquivo enviado se ocorrer erro
+      if (req.file) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (unlinkError) {
+          console.error("Erro ao deletar arquivo:", unlinkError);
+        }
+      }
       console.error("Erro ao atualizar livro:", error);
       res.status(500).json({
         success: false,
@@ -501,6 +610,26 @@ export class LivroController {
           message: "Não é possível deletar livro com empréstimos ativos",
         });
         return;
+      }
+
+      // Deletar imagem da capa se existir
+      if (livro.capa_url) {
+        const imagePath = path.join(
+          __dirname,
+          "..",
+          "..",
+          "uploads",
+          "capas",
+          livro.capa_url
+        );
+        if (fs.existsSync(imagePath)) {
+          try {
+            fs.unlinkSync(imagePath);
+            console.log(`🗑️ Imagem deletada: ${livro.capa_url}`);
+          } catch (unlinkError) {
+            console.error("Erro ao deletar imagem:", unlinkError);
+          }
+        }
       }
 
       await livro.destroy();

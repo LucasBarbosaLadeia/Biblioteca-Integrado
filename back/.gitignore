@@ -12,4 +12,8 @@ dist/
 
 # Sistema
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Uploads (arquivos enviados, mas mantém a estrutura)
+uploads/capas/*
+!uploads/capas/.gitkeep 

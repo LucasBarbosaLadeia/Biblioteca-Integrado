@@ -9,6 +9,7 @@ import {
   Image,
 } from "react-native";
 import { api } from "../../services/api";
+import { getCapaUrl } from "../../utils/imageUtils";
 
 import { Ionicons } from "@expo/vector-icons";
 

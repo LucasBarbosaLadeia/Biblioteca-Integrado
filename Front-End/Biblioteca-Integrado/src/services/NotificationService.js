@@ -138,7 +138,7 @@ class NotificationService {
         return [];
       }
 
-      const response = await api.get(`notification/notification/${userId}`);
+      const response = await api.notification.get(`/notification/${userId}`);
       console.log("📦 Resposta da API:", JSON.stringify(response, null, 2));
 
       // Verificar estrutura da resposta
@@ -150,8 +150,10 @@ class NotificationService {
 
       return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error("❌ Erro ao buscar notificações:", error.message);
-      console.error("Detalhes do erro:", error);
+      // Se for erro 404, apenas loga e retorna array vazio
+      console.log(
+        "ℹ️ Nenhuma notificação encontrada (endpoint não disponível)"
+      );
       return [];
     }
   }
@@ -162,20 +164,15 @@ class NotificationService {
       console.log("📝 Marcando notificação como lida:", notificationId);
 
       const token = await AsyncStorage.getItem("userToken");
-      const response = await fetch(
-        `${NOTIFICATION_SERVER_URL}/notification/notification/${notificationId}/lida`,
+      const response = await api.notification.patch(
+        `/notification/${notificationId}/lida`,
+        null,
         {
-          method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         }
       );
-
-      if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
-      }
 
       console.log("✅ Notificação marcada como lida");
       return true;

@@ -85,7 +85,7 @@ const ImageUpload = ({ image, onChangeImage }) => {
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>Capa do Livro (Opcional)</Text>
+      <Text style={styles.label}>Capa do Livro *</Text>
       <TouchableOpacity
         style={styles.box}
         onPress={() => setPickerOpen(true)}
@@ -147,7 +147,7 @@ const ImageUpload = ({ image, onChangeImage }) => {
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 12 },
-  label: { color: "#9fb0c8", marginBottom: 6 },
+  label: { color: "#9fb0c8", marginBottom: 6, fontWeight: "600" },
   box: {
     height: 390,
     borderRadius: 10,

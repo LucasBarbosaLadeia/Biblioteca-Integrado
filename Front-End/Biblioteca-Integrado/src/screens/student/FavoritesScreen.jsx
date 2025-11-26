@@ -17,6 +17,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { toggleFavorito } from "../../utils/favoritos";
 import { api } from "../../services/api";
+import { getCapaUrl } from "../../utils/imageUtils";
 
 const FavoritesScreen = ({ navigation }) => {
   const [favoritos, setFavoritos] = useState([]);
@@ -162,7 +163,9 @@ const FavoritesScreen = ({ navigation }) => {
                   >
                     <BookCard
                       imageSource={
-                        livro.capa_url ? { uri: livro.capa_url } : undefined
+                        livro.capa_url
+                          ? { uri: getCapaUrl(livro.capa_url) }
+                          : undefined
                       }
                       title={livro.titulo}
                       autor={livro.autor}

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teste - Upload de Capa de Livro</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 24px;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+      }
+      .required {
+        color: #e74c3c;
+      }
+      input[type="text"],
+      input[type="number"],
+      textarea,
+      input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+      .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+      }
+      .file-input-wrapper input[type="file"] {
+        position: absolute;
+        left: -9999px;
+      }
+      .file-input-label {
+        display: block;
+        padding: 12px;
+        background: #f0f0f0;
+        border: 2px dashed #ccc;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .file-input-label:hover {
+        background: #e8e8e8;
+        border-color: #667eea;
+      }
+      .file-preview {
+        margin-top: 10px;
+        text-align: center;
+      }
+      .file-preview img {
+        max-width: 200px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .response {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 5px;
+        display: none;
+      }
+      .response.success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+      .response.error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+      .response pre {
+        margin-top: 10px;
+        background: rgba(0, 0, 0, 0.05);
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+        font-size: 12px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📚 Teste - Upload de Capa de Livro</h1>
+      <p class="subtitle">API: POST http://localhost:3001/api/livros</p>
+
+      <form id="bookForm">
+        <!-- Imagem da Capa -->
+        <div class="form-group">
+          <label>Capa do Livro <span class="required">*</span></label>
+          <div class="file-input-wrapper">
+            <input
+              type="file"
+              id="capa"
+              name="capa"
+              accept="image/png,image/jpeg,image/jpg"
+              required
+            />
+            <label for="capa" class="file-input-label">
+              📷 Clique para selecionar uma imagem<br />
+              <small>(PNG, JPG ou JPEG - máx 2MB)</small>
+            </label>
+          </div>
+          <div class="file-preview" id="filePreview"></div>
+        </div>
+
+        <!-- Título -->
+        <div class="form-group">
+          <label for="titulo">Título <span class="required">*</span></label>
+          <input
+            type="text"
+            id="titulo"
+            name="titulo"
+            required
+            placeholder="Ex: 1984"
+          />
+        </div>
+
+        <!-- Autor -->
+        <div class="form-group">
+          <label for="autor">Autor <span class="required">*</span></label>
+          <input
+            type="text"
+            id="autor"
+            name="autor"
+            required
+            placeholder="Ex: George Orwell"
+          />
+        </div>
+
+        <!-- Grid: Categoria e Ano -->
+        <div class="grid">
+          <div class="form-group">
+            <label for="id_categoria"
+              >Categoria <span class="required">*</span></label
+            >
+            <input
+              type="number"
+              id="id_categoria"
+              name="id_categoria"
+              required
+              placeholder="Ex: 1"
+            />
+          </div>
+          <div class="form-group">
+            <label for="ano_publicacao">Ano de Publicação</label>
+            <input
+              type="number"
+              id="ano_publicacao"
+              name="ano_publicacao"
+              placeholder="Ex: 1949"
+            />
+          </div>
+        </div>
+
+        <!-- Grid: Quantidades -->
+        <div class="grid">
+          <div class="form-group">
+            <label for="qt_total"
+              >Quantidade Total <span class="required">*</span></label
+            >
+            <input
+              type="number"
+              id="qt_total"
+              name="qt_total"
+              required
+              value="5"
+              min="0"
+            />
+          </div>
+          <div class="form-group">
+            <label for="qt_atual"
+              >Quantidade Atual <span class="required">*</span></label
+            >
+            <input
+              type="number"
+              id="qt_atual"
+              name="qt_atual"
+              required
+              value="5"
+              min="0"
+            />
+          </div>
+        </div>
+
+        <!-- Grid: ISBN e Páginas -->
+        <div class="grid">
+          <div class="form-group">
+            <label for="isbn">ISBN</label>
+            <input
+              type="text"
+              id="isbn"
+              name="isbn"
+              placeholder="Ex: 978-0451524935"
+            />
+          </div>
+          <div class="form-group">
+            <label for="paginas">Páginas</label>
+            <input
+              type="number"
+              id="paginas"
+              name="paginas"
+              value="0"
+              min="0"
+            />
+          </div>
+        </div>
+
+        <!-- Prateleira -->
+        <div class="form-group">
+          <label for="prateleira">Prateleira</label>
+          <input
+            type="text"
+            id="prateleira"
+            name="prateleira"
+            placeholder="Ex: A-15"
+          />
+        </div>
+
+        <!-- Sinopse -->
+        <div class="form-group">
+          <label for="sinopse">Sinopse</label>
+          <textarea
+            id="sinopse"
+            name="sinopse"
+            placeholder="Descreva o livro..."
+          ></textarea>
+        </div>
+
+        <!-- Botão -->
+        <button type="submit" class="btn">📤 Criar Livro</button>
+      </form>
+
+      <!-- Resposta -->
+      <div id="response" class="response"></div>
+    </div>
+
+    <script>
+      // Preview da imagem
+      document.getElementById("capa").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById("filePreview");
+        const label = document.querySelector(".file-input-label");
+
+        if (file) {
+          // Validar tamanho
+          if (file.size > 2 * 1024 * 1024) {
+            alert("❌ Arquivo muito grande! Máximo 2MB");
+            e.target.value = "";
+            preview.innerHTML = "";
+            return;
+          }
+
+          // Validar tipo
+          if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+            alert("❌ Formato inválido! Use PNG, JPG ou JPEG");
+            e.target.value = "";
+            preview.innerHTML = "";
+            return;
+          }
+
+          // Mostrar preview
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                            ✅ ${file.name} (${(file.size / 1024).toFixed(
+              2
+            )} KB)
+                        </p>
+                    `;
+            label.innerHTML = "✅ Imagem selecionada - Clique para trocar";
+          };
+          reader.readAsDataURL(file);
+        } else {
+          preview.innerHTML = "";
+          label.innerHTML =
+            "📷 Clique para selecionar uma imagem<br><small>(PNG, JPG ou JPEG - máx 2MB)</small>";
+        }
+      });
+
+      // Submit do formulário
+      document
+        .getElementById("bookForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const btn = document.querySelector(".btn");
+          const responseDiv = document.getElementById("response");
+
+          // Desabilitar botão
+          btn.disabled = true;
+          btn.textContent = "⏳ Enviando...";
+
+          // Preparar FormData
+          const formData = new FormData();
+
+          // Adicionar arquivo
+          const fileInput = document.getElementById("capa");
+          if (fileInput.files[0]) {
+            formData.append("capa", fileInput.files[0]);
+          }
+
+          // Adicionar campos de texto
+          const fields = [
+            "titulo",
+            "autor",
+            "id_categoria",
+            "ano_publicacao",
+            "qt_total",
+            "qt_atual",
+            "isbn",
+            "paginas",
+            "prateleira",
+            "sinopse",
+          ];
+          fields.forEach((field) => {
+            const value = document.getElementById(field).value;
+            if (value) {
+              formData.append(field, value);
+            }
+          });
+
+          try {
+            const response = await fetch("http://localhost:3001/api/livros", {
+              method: "POST",
+              body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              responseDiv.className = "response success";
+              responseDiv.style.display = "block";
+              responseDiv.innerHTML = `
+                        <strong>✅ Livro criado com sucesso!</strong>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p style="margin-top: 10px;">
+                            <strong>URL da Capa:</strong><br>
+                            <a href="http://localhost:3001/capas/${
+                              data.data.capa_url
+                            }" target="_blank">
+                                http://localhost:3001/capas/${
+                                  data.data.capa_url
+                                }
+                            </a>
+                        </p>
+                    `;
+
+              // Limpar formulário
+              document.getElementById("bookForm").reset();
+              document.getElementById("filePreview").innerHTML = "";
+              document.querySelector(".file-input-label").innerHTML =
+                "📷 Clique para selecionar uma imagem<br><small>(PNG, JPG ou JPEG - máx 2MB)</small>";
+            } else {
+              throw new Error(data.message || "Erro desconhecido");
+            }
+          } catch (error) {
+            responseDiv.className = "response error";
+            responseDiv.style.display = "block";
+            responseDiv.innerHTML = `
+                    <strong>❌ Erro ao criar livro</strong>
+                    <p>${error.message}</p>
+                `;
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "📤 Criar Livro";
+          }
+        });
+    </script>
+  </body>
+</html>

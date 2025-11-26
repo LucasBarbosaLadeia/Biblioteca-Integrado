@@ -65,9 +65,9 @@ export default function AddBookScreen({ navigation }) {
   }, []);
 
   const validate = () => {
+    if (!cover) return "Imagem da capa é obrigatória.";
     if (!title.trim()) return "Título é obrigatório.";
     if (!author.trim()) return "Autor é obrigatório.";
-    if (!isbn.trim()) return "ISBN é obrigatório.";
     if (!category) return "Categoria é obrigatória.";
     if (!year || isNaN(Number(year)) || Number(year) < 1000)
       return "Ano inválido.";
@@ -76,7 +76,7 @@ export default function AddBookScreen({ navigation }) {
     return null;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const err = validate();
     if (err) {
       setAlertMessage(err);
@@ -84,34 +84,71 @@ export default function AddBookScreen({ navigation }) {
       return;
     }
 
-    const payload = {
-      cover,
-      title,
-      author,
-      isbn,
-      category,
-      year: Number(year),
-      copies: Number(copies),
-      publisher,
-      description,
-    };
+    try {
+      // Criar FormData para enviar a imagem
+      const formData = new FormData();
 
-    // In a real app you would call your API here (e.g. api.post('/livros', payload))
-    console.log("Adicionar livro ->", payload);
+      // Adicionar a imagem - React Native precisa de um objeto específico
+      const uriParts = cover.split(".");
+      const fileType = uriParts[uriParts.length - 1];
 
-    setAlertMessage("Livro adicionado com sucesso.");
-    setAlertVisible(true);
+      // Para React Native, precisamos usar este formato
+      const imageFile = {
+        uri: cover,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
+      };
+      formData.append("capa", imageFile);
 
-    // reset form
-    setCover(null);
-    setTitle("");
-    setAuthor("");
-    setIsbn("");
-    setCategory(null);
-    setYear("");
-    setCopies("1");
-    setPublisher("");
-    setDescription("");
+      // Adicionar campos de texto (usar nomes que correspondem ao backend)
+      formData.append("titulo", title.trim());
+      formData.append("autor", author.trim());
+      formData.append("id_categoria", String(category));
+      formData.append("ano_publicacao", String(year));
+      formData.append("qt_total", String(copies));
+      formData.append("qt_atual", String(copies)); // Inicialmente igual ao total
+      formData.append("paginas", "0"); // Valor padrão
+
+      if (isbn.trim()) formData.append("isbn", isbn.trim());
+      if (publisher.trim()) formData.append("prateleira", publisher.trim());
+      if (description.trim()) formData.append("sinopse", description.trim());
+
+      console.log("Enviando livro para API...");
+      console.log("FormData fields:", {
+        titulo: title.trim(),
+        autor: author.trim(),
+        id_categoria: category,
+        qt_total: copies,
+        qt_atual: copies,
+      });
+
+      // Enviar para a API
+      const response = await api.postFormData("/livros", formData);
+
+      console.log("Resposta da API:", response);
+
+      setAlertMessage("Livro adicionado com sucesso!");
+      setAlertVisible(true);
+
+      // Reset form
+      setCover(null);
+      setTitle("");
+      setAuthor("");
+      setIsbn("");
+      setCategory(null);
+      setYear("");
+      setCopies("1");
+      setPublisher("");
+      setDescription("");
+    } catch (error) {
+      console.error("Erro ao adicionar livro:", error);
+      setAlertMessage(
+        error?.message ||
+          error?.body?.message ||
+          "Erro ao adicionar livro. Tente novamente."
+      );
+      setAlertVisible(true);
+    }
   };
 
   const createCategory = async () => {
@@ -167,10 +204,10 @@ export default function AddBookScreen({ navigation }) {
               placeholder="Digite o nome do autor"
             />
             <TextField
-              label="ISBN *"
+              label="ISBN"
               value={isbn}
               onChangeText={setIsbn}
-              placeholder="978-3-16-148410-0"
+              placeholder="978-3-16-148410-0 (Opcional)"
             />
 
             <SelectField

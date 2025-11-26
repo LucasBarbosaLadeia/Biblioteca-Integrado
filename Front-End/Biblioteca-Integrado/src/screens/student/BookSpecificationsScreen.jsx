@@ -6,6 +6,7 @@ import { toggleFavorito as toggleFavoritoAPI } from "../../utils/favoritos";
 import { emit } from "../../utils/eventBus";
 import { api } from "../../services/api";
 import StyledAlert from "../../components/common/StyledAlert";
+import { getCapaUrl } from "../../utils/imageUtils";
 
 import HeaderDetalhes from "../../components/DetalhesDoLivro/HeaderDetalhes";
 import CoverImage from "../../components/DetalhesDoLivro/CoverImage";
@@ -21,7 +22,8 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
   const id = raw.id_livro ?? raw.id;
   const title = raw.titulo ?? raw.title ?? book?.title ?? "";
   const author = raw.autor ?? raw.author ?? book?.autor ?? "";
-  const cover = book?.cover ?? (raw.capa_url ? { uri: raw.capa_url } : null);
+  const cover =
+    book?.cover ?? (raw.capa_url ? { uri: getCapaUrl(raw.capa_url) } : null);
   const isAvailable = (raw.qt_atual ?? raw.qtAtual ?? 0) > 0;
   const copies = raw.qt_total ?? raw.qtTotal ?? 0;
   const pages = raw.paginas ?? raw.pages ?? 0;
@@ -83,9 +85,12 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
 
-      const result = await api.get(`reservas/usuario/${usuarioId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const result = await api.emprestimos.get(
+        `reservas/usuario/${usuarioId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       console.log("📚 Verificando reserva para livro ID:", id);
       console.log("👤 Usuário ID:", usuarioId);
@@ -186,7 +191,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
               const token = await AsyncStorage.getItem("token");
               const usuarioId = await AsyncStorage.getItem("userId");
 
-              await api.post(`/reservas/${id}/${usuarioId}`, null, {
+              await api.emprestimos.post(`/reservas/${id}/${usuarioId}`, null, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 
@@ -251,7 +256,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
               const token = await AsyncStorage.getItem("token");
               const usuarioId = await AsyncStorage.getItem("userId");
 
-              await api.delete(`/reservas/${id}/${usuarioId}`, {
+              await api.emprestimos.delete(`/reservas/${id}/${usuarioId}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 

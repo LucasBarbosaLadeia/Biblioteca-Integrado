@@ -8,15 +8,23 @@ import "./models";
 
 // Importar rotas
 import routes from "./routes";
-import { expireReservations } from "./jobs/expireReservations";
+// import { expireReservations } from "./jobs/expireReservations"; // DESABILITADO - Reservas movidas para microserviço
 
 const app = express();
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // pegar da env quando disponível
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// Servir arquivos estáticos (imagens de capas)
+app.use(
+  "/capas",
+  express.static(path.join(__dirname, "..", "uploads", "capas"))
+);
+
+// IMPORTANTE: NÃO usar express.json() globalmente
+// Cada rota decide se precisa de JSON parser ou Multer
+// Rotas com upload usam Multer, outras usam express.json() localmente
 
 // Usar rotas da API
 app.use(routes);
@@ -48,35 +56,36 @@ const startServer = async (): Promise<void> => {
       console.log(`📚 Biblioteca Integrado - Backend`);
     });
 
+    // DESABILITADO - Reservas movidas para microserviço
     // Agendador simples para expirar reservas (opcional via env)
-    const enableJob = process.env.ENABLE_RESERVAS_JOB === "true";
-    if (enableJob) {
-      const minutes = process.env.RESERVAS_JOB_INTERVAL_MINUTES
-        ? Number(process.env.RESERVAS_JOB_INTERVAL_MINUTES)
-        : 5;
-      console.log(
-        `🕒 Job de expiração de reservas ativado: rodando a cada ${minutes} minutos`
-      );
-      // executar imediatamente e depois em intervalos
-      (async () => {
-        try {
-          const r = await expireReservations();
-          console.log(`Job expiracao: ${r.expired} reservas expiradas`);
-        } catch (e) {
-          console.error("Erro no job expiracao:", e);
-        }
-      })();
+    // const enableJob = process.env.ENABLE_RESERVAS_JOB === "true";
+    // if (enableJob) {
+    //   const minutes = process.env.RESERVAS_JOB_INTERVAL_MINUTES
+    //     ? Number(process.env.RESERVAS_JOB_INTERVAL_MINUTES)
+    //     : 5;
+    //   console.log(
+    //     `🕒 Job de expiração de reservas ativado: rodando a cada ${minutes} minutos`
+    //   );
+    //   // executar imediatamente e depois em intervalos
+    //   (async () => {
+    //     try {
+    //       const r = await expireReservations();
+    //       console.log(`Job expiracao: ${r.expired} reservas expiradas`);
+    //     } catch (e) {
+    //       console.error("Erro no job expiracao:", e);
+    //     }
+    //   })();
 
-      setInterval(async () => {
-        try {
-          const r = await expireReservations();
-          if (r.expired > 0)
-            console.log(`Job expiracao: ${r.expired} reservas expiradas`);
-        } catch (e) {
-          console.error("Erro no job expiracao:", e);
-        }
-      }, minutes * 60 * 1000);
-    }
+    //   setInterval(async () => {
+    //     try {
+    //       const r = await expireReservations();
+    //       if (r.expired > 0)
+    //         console.log(`Job expiracao: ${r.expired} reservas expiradas`);
+    //     } catch (e) {
+    //       console.error("Erro no job expiracao:", e);
+    //     }
+    //   }, minutes * 60 * 1000);
+    // }
   } catch (error) {
     console.error("❌ Erro ao iniciar servidor:", error);
     process.exit(1);

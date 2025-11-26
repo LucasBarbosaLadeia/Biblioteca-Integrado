@@ -61,13 +61,13 @@ const MeuPerfilScreen = ({ navigation }) => {
 
         console.log("Chamando API:", `/usuarios/${usuarioId}`);
 
-        const [profileJson, loansJson, favsJson, reservasJson] =
-          await Promise.all([
+        const [profileResult, loansResult, favsResult, reservasResult] =
+          await Promise.allSettled([
             api.get(`/usuarios/${usuarioId}`, {
               headers,
               signal: controller.signal,
             }),
-            api.get(`/emprestimos/usuario/${usuarioId}`, {
+            api.emprestimos.get(`/emprestimos/usuario/${usuarioId}`, {
               headers,
               signal: controller.signal,
             }),
@@ -75,11 +75,23 @@ const MeuPerfilScreen = ({ navigation }) => {
               headers,
               signal: controller.signal,
             }),
-            api.get(`/reservas/usuario/${usuarioId}`, {
+            api.emprestimos.get(`/reservas/usuario/${usuarioId}`, {
               headers,
               signal: controller.signal,
             }),
           ]);
+
+        // Extrair dados das promises resolvidas
+        const profileJson =
+          profileResult.status === "fulfilled" ? profileResult.value : null;
+        const loansJson =
+          loansResult.status === "fulfilled" ? loansResult.value : { data: [] };
+        const favsJson =
+          favsResult.status === "fulfilled" ? favsResult.value : { data: [] };
+        const reservasJson =
+          reservasResult.status === "fulfilled"
+            ? reservasResult.value
+            : { data: [] };
 
         let mappedProfile = {
           name:

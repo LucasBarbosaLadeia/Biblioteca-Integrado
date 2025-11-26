@@ -18,6 +18,7 @@ import DrawerMenu from "../../components/home/DrawerMenu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { toggleFavorito } from "../../utils/favoritos";
 import { api } from "../../services/api";
+import { getCapaUrl } from "../../utils/imageUtils";
 import {
   on as onEvent,
   off as offEvent,
@@ -137,7 +138,9 @@ const HomeScreen = ({ navigation, setRole }) => {
             id: String(l.id_livro ?? l.id),
             title: l.titulo,
             autor: l.autor,
-            cover: l.capa_url ? { uri: l.capa_url } : CleanCodeCover,
+            cover: getCapaUrl(l.capa_url)
+              ? { uri: getCapaUrl(l.capa_url) }
+              : CleanCodeCover,
             raw: l,
           }));
           setSearchResults(parsed);
@@ -163,14 +166,16 @@ const HomeScreen = ({ navigation, setRole }) => {
       try {
         const data = await api.get(`livros/recentes?limit=10`);
         if (data && data.success && Array.isArray(data.data)) {
-          const parsed = data.data.map((l) => ({
+          const mapped = data.data.map((l) => ({
             id: String(l.id_livro),
             title: l.titulo,
             autor: l.autor,
-            cover: l.capa_url ? { uri: l.capa_url } : CleanCodeCover,
+            cover: getCapaUrl(l.capa_url)
+              ? { uri: getCapaUrl(l.capa_url) }
+              : CleanCodeCover,
             raw: l,
           }));
-          setRecentes(parsed);
+          setRecentes(mapped);
         }
       } catch (err) {
         console.error("Erro ao carregar livros recentes:", err);
@@ -185,7 +190,9 @@ const HomeScreen = ({ navigation, setRole }) => {
             id: String(l.id_livro),
             title: l.titulo,
             autor: l.autor,
-            cover: l.capa_url ? { uri: l.capa_url } : CleanCodeCover,
+            cover: getCapaUrl(l.capa_url)
+              ? { uri: getCapaUrl(l.capa_url) }
+              : CleanCodeCover,
             raw: l,
           }));
           setRecomendados(parsed);

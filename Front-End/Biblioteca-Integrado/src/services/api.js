@@ -4,6 +4,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const HOST = (API_HOST || "http://localhost").replace(/\/+$/g, "");
 const API_BASE = `${HOST}`;
 
+// Microserviços
+const EMPRESTIMOS_HOST = HOST.replace(":3001", ":3002");
+const NOTIFICATION_HOST = HOST.replace(":3001", ":3005");
+
 async function request(method, path, options = {}) {
   const pathname = path.startsWith("/") ? path : `/${path}`;
   const url = path.startsWith("http") ? path : `${API_BASE}${pathname}`;
@@ -93,6 +97,58 @@ export const api = {
     });
   },
   delete: (path, opts = {}) => request("DELETE", path, opts),
+  // Método para enviar FormData (usado para upload de arquivos)
+  postFormData: async (path, formData, opts = {}) => {
+    const pathname = path.startsWith("/") ? path : `/${path}`;
+    const url = path.startsWith("http") ? path : `${API_BASE}${pathname}`;
+
+    // Get token from AsyncStorage
+    let token = null;
+    try {
+      token = await AsyncStorage.getItem("userToken");
+    } catch (error) {
+      console.warn("[API] Failed to get token from AsyncStorage:", error);
+    }
+
+    const headers = {
+      ...(opts.headers || {}),
+    };
+
+    // Add Authorization header if token exists
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    // NÃO definir Content-Type - o fetch faz isso automaticamente para FormData
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+      ...opts,
+    });
+
+    console.log(`[API] Response status: ${res.status}`);
+
+    let json = null;
+    try {
+      json = await res.json();
+      console.log(
+        `[API] Response data:`,
+        JSON.stringify(json, null, 2).substring(0, 500)
+      );
+    } catch (e) {
+      console.log(`[API] No JSON body in response`);
+    }
+
+    if (!res.ok) {
+      const err = new Error(json?.message || res.statusText || "API error");
+      err.status = res.status;
+      err.body = json;
+      throw err;
+    }
+
+    return json;
+  },
   raw: (path, opts = {}) => {
     // for callers that want the raw fetch Response
     const pathname = path.startsWith("/") ? path : `/${path}`;
@@ -100,6 +156,61 @@ export const api = {
     return fetch(url, opts);
   },
   API_BASE,
+
+  // Microserviços helpers
+  emprestimos: {
+    get: (path, opts) => {
+      const pathname = path.startsWith("/") ? path : `/${path}`;
+      return request("GET", `${EMPRESTIMOS_HOST}${pathname}`, opts);
+    },
+    post: (path, body, opts) => {
+      const pathname = path.startsWith("/") ? path : `/${path}`;
+      const requestOpts = { ...opts };
+      if (body !== null && body !== undefined) {
+        requestOpts.body = JSON.stringify(body);
+        requestOpts.headers = {
+          ...opts?.headers,
+          "Content-Type": "application/json",
+        };
+      }
+      return request("POST", `${EMPRESTIMOS_HOST}${pathname}`, requestOpts);
+    },
+    put: (path, body, opts) => {
+      const pathname = path.startsWith("/") ? path : `/${path}`;
+      const requestOpts = { ...opts };
+      if (body !== null && body !== undefined) {
+        requestOpts.body = JSON.stringify(body);
+        requestOpts.headers = {
+          ...opts?.headers,
+          "Content-Type": "application/json",
+        };
+      }
+      return request("PUT", `${EMPRESTIMOS_HOST}${pathname}`, requestOpts);
+    },
+    delete: (path, opts) => {
+      const pathname = path.startsWith("/") ? path : `/${path}`;
+      return request("DELETE", `${EMPRESTIMOS_HOST}${pathname}`, opts);
+    },
+  },
+
+  notification: {
+    get: (path, opts) => {
+      const pathname = path.startsWith("/") ? path : `/${path}`;
+      return request("GET", `${NOTIFICATION_HOST}${pathname}`, opts);
+    },
+    patch: (path, body, opts) => {
+      const pathname = path.startsWith("/") ? path : `/${path}`;
+      const requestOpts = { ...opts };
+      if (body !== null && body !== undefined) {
+        requestOpts.body = JSON.stringify(body);
+        requestOpts.headers = {
+          ...opts?.headers,
+          "Content-Type": "application/json",
+        };
+      }
+      return request("PATCH", `${NOTIFICATION_HOST}${pathname}`, requestOpts);
+    },
+  },
 };
 
 export default api;

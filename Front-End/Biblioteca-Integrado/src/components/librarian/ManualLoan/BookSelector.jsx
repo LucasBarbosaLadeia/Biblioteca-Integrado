@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../../services/api";
+import { getCapaUrl } from "../../../utils/imageUtils";
 
 const COLORS = {
   bg: "#071025",
@@ -69,7 +70,7 @@ const BookSelector = ({ onSelect, selectedBook }) => {
           <Image
             source={
               item.capa_url
-                ? { uri: item.capa_url }
+                ? { uri: getCapaUrl(item.capa_url) }
                 : require("../../../assets/Clean-Code.jpg")
             }
             style={styles.cover}
