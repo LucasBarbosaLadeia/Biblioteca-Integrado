@@ -89,11 +89,42 @@ const ManageBooks = ({ navigation }) => {
           selectedCategory={category}
         />
 
-        <Text style={styles.countText}>{` ${filtered.length} livros`}</Text>
+        {/* Header com contagem */}
+        <View style={styles.headerRow}>
+          <View style={styles.countContainer}>
+            <Text style={styles.countNumber}>{filtered.length}</Text>
+            <Text style={styles.countLabel}>
+              {filtered.length === 1 ? "Livro" : "Livros"}
+            </Text>
+          </View>
+
+          {query.length > 0 && (
+            <View style={styles.searchBadge}>
+              <Text style={styles.searchBadgeText}>
+                Resultados para "{query}"
+              </Text>
+            </View>
+          )}
+        </View>
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#fff" />
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text style={styles.loadingText}>Carregando livros...</Text>
+          </View>
+        ) : filtered.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconContainer}>
+              <Text style={styles.emptyIcon}>📚</Text>
+            </View>
+            <Text style={styles.emptyTitle}>
+              {query ? "Nenhum livro encontrado" : "Nenhum livro cadastrado"}
+            </Text>
+            <Text style={styles.emptyText}>
+              {query
+                ? "Tente buscar por outro termo"
+                : "Adicione livros ao acervo para começar"}
+            </Text>
           </View>
         ) : (
           <FlatList
@@ -103,6 +134,7 @@ const ManageBooks = ({ navigation }) => {
               <ManageBookCard {...item} onEdit={() => handleEdit(item)} />
             )}
             contentContainerStyle={{ paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
           />
         )}
       </View>
@@ -111,13 +143,85 @@ const ManageBooks = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#071032" },
-  container: { paddingHorizontal: 16, paddingTop: 8, flex: 1 },
-  countText: { color: "#9fb6e6", marginVertical: 6 },
+  safe: { flex: 1, backgroundColor: "#0B1220" },
+  container: { paddingHorizontal: 16, paddingTop: 12, flex: 1 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  countContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: 8,
+  },
+  countNumber: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#3B82F6",
+    textShadowColor: "rgba(59, 130, 246, 0.3)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  countLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#94A3B8",
+  },
+  searchBadge: {
+    backgroundColor: "rgba(59, 130, 246, 0.15)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(59, 130, 246, 0.3)",
+  },
+  searchBadgeText: {
+    color: "#60A5FA",
+    fontSize: 12,
+    fontWeight: "600",
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  loadingText: {
+    color: "#94A3B8",
+    marginTop: 12,
+    fontSize: 14,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "rgba(59, 130, 246, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+  },
+  emptyIcon: {
+    fontSize: 48,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#E2E8F0",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#94A3B8",
+    textAlign: "center",
+    lineHeight: 20,
   },
 });
 

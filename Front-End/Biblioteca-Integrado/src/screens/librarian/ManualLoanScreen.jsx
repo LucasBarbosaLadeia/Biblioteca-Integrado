@@ -65,12 +65,12 @@ export default function ManualLoanScreen({ navigation }) {
         }
 
         const payload = {
-          id_usuario,
-          id_livro,
-          data_devolucao_prevista: iso,
+          idUsuario: id_usuario,
+          idLivro: id_livro,
+          dataPrevistaDevolucao: iso,
         };
 
-        const res = await api.post("emprestimos", payload);
+        const res = await api.post("/emprestimos", payload);
         // Success: show custom alert and reset flow
         setAlertTitle("Sucesso");
         setAlertMessage("Empréstimo criado com sucesso.");

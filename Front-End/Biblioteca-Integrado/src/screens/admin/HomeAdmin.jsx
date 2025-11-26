@@ -60,8 +60,8 @@ const HomeAdmin = () => {
         const availableBooks = dataBooksAvail?.pagination?.total ?? null;
 
         // Empréstimos estatísticas
-        const dataLoans = await api.get("emprestimos/estatisticas");
-        const loanStats = dataLoans?.data ?? {};
+        const dataLoans = await api.get("/emprestimos/estatisticas");
+        const loanStats = dataLoans ?? {};
 
         // Favoritos estatísticas (top livros favoritados)
         const dataFav = await api.get("favoritos/estatisticas");

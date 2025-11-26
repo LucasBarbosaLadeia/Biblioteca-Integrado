@@ -12,10 +12,18 @@ const RecentLoans = ({ limit = 4 }) => {
 
     const fetchRecent = async () => {
       try {
-        const body = await api.get(`emprestimos?page=1&limit=${limit}`);
-        const data = body?.data ?? [];
+        const data = await api.get("/emprestimos");
+        // Pegar apenas os mais recentes (ordenar por data de empréstimo)
+        const sorted = Array.isArray(data)
+          ? data
+              .sort(
+                (a, b) =>
+                  new Date(b.dataEmprestimo) - new Date(a.dataEmprestimo)
+              )
+              .slice(0, limit)
+          : [];
         if (!mounted) return;
-        setLoans(data);
+        setLoans(sorted);
       } catch (e) {
         // fallback: keep empty
         console.error("Erro fetching recent loans", e);
@@ -39,12 +47,12 @@ const RecentLoans = ({ limit = 4 }) => {
     <View style={styles.container}>
       {loans.map((l) => (
         <LoanCard
-          key={l.id_emprestimo}
-          borrower={l?.usuario?.nome || "—"}
-          title={l?.livro?.titulo || "—"}
-          dueDate={l?.data_devolucao_prevista}
+          key={l.id}
+          borrower={l?.usuario?.nome || `Usuário ${l?.idUsuario}` || "—"}
+          title={l?.livro?.titulo || `Livro ${l?.idLivro}` || "—"}
+          dueDate={l?.dataPrevistaDevolucao || l?.data_devolucao_prevista}
           status={l?.status}
-          returnDate={l?.data_devolucao_real}
+          returnDate={l?.dataDevolucao || l?.data_devolucao_real}
         />
       ))}
     </View>

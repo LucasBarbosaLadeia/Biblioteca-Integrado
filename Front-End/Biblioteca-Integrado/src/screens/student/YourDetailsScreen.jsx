@@ -67,7 +67,7 @@ const MeuPerfilScreen = ({ navigation }) => {
               headers,
               signal: controller.signal,
             }),
-            api.emprestimos.get(`/emprestimos/usuario/${usuarioId}`, {
+            api.get(`/emprestimos/usuario/${usuarioId}`, {
               headers,
               signal: controller.signal,
             }),
@@ -75,7 +75,7 @@ const MeuPerfilScreen = ({ navigation }) => {
               headers,
               signal: controller.signal,
             }),
-            api.emprestimos.get(`/reservas/usuario/${usuarioId}`, {
+            api.get(`/reservas/usuario/${usuarioId}`, {
               headers,
               signal: controller.signal,
             }),

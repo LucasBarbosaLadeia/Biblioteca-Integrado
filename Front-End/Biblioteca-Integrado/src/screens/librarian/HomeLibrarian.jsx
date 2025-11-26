@@ -60,25 +60,27 @@ const HomeLibrarian = ({ navigation, setRole }) => {
       setLoadingStats(true);
       try {
         // total books: use livros with limit=1 and read pagination.total
-        const dataBooks = await api.get("livros?page=1&limit=1");
-        const totalBooks = dataBooks?.pagination?.total ?? null;
+        const dataBooks = await api.get("/livros?page=1&limit=1");
+        const totalBooks =
+          dataBooks?.pagination?.total ?? dataBooks?.data?.length ?? 0;
 
-        // active loans
-        const dataActive = await api.get("emprestimos/ativos?page=1&limit=1");
-        const activeLoans = dataActive?.pagination?.total ?? null;
+        // Usar endpoint de estatísticas do microserviço
+        const stats = await api.get("/emprestimos/estatisticas");
+        const activeLoans = stats?.ativos ?? 0;
+        const overdue = stats?.atrasados ?? 0;
 
-        // overdue
-        const dataOver = await api.get("emprestimos/atrasados?page=1&limit=1");
-        const overdue = dataOver?.pagination?.total ?? null;
-
-        // requests: attempt to fetch emprestimos with status=pendente or use 0 as fallback
-        let requests = null;
+        // Reservas pendentes
+        let requests = 0;
         try {
-          const dataReq = await api.get(
-            "emprestimos?status=pendente&page=1&limit=1"
-          );
-          requests = dataReq?.pagination?.total ?? 0;
+          const reservas = await api.get("/reservas");
+          // Contar apenas reservas PENDENTE ou ativas
+          if (Array.isArray(reservas)) {
+            requests = reservas.filter(
+              (r) => r.status === "PENDENTE" || r.status === "ATIVA"
+            ).length;
+          }
         } catch (e) {
+          console.warn("Erro ao buscar reservas:", e);
           requests = 0;
         }
 

@@ -20,6 +20,12 @@ export default function ManageLoansList({
       d.book.toLowerCase().includes(query.toLowerCase())
   );
 
+  // Ordenar: Ativos primeiro, depois Atrasados, depois Devolvidos
+  const sorted = filtered.sort((a, b) => {
+    const statusOrder = { Ativo: 0, Atrasado: 1, Devolvido: 2 };
+    return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+  });
+
   const counts = useMemo(() => {
     return {
       todos: loans.length,
@@ -52,7 +58,7 @@ export default function ManageLoansList({
       </View>
 
       <FlatList
-        data={filtered}
+        data={sorted}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <LoanCard

@@ -138,7 +138,7 @@ class NotificationService {
         return [];
       }
 
-      const response = await api.notification.get(`/notification/${userId}`);
+      const response = await api.get(`/notification/${userId}`);
       console.log("📦 Resposta da API:", JSON.stringify(response, null, 2));
 
       // Verificar estrutura da resposta
@@ -164,7 +164,7 @@ class NotificationService {
       console.log("📝 Marcando notificação como lida:", notificationId);
 
       const token = await AsyncStorage.getItem("userToken");
-      const response = await api.notification.patch(
+      const response = await api.patch(
         `/notification/${notificationId}/lida`,
         null,
         {

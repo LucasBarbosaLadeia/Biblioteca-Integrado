@@ -85,12 +85,9 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
       const token = await AsyncStorage.getItem("token");
       const usuarioId = await AsyncStorage.getItem("userId");
 
-      const result = await api.emprestimos.get(
-        `reservas/usuario/${usuarioId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const result = await api.get(`/reservas/usuario/${usuarioId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       console.log("📚 Verificando reserva para livro ID:", id);
       console.log("👤 Usuário ID:", usuarioId);
@@ -191,7 +188,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
               const token = await AsyncStorage.getItem("token");
               const usuarioId = await AsyncStorage.getItem("userId");
 
-              await api.emprestimos.post(`/reservas/${id}/${usuarioId}`, null, {
+              await api.post(`/reservas/${id}/${usuarioId}`, null, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 
@@ -256,7 +253,7 @@ const BookSpecificationsScreen = ({ route, navigation }) => {
               const token = await AsyncStorage.getItem("token");
               const usuarioId = await AsyncStorage.getItem("userId");
 
-              await api.emprestimos.delete(`/reservas/${id}/${usuarioId}`, {
+              await api.delete(`/reservas/${id}/${usuarioId}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
 

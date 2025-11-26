@@ -1,12 +1,10 @@
 import { API_HOST } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// IMPORTANTE: Todas as requisições passam pelo Nginx (porta 80)
+// O Nginx faz o roteamento para os microserviços internos
 const HOST = (API_HOST || "http://localhost").replace(/\/+$/g, "");
 const API_BASE = `${HOST}`;
-
-// Microserviços
-const EMPRESTIMOS_HOST = HOST.replace(":3001", ":3002");
-const NOTIFICATION_HOST = HOST.replace(":3001", ":3005");
 
 async function request(method, path, options = {}) {
   const pathname = path.startsWith("/") ? path : `/${path}`;
@@ -97,6 +95,17 @@ export const api = {
     });
   },
   delete: (path, opts = {}) => request("DELETE", path, opts),
+  patch: (path, body, opts = {}) => {
+    const requestOpts = { ...opts };
+    if (body !== null && body !== undefined) {
+      requestOpts.body = JSON.stringify(body);
+      requestOpts.headers = {
+        ...opts?.headers,
+        "Content-Type": "application/json",
+      };
+    }
+    return request("PATCH", path, requestOpts);
+  },
   // Método para enviar FormData (usado para upload de arquivos)
   postFormData: async (path, formData, opts = {}) => {
     const pathname = path.startsWith("/") ? path : `/${path}`;
@@ -156,61 +165,6 @@ export const api = {
     return fetch(url, opts);
   },
   API_BASE,
-
-  // Microserviços helpers
-  emprestimos: {
-    get: (path, opts) => {
-      const pathname = path.startsWith("/") ? path : `/${path}`;
-      return request("GET", `${EMPRESTIMOS_HOST}${pathname}`, opts);
-    },
-    post: (path, body, opts) => {
-      const pathname = path.startsWith("/") ? path : `/${path}`;
-      const requestOpts = { ...opts };
-      if (body !== null && body !== undefined) {
-        requestOpts.body = JSON.stringify(body);
-        requestOpts.headers = {
-          ...opts?.headers,
-          "Content-Type": "application/json",
-        };
-      }
-      return request("POST", `${EMPRESTIMOS_HOST}${pathname}`, requestOpts);
-    },
-    put: (path, body, opts) => {
-      const pathname = path.startsWith("/") ? path : `/${path}`;
-      const requestOpts = { ...opts };
-      if (body !== null && body !== undefined) {
-        requestOpts.body = JSON.stringify(body);
-        requestOpts.headers = {
-          ...opts?.headers,
-          "Content-Type": "application/json",
-        };
-      }
-      return request("PUT", `${EMPRESTIMOS_HOST}${pathname}`, requestOpts);
-    },
-    delete: (path, opts) => {
-      const pathname = path.startsWith("/") ? path : `/${path}`;
-      return request("DELETE", `${EMPRESTIMOS_HOST}${pathname}`, opts);
-    },
-  },
-
-  notification: {
-    get: (path, opts) => {
-      const pathname = path.startsWith("/") ? path : `/${path}`;
-      return request("GET", `${NOTIFICATION_HOST}${pathname}`, opts);
-    },
-    patch: (path, body, opts) => {
-      const pathname = path.startsWith("/") ? path : `/${path}`;
-      const requestOpts = { ...opts };
-      if (body !== null && body !== undefined) {
-        requestOpts.body = JSON.stringify(body);
-        requestOpts.headers = {
-          ...opts?.headers,
-          "Content-Type": "application/json",
-        };
-      }
-      return request("PATCH", `${NOTIFICATION_HOST}${pathname}`, requestOpts);
-    },
-  },
 };
 
 export default api;

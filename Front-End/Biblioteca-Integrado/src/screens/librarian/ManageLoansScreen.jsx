@@ -4,106 +4,167 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  View,
+  Text,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api } from "../../services/api";
 import LibrarianHeader from "../../components/librarian/header/Header";
 import ManageLoansList from "../../components/librarian/cardManage/ManageLoansList";
-import { MOCK_LOANS } from "../../components/librarian/cardManage/mockLoans";
-import api from "../../services/api";
 
 export default function ManageLoansScreen({ navigation }) {
-  // Screen owns the loans state and will fetch from backend.
   const [loans, setLoans] = useState([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      setLoading(true);
-      try {
-        const data = await api.get("/emprestimos");
-        // Expecting array; map to front-end shape if necessary
-        if (!mounted) return;
-        if (Array.isArray(data)) {
-          setLoans(
-            data.map((d) => ({
-              id: String(d.id || d._id || d.uuid),
-              student:
-                d.usuario_nome ||
-                (d.usuario && d.usuario.nome) ||
-                d.aluno ||
-                "---",
-              book:
-                d.livro_titulo ||
-                (d.livro && d.livro.titulo) ||
-                d.livro ||
-                "---",
-              loanDate: d.data_emprestimo || d.loanDate || null,
-              returnDate: d.data_devolucao || d.returnDate || null,
-              status:
-                d.status ||
-                (d.devolvido
-                  ? "Devolvido"
-                  : d.ativo
-                  ? "Ativo"
-                  : "Desconhecido"),
-            }))
-          );
-        } else {
-          setLoans(MOCK_LOANS);
-        }
-      } catch (err) {
-        console.warn("Erro ao carregar empréstimos:", err);
-        Alert.alert(
-          "Erro",
-          "Não foi possível carregar empréstimos. Verifique o servidor."
-        );
-        setLoans(MOCK_LOANS);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      mounted = false;
-    };
+    loadLoans();
   }, []);
 
-  async function handleMarkReturned(item) {
-    // optimistic update
-    setLoans((prev) =>
-      prev.map((p) => (p.id === item.id ? { ...p, status: "Devolvido" } : p))
-    );
+  async function loadLoans() {
+    setLoading(true);
     try {
-      await api.put(`/emprestimos/${item.id}/devolver`);
+      const token = await AsyncStorage.getItem("token");
+
+      // Buscar empréstimos
+      const emprestimosData = await api.get("/emprestimos", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("📚 Empréstimos recebidos:", emprestimosData);
+
+      // Extrair o array de empréstimos (pode vir em data.data ou direto em data)
+      const emprestimosArray = Array.isArray(emprestimosData)
+        ? emprestimosData
+        : emprestimosData?.data
+        ? emprestimosData.data
+        : [];
+
+      if (!Array.isArray(emprestimosArray) || emprestimosArray.length === 0) {
+        console.log("ℹ️ Nenhum empréstimo encontrado");
+        setLoans([]);
+        return;
+      }
+
+      console.log("📊 Total de empréstimos:", emprestimosArray.length);
+
+      // Buscar dados dos livros e usuários para cada empréstimo
+      const loansWithDetails = await Promise.all(
+        emprestimosArray.map(async (emp) => {
+          try {
+            const [livroData, usuarioData] = await Promise.all([
+              api.get(`/livros/${emp.idLivro}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              }),
+              api.get(`/usuarios/${emp.idUsuario}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              }),
+            ]);
+
+            const livro = livroData?.data || livroData;
+            const usuario = usuarioData?.data || usuarioData;
+
+            return {
+              id: String(emp.id),
+              idEmprestimo: emp.id,
+              student: usuario?.nome || `Usuário ${emp.idUsuario}`,
+              studentRA: usuario?.RA || "N/A",
+              book: livro?.titulo || `Livro ${emp.idLivro}`,
+              bookAuthor: livro?.autor || "Autor Desconhecido",
+              loanDate: emp.dataEmprestimo,
+              dueDate: emp.dataPrevistaDevolucao,
+              returnDate: emp.dataDevolucao,
+              status:
+                emp.status === "ATIVO"
+                  ? "Ativo"
+                  : emp.status === "DEVOLVIDO"
+                  ? "Devolvido"
+                  : emp.status === "ATRASADO"
+                  ? "Atrasado"
+                  : "Desconhecido",
+            };
+          } catch (error) {
+            console.error("Erro ao buscar detalhes do empréstimo:", error);
+            return {
+              id: String(emp.id),
+              idEmprestimo: emp.id,
+              student: `Usuário ${emp.idUsuario}`,
+              studentRA: "N/A",
+              book: `Livro ${emp.idLivro}`,
+              bookAuthor: "Autor Desconhecido",
+              loanDate: emp.dataEmprestimo,
+              dueDate: emp.dataPrevistaDevolucao,
+              returnDate: emp.dataDevolucao,
+              status:
+                emp.status === "ATIVO"
+                  ? "Ativo"
+                  : emp.status === "DEVOLVIDO"
+                  ? "Devolvido"
+                  : emp.status === "ATRASADO"
+                  ? "Atrasado"
+                  : "Desconhecido",
+            };
+          }
+        })
+      );
+
+      console.log("✅ Empréstimos com detalhes:", loansWithDetails.length);
+      setLoans(loansWithDetails);
     } catch (err) {
-      console.warn("Erro ao marcar devolvido:", err);
+      console.error("Erro ao carregar empréstimos:", err);
       Alert.alert(
         "Erro",
-        "Não foi possível atualizar no servidor. A alteração ficou apenas local."
+        "Não foi possível carregar empréstimos. Verifique o servidor."
+      );
+      setLoans([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleMarkReturned(item) {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      console.log("📖 Marcando empréstimo como devolvido:", item.idEmprestimo);
+
+      // Atualizar no backend
+      await api.put(`/emprestimos/${item.idEmprestimo}/devolver`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Atualizar estado local
+      setLoans((prev) =>
+        prev.map((p) =>
+          p.id === item.id
+            ? {
+                ...p,
+                status: "Devolvido",
+                returnDate: new Date().toISOString(),
+              }
+            : p
+        )
+      );
+
+      Alert.alert("Sucesso", "Empréstimo marcado como devolvido!");
+    } catch (err) {
+      console.error("Erro ao marcar devolvido:", err);
+      Alert.alert(
+        "Erro",
+        err?.body?.message ||
+          err?.message ||
+          "Não foi possível marcar como devolvido."
       );
     }
   }
 
   async function handleMarkLate(item) {
-    // backend doesn't expose explicit 'mark late' endpoint in docs; try a generic update
-    setLoans((prev) =>
-      prev.map((p) => (p.id === item.id ? { ...p, status: "Atrasado" } : p))
+    // O status "atrasado" é calculado automaticamente pelo backend
+    // baseado na data prevista de devolução
+    Alert.alert(
+      "Informação",
+      "O status 'Atrasado' é calculado automaticamente pelo sistema quando a data prevista de devolução é ultrapassada."
     );
-    try {
-      await api.put(`/emprestimos/${item.id}`, { status: "Atrasado" });
-    } catch (err) {
-      // if API doesn't support updating status directly, keep local change and notify
-      console.warn(
-        "Erro ao marcar atrasado (tentar PUT /emprestimos/:id):",
-        err
-      );
-      Alert.alert(
-        "Aviso",
-        "Marcação como atrasado aplicada localmente. Se necessário, implemente endpoint no backend para persistir essa mudança."
-      );
-    }
   }
 
   return (
@@ -115,11 +176,10 @@ export default function ManageLoansScreen({ navigation }) {
       />
 
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#60A5FA"
-          style={{ marginTop: 24 }}
-        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#60A5FA" />
+          <Text style={styles.loadingText}>Carregando empréstimos...</Text>
+        </View>
       ) : (
         <ManageLoansList
           loans={loans}
@@ -135,5 +195,14 @@ export default function ManageLoansScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0B1220" },
-  text: { color: "#fff", padding: 16 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    color: "#9CA3AF",
+    marginTop: 12,
+    fontSize: 14,
+  },
 });
