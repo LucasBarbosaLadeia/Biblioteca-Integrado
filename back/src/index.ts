@@ -16,15 +16,16 @@ const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // pegar 
 // Middleware
 app.use(cors());
 
+// Parser JSON global (necessário para auth middleware ler body)
+// Rotas com upload de arquivo (Multer) sobrescrevem isso localmente
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Servir arquivos estáticos (imagens de capas)
 app.use(
   "/capas",
   express.static(path.join(__dirname, "..", "uploads", "capas"))
 );
-
-// IMPORTANTE: NÃO usar express.json() globalmente
-// Cada rota decide se precisa de JSON parser ou Multer
-// Rotas com upload usam Multer, outras usam express.json() localmente
 
 // Usar rotas da API
 app.use(routes);

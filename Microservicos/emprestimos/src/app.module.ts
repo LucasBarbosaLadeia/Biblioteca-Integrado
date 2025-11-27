@@ -12,27 +12,27 @@ import { redisStore } from 'cache-manager-ioredis-yet';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ScheduleModule.forRoot(), // Habilita cron jobs
+    ScheduleModule.forRoot(),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (cfg: ConfigService) => {
-        const host = cfg.get('REDIS_HOST') || 'redis';
-        const port = Number(cfg.get('REDIS_PORT') || 6379);
+        const host = cfg.get<string>('REDIS_HOST') || 'redis';
+        const port = Number(cfg.get<number>('REDIS_PORT') || 6379);
 
-        console.log(`🔧 [REDIS CONFIG] Conectando: ${host}:${port}`);
+        console.log(`[REDIS] Conectando: ${host}:${port}`);
 
         try {
           const store = await redisStore({
-            host,
-            port,
+            host: host,
+            port: port,
           });
 
-          console.log('✅ [REDIS CONFIG] Store criado com sucesso');
+          console.log('[REDIS] Store criado');
           return { store, ttl: 300000 }; // 5 minutos default
         } catch (error) {
-          console.error('❌ [REDIS CONFIG] Erro ao criar store:', error);
+          console.error('[REDIS] Erro ao criar store:', error);
           throw error;
         }
       },

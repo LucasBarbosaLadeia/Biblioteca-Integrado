@@ -317,9 +317,14 @@ export class UsuarioController {
       }
 
       const token = jwt.sign(
-        { id: usuario.id_usuario, email: usuario.email },
-        process.env.JWT_SECRET || "segredo_simples", // pode ser uma string fixa
-        { expiresIn: "1h" } // expira em 1 hora
+        {
+          id: usuario.id_usuario,
+          nome: usuario.nome,
+          email: usuario.email,
+          tipo: usuario.tipo,
+        },
+        process.env.JWT_SECRET || "seu-segredo-super-secreto",
+        { expiresIn: "24h" }
       );
 
       // Retornar usuário sem a senha

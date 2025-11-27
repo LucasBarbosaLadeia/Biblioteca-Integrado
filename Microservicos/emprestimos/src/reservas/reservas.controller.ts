@@ -6,11 +6,15 @@ import {
   Delete,
   ParseIntPipe,
   ParseUUIDPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { ReservasService } from './reservas.service';
 import { ExpireReservasJob } from './jobs/expire-reservas.job';
+import { AuthGuard } from '../guards/auth.guard';
+import { Roles } from '../decorators/roles.decorator';
 
 @Controller('reservas')
+@UseGuards(AuthGuard)
 export class ReservasController {
   constructor(
     private readonly service: ReservasService,
@@ -18,6 +22,7 @@ export class ReservasController {
   ) {}
 
   @Post('retirar/:id')
+  @Roles('funcionario', 'admin')
   retirar(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.service.retirarReserva(id);
   }
@@ -31,6 +36,7 @@ export class ReservasController {
   }
 
   @Get()
+  @Roles('funcionario', 'admin')
   listar() {
     return this.service.listarTodas();
   }
@@ -53,6 +59,7 @@ export class ReservasController {
    * Útil para testes e manutenção
    */
   @Post('jobs/expire-manual')
+  @Roles('funcionario', 'admin')
   async executeExpireJob() {
     const result = await this.expireJob.executeManual();
     return {

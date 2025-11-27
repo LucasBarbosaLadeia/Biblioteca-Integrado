@@ -1,15 +1,11 @@
 import { Router } from "express";
-import express from "express";
 import { LivroController } from "../controller";
 import upload from "../config/multer";
+import { authMiddleware, isLibrarian } from "../middleware/auth";
 
 const router = Router();
 
-// Middleware para rotas que NÃO usam upload (precisam de JSON parser)
-const jsonParser = express.json();
-const urlencodedParser = express.urlencoded({ extended: true });
-
-// Rotas GET (precisam de JSON parser para query params complexos, se houver)
+// Rotas GET - Públicas (qualquer um pode ver os livros)
 router.get("/recentes", LivroController.getRecentes);
 router.get("/", LivroController.getAll);
 router.get("/disponiveis", LivroController.getDisponiveis);
@@ -17,13 +13,42 @@ router.get("/recomendados", LivroController.getRecomendados);
 router.get("/categoria/:categoriaId", LivroController.getByCategoria);
 router.get("/:id", LivroController.getById);
 
-// Rotas POST/PUT com upload (NÃO usar JSON parser, Multer processa tudo)
-router.post("/", upload.single("capa"), LivroController.create);
-router.put("/:id", upload.single("capa"), LivroController.update);
+// Rotas POST/PUT/DELETE - Protegidas (apenas bibliotecários e admins)
+// Criar livro (com upload de imagem)
+router.post(
+  "/",
+  authMiddleware,
+  isLibrarian,
+  upload.single("capa"),
+  LivroController.create
+);
 
-// Rotas sem upload (usar JSON parser)
-router.delete("/:id", jsonParser, LivroController.delete);
-router.patch("/:id/decrementar", jsonParser, LivroController.decrementar);
-router.patch("/:id/incrementar", jsonParser, LivroController.incrementar);
+// Atualizar livro (com upload opcional de imagem)
+router.put(
+  "/:id",
+  authMiddleware,
+  isLibrarian,
+  upload.single("capa"),
+  LivroController.update
+);
+
+// Deletar livro
+router.delete("/:id", authMiddleware, isLibrarian, LivroController.delete);
+
+// Decrementar quantidade (quando empresta livro) - Protegido
+router.patch(
+  "/:id/decrementar",
+  authMiddleware,
+  isLibrarian,
+  LivroController.decrementar
+);
+
+// Incrementar quantidade (quando devolve livro) - Protegido
+router.patch(
+  "/:id/incrementar",
+  authMiddleware,
+  isLibrarian,
+  LivroController.incrementar
+);
 
 export default router;

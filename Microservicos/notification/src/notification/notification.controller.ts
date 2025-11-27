@@ -4,10 +4,13 @@ import {
   Param,
   Patch,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
+import { AuthGuard } from '../guards/auth.guard';
 
 @Controller('notification')
+@UseGuards(AuthGuard)
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
